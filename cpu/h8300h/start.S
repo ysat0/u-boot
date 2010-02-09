@@ -25,16 +25,16 @@
 	.align	2
 
 	.global	_start
-_start:
-	.long	_init
+	.long	_start
 vector	=	1
 	.rept	63
 	.long	__ram_vec + (vector * 4)
 vector	=	vector + 1
 	.endr
 
-_init:
+_start:
 	mov.l	#__init_stack,sp
+#if !defined(CONFIG_H8300_SIM)
 	jsr	@_lowlevel_init
 
 	mov.l	#__fdata,er5
@@ -49,9 +49,9 @@ _init:
 	adds	#4,er4
 	dec.l	#1,er5
 	bne	1b
-
-	mov.l	#CONFIG_SYS_LOAD_ADDR - CONFIG_SYS_GBL_DATA_SIZE,sp
-	mov.l	sp,er5		/* global data */
+#endif
+	mov.l	#CONFIG_SYS_LOAD_ADDR - CONFIG_SYS_GBL_DATA_SIZE - CONFIG_SYS_MALLOC_LEN,sp
+	mov.l	sp,er0		/* global data */
 	jsr	@_h8300_generic_init
 	
 	bra	.

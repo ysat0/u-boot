@@ -22,7 +22,7 @@
  */
 
 OUTPUT_ARCH(h8300h)
-ENTRY(__start)
+ENTRY(_start)
 
 MEMORY
 {

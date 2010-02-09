@@ -48,6 +48,8 @@ typedef	struct global_data
 #define	GD_FLG_LOGINIT	0x00020		/* Log Buffer has been initialized	*/
 #define GD_FLG_DISABLE_CONSOLE	0x00040		/* Disable console (in & out)	 */
 
-#define DECLARE_GLOBAL_DATA_PTR	register gd_t *gd asm ("er5")
+extern gd_t *gd;
+
+#define DECLARE_GLOBAL_DATA_PTR
 
 #endif /* __ASM_SH_GLOBALDATA_H_ */
