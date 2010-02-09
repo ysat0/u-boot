@@ -51,15 +51,6 @@ extern int watchdog_disable(void);
 # define INIT_FUNC_IDE_INIT
 #endif /* CONFIG_CMD_IDE */
 
-static int sh_mem_env_init(void)
-{
-	mem_malloc_init(TEXT_BASE - CONFIG_SYS_GBL_DATA_SIZE -
-			CONFIG_SYS_MALLOC_LEN, CONFIG_SYS_MALLOC_LEN - 16);
-	env_relocate();
-	jumptable_init();
-	return 0;
-}
-
 #if defined(CONFIG_CMD_NET)
 static int sh_net_init(void)
 {
@@ -71,7 +62,7 @@ static int sh_net_init(void)
 
 typedef int (init_fnc_t) (void);
 
-init_fnc_t *init_sequence[] =
+static init_fnc_t *init_sequence[] =
 {
 	cpu_init,		/* basic cpu dependent setup */
 	board_init,		/* basic board dependent setup */
@@ -83,26 +74,23 @@ init_fnc_t *init_sequence[] =
 	display_options,
 	checkcpu,
 	checkboard,		/* Check support board */
-	dram_init,		/* SDRAM init */
-	timer_init,		/* SuperH Timer (TCNT0 only) init */
+	dram_init,
+	timer_init,
 	stdio_init,
 	console_init_r,
 	interrupt_init,
-#ifdef BOARD_LATE_INIT
-	board_late_init,
-#endif
-#if defined(CONFIG_CMD_NET)
-	sh_net_init,		/* SH specific eth init */
-#endif
 	NULL			/* Terminate this list */
 };
 
-void h8300_generic_init(void)
+gd_t *gd;
+
+void h8300_generic_init(gd_t *_gd)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 
 	bd_t *bd;
 	init_fnc_t **init_fnc_ptr;
+	gd = _gd;
 
 	memset(gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
 
@@ -121,6 +109,10 @@ void h8300_generic_init(void)
 	bd->bi_sramsize	= CONFIG_SYS_SRAM_SIZE;
 #endif
 	bd->bi_baudrate	= CONFIG_BAUDRATE;
+
+	mem_malloc_init(CONFIG_SYS_LOAD_ADDR - CONFIG_SYS_GBL_DATA_SIZE -
+			CONFIG_SYS_MALLOC_LEN, CONFIG_SYS_MALLOC_LEN - 16);
+	env_relocate();
 
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
 		WATCHDOG_RESET();
