@@ -48,23 +48,6 @@ extern void __raw_readsl(unsigned int addr, void *data, int longlen);
 #define __raw_base_readw(base, off)	__arch_base_getw(base, off)
 #define __raw_base_readl(base, off)	__arch_base_getl(base, off)
 
-/*
- *  IO port access primitives
- *  -------------------------
- *
- * The SH doesn't have special IO access instructions; all IO is memory
- * mapped.  Note that these are defined to perform little endian accesses
- * only.  Their primary purpose is to access PCI and ISA peripherals.
- *
- * The machine specific io.h include defines __io to translate an "IO"
- * address to a memory address.
- *
- * Note that we prevent GCC re-ordering or caching values in expressions
- * by introducing sequence points into the in*() definitions.  Note that
- * __raw_* do not guarantee this behaviour.
- *
- * The {in,out}[bwl] macros are for emulating x86-style PCI/ISA IO space.
- */
 #define outb(v, p)               __raw_writeb(v, p)
 #define outw(v, p)               __raw_writew(cpu_to_le16(v), p)
 #define outl(v, p)               __raw_writel(cpu_to_le32(v), p)
