@@ -184,7 +184,20 @@ gd_t *global_data;
 "	jmp %%g1\n"					\
 "	nop\n"						\
 	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "g1" );
-
+#elif defined(CONFIG_H8300)
+/*
+ * er5 holds the pointer to the global_data. er0 is call clobbered.
+ */
+#define EXPORT_FUNC(x)					\
+	asm volatile(					\
+	"	.globl\t_" #x "\n"			\
+	"_" #x ":\n"					\
+	"	mov.l er5,er0\n"			\
+	"	add.l %0,er0\n"				\
+	"	add.l %1,er0\n"				\
+	"	mov.l @er0,er0\n"			\
+	"	jmp @er0\n"				\
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "er0" );
 #else
 #error stubs definition missing for this architecture
 #endif
@@ -203,7 +216,10 @@ void __attribute__((unused)) dummy(void)
 {
 #include <_exports.h>
 }
-
+#if defined(CONFIG_H8300)
+#define __bss_start _bss_start
+#define _end end
+#endif
 extern unsigned long __bss_start, _end;
 
 void app_startup(char **argv)
