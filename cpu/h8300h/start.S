@@ -20,9 +20,6 @@
 #include <config.h>
 #include <version.h>
 
-#define INITSP 0xffff20
-#define RAMVECTOR 0xfffe20
-
 	.h8300h
 	.text
 	.align	2
@@ -32,14 +29,18 @@ _start:
 	.long	_init
 vector	=	1
 	.rept	63
-	.long	RAMVECTOR + (vector * 4)
+	.long	__ram_vec + (vector * 4)
 vector	=	vector + 1
 	.endr
 
 _init:
-	mov.l	#INITSP,sp
+	mov.l	#__init_stack,sp
 	jsr	@_lowlevel_init
 
+	mov.l	#__fdata,er5
+	mov.l	#__ram_data,er6
+	mov.l	#__sizeof_data,er4
+	eepmov.w
 	mov.l	#_bss_start,er4
 	mov.l	#_bss_end,er5
 	sub	er4,er5

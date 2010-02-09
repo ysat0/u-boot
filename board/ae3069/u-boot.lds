@@ -24,6 +24,13 @@
 OUTPUT_ARCH(h8300h)
 ENTRY(__start)
 
+MEMORY
+{
+       irom : ORIGIN = 0x000000, LENGTH = 512K
+       dram : ORIGIN = 0x400000, LENGTH = 2M
+       iram : ORIGIN = 0xffbf20, LENGTH = 16K
+}
+
 SECTIONS
 {
 	PROVIDE (__start = .);
@@ -35,41 +42,33 @@ SECTIONS
 		. = ALIGN(4);
 		*(.text)
 		. = ALIGN(4);
-	} =0xFF
+	} > irom
 	PROVIDE (__ecode = .);
 	.rodata :
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
-	}
+	} > irom
 	PROVIDE (__etext = .);
-
-
-	PROVIDE (__fdata = .);
-	.data :
-	{
-		*(.data)
-		. = ALIGN(4);
-	}
-	PROVIDE (__edata = .);
-
-	PROVIDE (__fgot = .);
-	.got :
-	{
-		*(.got)
-		. = ALIGN(4);
-	}
-	PROVIDE (__egot = .);
 
 	PROVIDE (___u_boot_cmd_start = .);
 	.u_boot_cmd :
 	{
 		*(.u_boot_cmd)
 		. = ALIGN(4);
-	}
+	} > irom
 	PROVIDE (___u_boot_cmd_end = .);
 
-	PROVIDE (reloc_dst_end = .);
+	PROVIDE (__fdata = .);
+	.data :
+	{
+		PROVIDE (__ram_data = .);
+	
+		*(.data)
+		. = ALIGN(4);
+	} >dram AT>irom
+	PROVIDE (__sizeof_data = SIZEOF(.data));
+	PROVIDE (__edata = .);
 
 	PROVIDE (_bss_start = .);
 	PROVIDE (___bss_start = .);
@@ -77,8 +76,13 @@ SECTIONS
 	{
 		*(.bss)
 		. = ALIGN(4);
-	}
+	} > dram
 	PROVIDE (_bss_end = .);
 
 	PROVIDE (__end = .);
+	.iram :
+	{
+	}
+	PROVIDE (__ram_vec =    0xfffe20);
+	PROVIDE (__init_stack = 0xffff20);
 }
