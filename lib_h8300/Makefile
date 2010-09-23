@@ -1,6 +1,5 @@
 #
-# Copyright (c) 2007
-# Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
+# Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as

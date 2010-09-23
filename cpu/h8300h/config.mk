@@ -1,6 +1,5 @@
 #
-# (C) Copyright 2007-2008
-# Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
+# Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
 #
 # See file CREDITS for list of people who contributed to this
 # project.
@@ -23,4 +22,5 @@
 #
 PLATFORM_CPPFLAGS += -mh
 USE_PRIVATE_LIBGCC = $(shell dirname `$(CC) $(CFLAGS) -mh -mint32 -print-libgcc-file-name`)
-LDFLAGS += -mh8300helf
+LDEMUL = -mh8300helf
+LDFLAGS += $(LDEMUL)

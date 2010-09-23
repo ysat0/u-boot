@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
+ * Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -82,6 +82,14 @@ static init_fnc_t *init_sequence[] =
 	NULL			/* Terminate this list */
 };
 
+
+void puthex(unsigned char hex)
+{
+	const static char d[]="0123456789ABCDEF";
+	serial_raw_putc(d[hex >> 4]);
+	serial_raw_putc(d[hex & 0x0f]);
+}
+
 gd_t *gd;
 
 void h8300_generic_init(gd_t *_gd)
@@ -91,6 +99,10 @@ void h8300_generic_init(gd_t *_gd)
 	bd_t *bd;
 	init_fnc_t **init_fnc_ptr;
 	gd = _gd;
+	puthex(*(unsigned char *)0xff4000);
+	puthex(*(unsigned char *)0xff4001);
+	puthex(*(unsigned char *)0xff4002);
+	puthex(*(unsigned char *)0xff4003);
 
 	memset(gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
 
@@ -113,7 +125,6 @@ void h8300_generic_init(gd_t *_gd)
 	mem_malloc_init(CONFIG_SYS_LOAD_ADDR - CONFIG_SYS_GBL_DATA_SIZE -
 			CONFIG_SYS_MALLOC_LEN, CONFIG_SYS_MALLOC_LEN - 16);
 	env_relocate();
-
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
 		WATCHDOG_RESET();
 		if ((*init_fnc_ptr) () != 0)

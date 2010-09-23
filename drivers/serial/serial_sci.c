@@ -20,14 +20,12 @@
 #include <common.h>
 #include <asm/io.h>
 
-#define SCIBASE 0xffffb0
-
-#define SMR (SCIBASE + 0x00)
-#define BRR (SCIBASE + 0x01)
-#define SCR (SCIBASE + 0x02)
-#define TDR (SCIBASE + 0x03)
-#define SSR (SCIBASE + 0x04)
-#define RDR (SCIBASE + 0x05)
+#define SMR (CONFIG_SCI_BASE + 0x00)
+#define BRR (CONFIG_SCI_BASE + 0x01)
+#define SCR (CONFIG_SCI_BASE + 0x02)
+#define TDR (CONFIG_SCI_BASE + 0x03)
+#define SSR (CONFIG_SCI_BASE + 0x04)
+#define RDR (CONFIG_SCI_BASE + 0x05)
 
 /*----------------------------------------------------------------------*/
 
@@ -37,16 +35,19 @@ void serial_setbrg(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 
+#if 0
 	outb(BRR_VALUE(gd->baudrate, CONFIG_SYS_HZ), BRR);
+#endif
 }
 
 int serial_init(void)
 {
+#if 0
 	outb(0, SCR);
 	outb(0, SMR);
 	serial_setbrg();
 	outb(0x30, SCR);
-
+#endif
 	return 0;
 }
 
@@ -55,7 +56,7 @@ void serial_raw_putc(const char c)
 	while(!(inb(SSR) & 0x80))
 	      ;
 	outb(c, TDR);
-	outb(0x78, SSR);
+	outb(inb(SSR) & ~0x82, SSR);
 }
 
 void serial_putc(const char c)

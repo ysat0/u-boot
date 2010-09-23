@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
+ * Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
  *
  * (C) Copyright 2003
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
@@ -27,26 +27,26 @@
 #include <asm/io.h>
 #include <asm/processor.h>
 
-#define _8TCR0  0xffff80
-#define _8TCR1  0xffff81
-#define _8TCSR0 0xffff82
-#define _8TCSR1 0xffff83
-#define _8TCNT0 0xffff88
-#define _8TCNT1 0xffff89
+#define TCR0  (CONFIG_TIMER_BASE + 0)
+#define TCR1  (CONFIG_TIMER_BASE + 1)
+#define TCSR0 (CONFIG_TIMER_BASE + 2)
+#define TCSR1 (CONFIG_TIMER_BASE + 3)
+#define TCNT0 (CONFIG_TIMER_BASE + 4)
+#define TCNT1 (CONFIG_TIMER_BASE + 5)
 
 static unsigned long long tick;
 static unsigned short last;
 
 int timer_init(void)
 {
-	outb(0x04, _8TCR0);	/* 16bit free running */
-	outb(0x01, _8TCR1);	/* clk / 8 */
+	outb(0x04, TCR0);	/* 16bit free running */
+	outb(0x01, TCR1);	/* clk / 8 */
 	return 0;
 }
 
 unsigned long long get_ticks(void)
 {
-	unsigned short now = inw(_8TCNT0);
+	unsigned short now = inw(TCNT0);
 	if (now < last)
 		tick += 0x10000 + (0x10000 - last) + now;
 	else
@@ -62,15 +62,15 @@ ulong get_timer(ulong base)
 
 void set_timer(ulong t)
 {
-	outw((u16) t, _8TCNT0);
+	outw((u16) t, TCNT0);
 }
 
 void reset_timer(void)
 {
 	last = 0;
-	outb(0x00, _8TCR1);
-	outw(0, _8TCNT0);
-	outb(0x01, _8TCR1);
+	outb(0x00, TCR1);
+	outw(0, TCNT0);
+	outb(0x01, TCR1);
 }
 
 void __udelay(unsigned long usec)

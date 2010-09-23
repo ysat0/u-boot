@@ -1,8 +1,7 @@
 #
-# Copyright (C) 2007,2008 Nobuhiro Iwamatsu
-# Copyright (C) 2008 Renesas Solutions Corp.
+# Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
 #
-# u-boot/board/rsk7203/Makefile
+# u-boot/board/ae3069/Makefile
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
