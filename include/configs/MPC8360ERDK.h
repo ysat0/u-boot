@@ -250,6 +250,7 @@
 #define CONFIG_SYS_NS16550_COM2	(CONFIG_SYS_IMMR+0x4600)
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history */
+#define CONFIG_AUTO_COMPLETE		/* add autocompletion support   */
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
 #ifdef	CONFIG_SYS_HUSH_PARSER
@@ -308,7 +309,7 @@
  * QE UEC ethernet configuration
  */
 #define CONFIG_UEC_ETH
-#define CONFIG_ETHPRIME		"FSL UEC0"
+#define CONFIG_ETHPRIME		"UEC0"
 
 #define CONFIG_UEC_ETH1		/* GETH1 */
 
@@ -411,8 +412,9 @@
 /*
  * Core HID Setup
  */
-#define CONFIG_SYS_HID0_INIT		0x000000000
-#define CONFIG_SYS_HID0_FINAL		HID0_ENABLE_MACHINE_CHECK
+#define CONFIG_SYS_HID0_INIT	0x000000000
+#define CONFIG_SYS_HID0_FINAL	(HID0_ENABLE_MACHINE_CHECK | \
+				 HID0_ENABLE_INSTRUCTION_CACHE)
 #define CONFIG_SYS_HID2		HID2_HBE
 
 /*
@@ -506,10 +508,6 @@
 #define CONFIG_HAS_ETH1
 #define CONFIG_HAS_ETH2
 #define CONFIG_HAS_ETH3
-#define CONFIG_ETHADDR	00:04:9f:ef:01:01
-#define CONFIG_ETH1ADDR	00:04:9f:ef:01:02
-#define CONFIG_ETH2ADDR	00:04:9f:ef:01:03
-#define CONFIG_ETH3ADDR	00:04:9f:ef:01:04
 #endif
 
 #define CONFIG_BAUDRATE 115200
@@ -518,10 +516,6 @@
 #define CONFIG_HOSTNAME	mpc8360erdk
 #define CONFIG_BOOTFILE	uImage
 
-#define CONFIG_IPADDR		10.0.0.99
-#define CONFIG_SERVERIP		10.0.0.2
-#define CONFIG_GATEWAYIP	10.0.0.2
-#define CONFIG_NETMASK		255.255.255.0
 #define CONFIG_ROOTPATH		/nfsroot/
 
 #define	CONFIG_BOOTDELAY 2	/* -1 disables auto-boot */

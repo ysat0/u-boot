@@ -118,7 +118,7 @@
 #define CONFIG_SYS_FLASH_BASE		0xffc00000	/* start of FLASH   */
 #define CONFIG_SYS_FLASH_SIZE		4		/* flash size in MB */
 #define CONFIG_SYS_BR0_PRELIM		(CONFIG_SYS_FLASH_BASE | \
-					 (2 << BR_PS_SHIFT) |	/*  32bit */ \
+					 (2 << BR_PS_SHIFT) |	/*  16bit */ \
 					 BR_V)			/* valid */
 
 #define CONFIG_SYS_OR0_PRELIM		0xffc06ff7	/*   4 MB flash size */
@@ -128,7 +128,7 @@
 #define CONFIG_SYS_FLASH_BASE		0xf8000000	/* start of FLASH   */
 #define CONFIG_SYS_FLASH_SIZE		128		/* flash size in MB */
 #define CONFIG_SYS_BR0_PRELIM		(CONFIG_SYS_FLASH_BASE | \
-					 (2 << BR_PS_SHIFT) |	/*  32bit */ \
+					 (2 << BR_PS_SHIFT) |	/*  16bit */ \
 					 BR_V)			/* valid */
 
 #define CONFIG_SYS_OR0_PRELIM		0xf8006ff7	/* 128 MB flash size */
@@ -197,6 +197,7 @@
 #define CONFIG_SYS_NS16550_COM2		(CONFIG_SYS_IMMR + 0x4600)
 
 #define CONFIG_CMDLINE_EDITING		/* add command line history	*/
+#define CONFIG_AUTO_COMPLETE		/* add autocompletion support */
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
 #ifdef CONFIG_SYS_HUSH_PARSER
@@ -448,7 +449,8 @@
 #define CONFIG_SYS_SICRL SICRL_LDP_A
 
 #define CONFIG_SYS_HID0_INIT	0x000000000
-#define CONFIG_SYS_HID0_FINAL	HID0_ENABLE_MACHINE_CHECK
+#define CONFIG_SYS_HID0_FINAL	(HID0_ENABLE_MACHINE_CHECK | \
+				 HID0_ENABLE_INSTRUCTION_CACHE)
 
 #define CONFIG_SYS_HID2		HID2_HBE
 

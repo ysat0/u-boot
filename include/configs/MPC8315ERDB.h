@@ -197,6 +197,7 @@
 #define CONFIG_SYS_LCRR_DBYP	LCRR_DBYP
 #define CONFIG_SYS_LCRR_CLKDIV		LCRR_CLKDIV_2
 #define CONFIG_SYS_LBC_LBCR		0x00040000
+#define CONFIG_FSL_ELBC		1
 
 /*
  * FLASH on the Local Bus
@@ -504,6 +505,7 @@
 #endif
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history */
+#define CONFIG_AUTO_COMPLETE		/* add autocompletion support   */
 
 #undef CONFIG_WATCHDOG		/* watchdog disabled */
 
@@ -535,8 +537,9 @@
 /*
  * Core HID Setup
  */
-#define CONFIG_SYS_HID0_INIT		0x000000000
-#define CONFIG_SYS_HID0_FINAL		(HID0_ENABLE_MACHINE_CHECK | \
+#define CONFIG_SYS_HID0_INIT	0x000000000
+#define CONFIG_SYS_HID0_FINAL	(HID0_ENABLE_MACHINE_CHECK | \
+				 HID0_ENABLE_INSTRUCTION_CACHE | \
 				 HID0_ENABLE_DYNAMIC_POWER_MANAGMENT)
 #define CONFIG_SYS_HID2		HID2_HBE
 
@@ -616,9 +619,7 @@
 
 #if defined(CONFIG_TSEC_ENET)
 #define CONFIG_HAS_ETH0
-#define CONFIG_ETHADDR		04:00:00:00:00:0A
 #define CONFIG_HAS_ETH1
-#define CONFIG_ETH1ADDR		04:00:00:00:00:0B
 #endif
 
 #define CONFIG_BAUDRATE 115200

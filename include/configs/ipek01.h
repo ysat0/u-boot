@@ -267,8 +267,6 @@
 /* End of used area in DPRAM */
 #define CONFIG_SYS_INIT_RAM_END		MPC5XXX_SRAM_SIZE
 
-
-
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -315,7 +313,6 @@
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
-
 #define CONFIG_SYS_MEMTEST_START	0x00100000	/* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x00f00000	/* 1...15 MB in DRAM */
 
@@ -327,13 +324,8 @@
 /*
  * Various low-level settings
  */
-#if defined(CONFIG_MPC5200)
 #define CONFIG_SYS_HID0_INIT		HID0_ICE | HID0_ICFI
 #define CONFIG_SYS_HID0_FINAL		HID0_ICE
-#else
-#define CONFIG_SYS_HID0_INIT		0
-#define CONFIG_SYS_HID0_FINAL		0
-#endif
 
 #define CONFIG_SYS_BOOTCS_START		CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_BOOTCS_SIZE		CONFIG_SYS_FLASH_SIZE

@@ -43,7 +43,7 @@
 #endif
 
 int
-do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong		addr = load_addr;
 	ulong		dest = 0;
@@ -230,7 +230,7 @@ do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 				printf ("   Uncompressing part %d ... ", part);
 				/*
-                                 * If we've got less than 4 MB of malloc()
+				 * If we've got less than 4 MB of malloc()
 				 * space, use slower decompression algorithm
 				 * which requires at most 2300 KB of memory.
 				 */
@@ -262,7 +262,8 @@ do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	return 0;
 }
 
-U_BOOT_CMD(imxtract, 4, 1, do_imgextract,
+U_BOOT_CMD(
+	imxtract, 4, 1, do_imgextract,
 	"extract a part of a multi-image",
 	"addr part [dest]\n"
 	"    - extract <part> from legacy image at <addr> and copy to <dest>"
