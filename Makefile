@@ -2435,40 +2435,6 @@ espt_config  :   unconfig
 	@echo "#define CONFIG_ESPT 1" > $(obj)include/config.h
 	@$(MKCONFIG) -a $@ sh sh4 espt
 
-<<<<<<< HEAD
-#========================================================================
-# SPARC
-#========================================================================
-
-#########################################################################
-## LEON3
-#########################################################################
-
-# Gaisler GR-XC3S-1500 board
-gr_xc3s_1500_config : unconfig
-	@$(MKCONFIG) $(@:_config=) sparc leon3 gr_xc3s_1500 gaisler
-
-# Gaisler GR-CPCI-AX2000 board, a General purpose FPGA-AX system
-gr_cpci_ax2000_config : unconfig
-	@$(MKCONFIG) $(@:_config=) sparc leon3 gr_cpci_ax2000 gaisler
-
-# Gaisler GRLIB template design (GPL SPARC/LEON3) for Altera NIOS
-# Development board Stratix II edition, FPGA Device EP2S60.
-gr_ep2s60_config: unconfig
-	@$(MKCONFIG) $(@:_config=) sparc leon3 gr_ep2s60 gaisler
-
-# Gaisler LEON3 GRSIM simulator
-grsim_config : unconfig
-	@$(MKCONFIG) $(@:_config=) sparc leon3 grsim gaisler
-
-#########################################################################
-## LEON2
-#########################################################################
-
-# Gaisler LEON2 GRSIM simulator
-grsim_leon2_config : unconfig
-	@$(MKCONFIG) $(@:_config=) sparc leon2 grsim_leon2 gaisler
-
 #========================================================================
 # H8/300
 #========================================================================
@@ -2489,9 +2455,6 @@ ae3069_config : unconfig
 edosk2674_config : unconfig
 	@$(MKCONFIG) $(@:_config=) h8300 h8300s edosk2674
 
-#########################################################################
-=======
->>>>>>> master
 #########################################################################
 #########################################################################
 
