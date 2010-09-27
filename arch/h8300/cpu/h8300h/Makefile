@@ -2,8 +2,7 @@
 # (C) Copyright 2000-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
-# Copyright (C) 2007,2008 Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
-# Copyright (C) 2008 Renesas Solutions Corp.
+# Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
 #
 # See file CREDITS for list of people who contributed to this
 # project.
@@ -27,9 +26,13 @@
 include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(CPU).a
+SOBJS-y = start.o
+COBJS-y = cpu.o interrupts.o watchdog.o 
+SOBJS-$(CONFIG_CPU_H83069) += 3069flash_low.o
+COBJS-$(CONFIG_CPU_H83069) += 3069flash.o
 
-SOBJS	= start.o
-COBJS	= cpu.o interrupts.o watchdog.o
+SOBJS	= $(SOBJS-y)
+COBJS	= $(COBJS-y)
 
 SRCS    := $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS    := $(addprefix $(obj),$(COBJS))
