@@ -62,7 +62,7 @@ static int sh_net_init(void)
 
 typedef int (init_fnc_t) (void);
 
-static init_fnc_t *init_sequence[] =
+const static init_fnc_t *init_sequence[] =
 {
 	cpu_init,		/* basic cpu dependent setup */
 	board_init,		/* basic board dependent setup */
@@ -130,7 +130,6 @@ void h8300_generic_init(gd_t *_gd)
 		if ((*init_fnc_ptr) () != 0)
 			hang();
 	}
-
 #ifdef CONFIG_WATCHDOG
 	/* disable watchdog if environment is set */
 	{
