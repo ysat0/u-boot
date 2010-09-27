@@ -83,13 +83,6 @@ const static init_fnc_t *init_sequence[] =
 };
 
 
-void puthex(unsigned char hex)
-{
-	const static char d[]="0123456789ABCDEF";
-	serial_raw_putc(d[hex >> 4]);
-	serial_raw_putc(d[hex & 0x0f]);
-}
-
 gd_t *gd;
 
 void h8300_generic_init(gd_t *_gd)
@@ -99,10 +92,6 @@ void h8300_generic_init(gd_t *_gd)
 	bd_t *bd;
 	init_fnc_t **init_fnc_ptr;
 	gd = _gd;
-	puthex(*(unsigned char *)0xff4000);
-	puthex(*(unsigned char *)0xff4001);
-	puthex(*(unsigned char *)0xff4002);
-	puthex(*(unsigned char *)0xff4003);
 
 	memset(gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
 
@@ -122,8 +111,8 @@ void h8300_generic_init(gd_t *_gd)
 #endif
 	bd->bi_baudrate	= CONFIG_BAUDRATE;
 
-	mem_malloc_init(CONFIG_SYS_LOAD_ADDR - CONFIG_SYS_GBL_DATA_SIZE -
-			CONFIG_SYS_MALLOC_LEN, CONFIG_SYS_MALLOC_LEN - 16);
+	mem_malloc_init((unsigned long)_gd + CONFIG_SYS_GBL_DATA_SIZE,
+			CONFIG_SYS_MALLOC_LEN - 16);
 	env_relocate();
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
 		WATCHDOG_RESET();
