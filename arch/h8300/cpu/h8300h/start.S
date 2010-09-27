@@ -21,9 +21,8 @@
 #include <version.h>
 
 	.h8300h
-	.text
-	.align	2
 
+	.section	".vector","ax"
 	.global	_start
 	.long	_start
 vector	=	1
@@ -32,6 +31,8 @@ vector	=	1
 vector	=	vector + 1
 	.endr
 
+	.text
+	.align	2
 _start:
 	mov.l	#__init_stack,sp
 	jsr	@_lowlevel_init
