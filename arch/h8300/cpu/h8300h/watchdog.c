@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
- *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 of
@@ -19,14 +17,53 @@
 
 #include <common.h>
 #include <asm/processor.h>
+#include <asm/io.h>
+
+#define WDT_BASE	0xffff8c
+
+#define WDT_WD		(1 << 6)
+#define WDT_ENABLE	(1 << 5)
+#define WDT_CKS4096	(7)
+
+#if defined(CONFIG_WATCHDOG)
+static inline unsigned char tcsr_read(void)
+{
+	return inb(WDT_BASE);
+}
+
+static inline void tcnt_write(unsigned char value)
+{
+	outw((unsigned short)value | 0x5A00, WDT_BASE);
+}
+
+static inline void tcsr_write(unsigned char value)
+{
+	outw((unsigned short)value | 0xA500, WDT_BASE);
+}
+
+void watchdog_reset(void)
+{
+	tcnt_write(0);
+}
 
 int watchdog_init(void)
 {
+	/* Set overflow time*/
+	tcnt_write(0);
+	/* Power on reset */
+	tcsr_write(WDT_WD|WDT_ENABLE|WDT_CKS4096);
+
 	return 0;
 }
 
+int watchdog_disable(void)
+{
+	tcsr_write(tcsr_read() & ~WDT_ENABLE);
+	return 0;
+}
+#endif
+
 void reset_cpu(unsigned long ignored)
 {
-	while (1)
-		;
+	asm volatile("jmp @@0");
 }
