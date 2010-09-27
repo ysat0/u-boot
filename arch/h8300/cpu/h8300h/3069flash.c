@@ -40,11 +40,12 @@ int _3069_erase_block(int block);
 int _3069_write_block(unsigned char *data, unsigned long addr);
 
 flash_info_t flash_info[] = {
-	0x7000,
-	7,
-	0,
-	{0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000},
-	{0, 0, 0, 0, 0, 0, 0, 0, },
+	{0x7000,
+	 7,
+	 0,
+	 {0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000},
+	 {0, 0, 0, 0, 0, 0, 0, }
+	},
 };
 
 int flash_erase (flash_info_t * info, int s_first, int s_last)
@@ -172,4 +173,18 @@ int write_buff (flash_info_t * info, uchar * src, ulong addr, ulong cnt)
 		rc = write_unaligned(src, addr, cnt);
 
 	return rc;
+}
+
+void flash_print_info(flash_info_t *info)
+{
+	int i;
+	printf("H8/3069 Internal flash\n");
+	printf("  Size: %d KB in %ld Sectors\n",
+	       info->size >> 10, info->sector_count);
+
+	printf("  Sector Start Address:\n");
+	for(i = 0; i < info->sector_count; i++) {
+		printf("%06lX ", info->start[i]);
+	}
+	printf("\n");
 }
