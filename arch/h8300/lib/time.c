@@ -31,8 +31,8 @@
 #define TCR1  (CONFIG_TIMER_BASE + 1)
 #define TCSR0 (CONFIG_TIMER_BASE + 2)
 #define TCSR1 (CONFIG_TIMER_BASE + 3)
-#define TCNT0 (CONFIG_TIMER_BASE + 4)
-#define TCNT1 (CONFIG_TIMER_BASE + 5)
+#define TCNT0 (CONFIG_TIMER_BASE + 8)
+#define TCNT1 (CONFIG_TIMER_BASE + 9)
 
 static unsigned long long tick;
 static unsigned short last;
@@ -48,7 +48,7 @@ unsigned long long get_ticks(void)
 {
 	unsigned short now = inw(TCNT0);
 	if (now < last)
-		tick += 0x10000 + (0x10000 - last) + now;
+		tick += (0x10000 - last) + now;
 	else
 		tick += now - last;
 	last = now;
@@ -75,12 +75,12 @@ void reset_timer(void)
 
 void __udelay(unsigned long usec)
 {
-	unsigned long long end = get_ticks() + usec * (CONFIG_SYS_HZ / 1000000);
+	unsigned long long end = get_ticks() + (usec * (CONFIG_SYS_HZ / 8000000));
 
 	while (get_ticks() < end);
 }
 
 unsigned long get_tbclk(void)
 {
-	return CONFIG_SYS_HZ;
+	return CONFIG_SYS_HZ / 8;
 }
