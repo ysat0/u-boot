@@ -3,6 +3,8 @@
  * (C) Copyright 2002-2003
  * Xue Ligong(lgxue@hotmail.com),Wang Kehao, ESLAB, whut.edu.cn
  *
+ * Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -32,83 +34,145 @@
 
 #ifdef CONFIG_DRIVER_RTL8019
 
-#define RTL8019_REG_00			(RTL8019_BASE + 0x00)
-#define	RTL8019_REG_01			(RTL8019_BASE + 0x01)
-#define	RTL8019_REG_02			(RTL8019_BASE + 0x02)
-#define	RTL8019_REG_03			(RTL8019_BASE + 0x03)
-#define	RTL8019_REG_04			(RTL8019_BASE + 0x04)
-#define	RTL8019_REG_05			(RTL8019_BASE + 0x05)
-#define	RTL8019_REG_06			(RTL8019_BASE + 0x06)
-#define	RTL8019_REG_07			(RTL8019_BASE + 0x07)
-#define	RTL8019_REG_08			(RTL8019_BASE + 0x08)
-#define	RTL8019_REG_09			(RTL8019_BASE + 0x09)
-#define	RTL8019_REG_0a			(RTL8019_BASE + 0x0a)
-#define	RTL8019_REG_0b			(RTL8019_BASE + 0x0b)
-#define	RTL8019_REG_0c			(RTL8019_BASE + 0x0c)
-#define	RTL8019_REG_0d			(RTL8019_BASE + 0x0d)
-#define	RTL8019_REG_0e			(RTL8019_BASE + 0x0e)
-#define	RTL8019_REG_0f			(RTL8019_BASE + 0x0f)
-#define	RTL8019_REG_10			(RTL8019_BASE + 0x10)
-#define	RTL8019_REG_1f			(RTL8019_BASE + 0x1f)
+#define DRIVERNAME "rtl8019"
 
-#define RTL8019_COMMAND			RTL8019_REG_00
-#define RTL8019_PAGESTART		RTL8019_REG_01
-#define RTL8019_PAGESTOP		RTL8019_REG_02
-#define RTL8019_BOUNDARY		RTL8019_REG_03
-#define RTL8019_TRANSMITSTATUS		RTL8019_REG_04
-#define RTL8019_TRANSMITPAGE		RTL8019_REG_04
-#define RTL8019_TRANSMITBYTECOUNT0	RTL8019_REG_05
-#define RTL8019_NCR			RTL8019_REG_05
-#define RTL8019_TRANSMITBYTECOUNT1	RTL8019_REG_06
-#define RTL8019_INTERRUPTSTATUS		RTL8019_REG_07
-#define RTL8019_CURRENT			RTL8019_REG_07
-#define RTL8019_REMOTESTARTADDRESS0	RTL8019_REG_08
-#define RTL8019_CRDMA0			RTL8019_REG_08
-#define RTL8019_REMOTESTARTADDRESS1	RTL8019_REG_09
-#define RTL8019_CRDMA1			RTL8019_REG_09
-#define RTL8019_REMOTEBYTECOUNT0	RTL8019_REG_0a
-#define RTL8019_REMOTEBYTECOUNT1	RTL8019_REG_0b
-#define RTL8019_RECEIVESTATUS		RTL8019_REG_0c
-#define RTL8019_RECEIVECONFIGURATION	RTL8019_REG_0c
-#define RTL8019_TRANSMITCONFIGURATION	RTL8019_REG_0d
-#define RTL8019_FAE_TALLY		RTL8019_REG_0d
-#define RTL8019_DATACONFIGURATION	RTL8019_REG_0e
-#define RTL8019_CRC_TALLY		RTL8019_REG_0e
-#define RTL8019_INTERRUPTMASK		RTL8019_REG_0f
-#define RTL8019_MISS_PKT_TALLY		RTL8019_REG_0f
-#define RTL8019_PHYSICALADDRESS0	RTL8019_REG_01
-#define	RTL8019_PHYSICALADDRESS1	RTL8019_REG_02
-#define RTL8019_PHYSICALADDRESS2	RTL8019_REG_03
-#define RTL8019_PHYSICALADDRESS3	RTL8019_REG_04
-#define RTL8019_PHYSICALADDRESS4	RTL8019_REG_05
-#define RTL8019_PHYSICALADDRESS5	RTL8019_REG_06
-#define RTL8019_MULTIADDRESS0		RTL8019_REG_08
-#define RTL8019_MULTIADDRESS1		RTL8019_REG_09
-#define RTL8019_MULTIADDRESS2		RTL8019_REG_0a
-#define RTL8019_MULTIADDRESS3		RTL8019_REG_0b
-#define RTL8019_MULTIADDRESS4		RTL8019_REG_0c
-#define RTL8019_MULTIADDRESS5		RTL8019_REG_0d
-#define RTL8019_MULTIADDRESS6		RTL8019_REG_0e
-#define RTL8019_MULTIADDRESS7		RTL8019_REG_0f
-#define RTL8019_DMA_DATA		RTL8019_REG_10
-#define RTL8019_RESET			RTL8019_REG_1f
+#define TXPAGE 0x40
+#define RXPAGE 0x48
+#define ENDPAGE 0x80
 
-#define	RTL8019_PAGE0			0x22
-#define	RTL8019_PAGE1			0x62
-#define	RTL8019_PAGE0DMAWRITE		0x12
-#define	RTL8019_PAGE2DMAWRITE		0x92
-#define	RTL8019_REMOTEDMAWR		0x12
-#define	RTL8019_REMOTEDMARD		0x0A
-#define	RTL8019_ABORTDMAWR		0x32
-#define	RTL8019_ABORTDMARD		0x2A
-#define	RTL8019_PAGE0STOP		0x21
-#define	RTL8019_PAGE1STOP		0x61
-#define	RTL8019_TRANSMIT		0x26
-#define	RTL8019_TXINPROGRESS		0x04
-#define	RTL8019_SEND			0x1A
+/* RTL8019 registers */
+/* page 0 */
+#define CR       0x00
+#define CLDA0    0x01
+#define PSTART   0x01
+#define CLDA1    0x02
+#define PSTOP    0x02
+#define BNDRY    0x03
+#define TSR      0x04
+#define TPSR     0x04
+#define NCR      0x05
+#define TBCL     0x05
+#define FIFO     0x06
+#define TBCH     0x06
+#define ISR      0x07
+#define CRDA0    0x08
+#define RSAL     0x08
+#define CRDA1    0x09
+#define RSAH     0x09
+#define RBCL     0x0a
+#define RBCH     0x0b
+#define RSR      0x0c
+#define RCR      0x0c
+#define FER      0x0d
+#define TCR      0x0d
+#define CER      0x0e
+#define DCR      0x0e
+#define MISSED   0x0f
+#define IMR      0x0f
+#define DATA     0x10
+#define RESET    0x1f
 
-#define RTL8019_PSTART			0x4c
-#define RTL8019_PSTOP			0x80
-#define RTL8019_TPSTART			0x40
+/* page 1 */
+#define PAR0     0x01
+#define PAR1     0x02
+#define PAR2     0x03
+#define PAR3     0x04
+#define PAR4     0x05
+#define PAR5     0x06
+#define CURP     0x07
+#define MAR0     0x08
+#define MAR1     0x09
+#define MAR2     0x0a
+#define MAR3     0x0b
+#define MAR4     0x0c
+#define MAR5     0x0d
+#define MAR6     0x0e
+#define MAR7     0x0f
+
+/* page 2*/
+#define CR       0x00
+#define PSTART   0x01
+#define CLDA0    0x01
+#define PSTOP    0x02
+#define CLDA1    0x02
+#define RNPP     0x03
+#define TPSR     0x04
+#define LNPP     0x05
+#define ACH      0x06
+#define ACL      0x07
+
+/* interrupt status */
+#define ISR_RXP    0x01
+#define ISR_TXP    0x02
+#define ISR_RXE    0x04
+#define ISR_TXE    0x08
+#define ISR_OFLW   0x10
+#define ISR_CNT    0x20
+#define ISR_RDC    0x40
+#define ISR_RESET  0x80
+
+/* command */
+#define CR_STOP    0x01
+#define CR_START   0x02
+#define CR_TXPKT   0x04
+#define CR_RDMA    0x08
+#define CR_WDMA    0x10
+#define CR_SEND    0x18
+#define CR_NODMA   0x20
+#define CR_PAGE0   0x00
+#define CR_PAGE1   0x40
+#define CR_PAGE2   0x80
+
+// data configuration */
+#define DCR_WTS    0x01
+#define DCR_BOS    0x02
+#define DCR_LAS    0x04
+#define DCR_LS     0x08
+#define DCR_ARM    0x10
+#define DCR_FIFO_1 0x00
+#define DCR_FIFO_2 0x20
+#define DCR_FIFO_4 0x40
+#define DCR_FIFO_6 0x60
+
+/* receive control */
+#define RCR_SEP    0x01
+#define RCR_AR     0x02
+#define RCR_AB     0x04
+#define RCR_AM     0x08
+#define RCR_PROM   0x10
+#define RCR_MON    0x20
+
+/* receive status */
+#define RSR_RxP    0x01
+#define RSR_CRC    0x02
+#define RSR_FRAME  0x04
+#define RSR_FO     0x08
+#define RSR_MISS   0x10
+#define RSR_PHY    0x20
+#define RSR_DIS    0x40
+#define RSR_DFR    0x80
+
+/* transmit control */
+#define TCR_NOCRC   0x01
+#define TCR_NORMAL  0x00
+#define TCR_LOCAL   0x02
+#define TCR_INLOOP  0x04
+#define TCR_OUTLOOP 0x08
+#define TCR_ATD     0x10
+#define TCR_OFFSET  0x20
+
+/* transmit status */
+#define TSR_TXP    0x01
+#define TSR_COL    0x04
+#define TSR_ABT    0x08
+#define TSR_CRS    0x10
+#define TSR_FU     0x20
+#define TSR_CDH    0x40
+#define TSR_OWC    0x80
+
+struct rtl8019_commands {
+	u8 offset;
+	u8 value;
+};
 
 #endif /*end of CONFIG_DRIVER_RTL8019*/

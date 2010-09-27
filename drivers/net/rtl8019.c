@@ -2,6 +2,8 @@
  * Realtek 8019AS Ethernet
  * (C) Copyright 2002-2003
  * Xue Ligong(lgxue@hotmail.com),Wang Kehao, ESLAB, whut.edu.cn
+ * 
+ * Copyright (C) 2010 Yoshinori Sato <ysato@users.sourceforge.jp>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -34,238 +36,223 @@
 
 /* packet page register access functions */
 
-static unsigned char get_reg (unsigned int regno)
+static inline unsigned char get_reg (struct eth_device *dev, unsigned int regno)
 {
-	return (*(unsigned char *) regno);
+	return (*(unsigned char *) (dev->iobase + regno));
 }
 
-static void put_reg (unsigned int regno, unsigned char val)
+static inline void put_reg (struct eth_device *dev, unsigned int regno, unsigned char val)
 {
-	*(volatile unsigned char *) regno = val;
+	*(volatile unsigned char *) (dev->iobase + regno) = val;
 }
 
-static void eth_reset (void)
+static inline void remote_read (struct eth_device *dev, unsigned short address, unsigned short len, u8 *buffer)
 {
-	unsigned char ucTemp;
-
-	/* reset NIC */
-	ucTemp = get_reg (RTL8019_RESET);
-	put_reg (RTL8019_RESET, ucTemp);
-	put_reg (RTL8019_INTERRUPTSTATUS, 0xff);
-	udelay (2000);		/* wait for 2ms */
+	put_reg (dev, RSAL, address & 0xff);
+	put_reg (dev, RSAH, address >> 8);
+	put_reg (dev, RBCL, len & 0xff);
+	put_reg (dev, RBCH, len >> 8);
+	put_reg (dev, CR, CR_RDMA | CR_START);
+	for (; len > 0; --len)
+		*buffer++ = get_reg (dev, DATA);
 }
 
-void rtl8019_get_enetaddr (uchar * addr)
+static inline void remote_write (struct eth_device *dev, unsigned short address, unsigned short len, u8 *buffer)
 {
-	unsigned char i;
-	unsigned char temp;
-
-	eth_reset ();
-
-	put_reg (RTL8019_COMMAND, RTL8019_REMOTEDMARD);
-	put_reg (RTL8019_DATACONFIGURATION, 0x48);
-	put_reg (RTL8019_REMOTESTARTADDRESS0, 0x00);
-	put_reg (RTL8019_REMOTESTARTADDRESS1, 0x00);
-	put_reg (RTL8019_REMOTEBYTECOUNT0, 12);
-	put_reg (RTL8019_REMOTEBYTECOUNT1, 0x00);
-	put_reg (RTL8019_COMMAND, RTL8019_REMOTEDMARD);
-	printf ("MAC: ");
-	for (i = 0; i < 6; i++) {
-		temp = get_reg (RTL8019_DMA_DATA);
-		*addr++ = temp;
-		temp = get_reg (RTL8019_DMA_DATA);
-		printf ("%x:", temp);
-	}
-
-	while ((!get_reg (RTL8019_INTERRUPTSTATUS) & 0x40));
-	printf ("\b \n");
-	put_reg (RTL8019_REMOTEBYTECOUNT0, 0x00);
-	put_reg (RTL8019_REMOTEBYTECOUNT1, 0x00);
-	put_reg (RTL8019_COMMAND, RTL8019_PAGE0);
+	put_reg (dev, RSAL, address & 0xff);
+	put_reg (dev, RSAH, address >> 8);
+	put_reg (dev, RBCL, len & 0xff);
+	put_reg (dev, RBCH, len >> 8);
+	put_reg (dev, CR, CR_WDMA | CR_START);
+	for (; len > 0; --len)
+		put_reg (dev, DATA, *buffer++);
 }
 
-void eth_halt (void)
+static int rtl8019_halt (struct eth_device *dev)
 {
-	put_reg (RTL8019_COMMAND, 0x01);
-}
-
-int eth_init (bd_t * bd)
-{
-	uchar enetaddr[6];
-	eth_reset ();
-	put_reg (RTL8019_COMMAND, RTL8019_PAGE0STOP);
-	put_reg (RTL8019_DATACONFIGURATION, 0x48);
-	put_reg (RTL8019_REMOTEBYTECOUNT0, 0x00);
-	put_reg (RTL8019_REMOTEBYTECOUNT1, 0x00);
-	put_reg (RTL8019_RECEIVECONFIGURATION, 0x00);	/*00; */
-	put_reg (RTL8019_TRANSMITPAGE, RTL8019_TPSTART);
-	put_reg (RTL8019_TRANSMITCONFIGURATION, 0x02);
-	put_reg (RTL8019_PAGESTART, RTL8019_PSTART);
-	put_reg (RTL8019_BOUNDARY, RTL8019_PSTART);
-	put_reg (RTL8019_PAGESTOP, RTL8019_PSTOP);
-	put_reg (RTL8019_INTERRUPTSTATUS, 0xff);
-	put_reg (RTL8019_INTERRUPTMASK, 0x11);	/*b; */
-	put_reg (RTL8019_COMMAND, RTL8019_PAGE1STOP);
-	eth_getenv_enetaddr("ethaddr", enetaddr);
-	put_reg (RTL8019_PHYSICALADDRESS0, enetaddr[0]);
-	put_reg (RTL8019_PHYSICALADDRESS1, enetaddr[1]);
-	put_reg (RTL8019_PHYSICALADDRESS2, enetaddr[2]);
-	put_reg (RTL8019_PHYSICALADDRESS3, enetaddr[3]);
-	put_reg (RTL8019_PHYSICALADDRESS4, enetaddr[4]);
-	put_reg (RTL8019_PHYSICALADDRESS5, enetaddr[5]);
-	put_reg (RTL8019_MULTIADDRESS0, 0x00);
-	put_reg (RTL8019_MULTIADDRESS1, 0x00);
-	put_reg (RTL8019_MULTIADDRESS2, 0x00);
-	put_reg (RTL8019_MULTIADDRESS3, 0x00);
-	put_reg (RTL8019_MULTIADDRESS4, 0x00);
-	put_reg (RTL8019_MULTIADDRESS5, 0x00);
-	put_reg (RTL8019_MULTIADDRESS6, 0x00);
-	put_reg (RTL8019_MULTIADDRESS7, 0x00);
-	put_reg (RTL8019_CURRENT, RTL8019_PSTART);
-	put_reg (RTL8019_COMMAND, RTL8019_PAGE0);
-	put_reg (RTL8019_TRANSMITCONFIGURATION, 0xe0);	/*58; */
-
+	put_reg (dev, CR, CR_STOP);
 	return 0;
 }
 
-static unsigned char nic_to_pc (void)
+static int rtl8019_init(struct eth_device *dev, bd_t *bis)
 {
-	unsigned char rec_head_status;
-	unsigned char next_packet_pointer;
-	unsigned char packet_length0;
-	unsigned char packet_length1;
-	unsigned short rxlen = 0;
-	unsigned int i = 4;
-	unsigned char current_point;
-	unsigned char *addr;
+	static const struct rtl8019_commands init_seq[] = {
+		{CR,     CR_PAGE0 | CR_NODMA |CR_STOP},
+		{DCR,    DCR_LS | DCR_FIFO_4},
+		{RBCH,   0},
+		{RBCL,   0},
+		{RCR,    RCR_MON},
+		{TCR,    TCR_LOCAL},
+		{ISR,    0xff},
+		{IMR,    0x7f},
+		{TPSR,   TXPAGE},
+		{PSTART, RXPAGE},
+		{BNDRY,  0x7f},
+		{PSTOP,  0x80},
+		{CR,     CR_NODMA | CR_PAGE1 | CR_STOP},
+		{CURP,   RXPAGE},
+		{CR,     CR_NODMA | CR_PAGE0 | CR_STOP},
+		{TCR,    TCR_NORMAL},
+		{RCR,    RCR_AB}
+	};
+	int i;
 
-	/*
-	 * The RTL8019's first 4B is packet status,page of next packet
-	 * and packet length(2B).So we receive the fist 4B.
-	 */
-	put_reg (RTL8019_REMOTESTARTADDRESS1, get_reg (RTL8019_BOUNDARY));
-	put_reg (RTL8019_REMOTESTARTADDRESS0, 0x00);
-	put_reg (RTL8019_REMOTEBYTECOUNT1, 0x00);
-	put_reg (RTL8019_REMOTEBYTECOUNT0, 0x04);
-
-	put_reg (RTL8019_COMMAND, RTL8019_REMOTEDMARD);
-
-	rec_head_status = get_reg (RTL8019_DMA_DATA);
-	next_packet_pointer = get_reg (RTL8019_DMA_DATA);
-	packet_length0 = get_reg (RTL8019_DMA_DATA);
-	packet_length1 = get_reg (RTL8019_DMA_DATA);
-
-	put_reg (RTL8019_COMMAND, RTL8019_PAGE0);
-	/*Packet length is in two 8bit registers */
-	rxlen = packet_length1;
-	rxlen = (((rxlen << 8) & 0xff00) + packet_length0);
-	rxlen -= 4;
-
-	if (rxlen > PKTSIZE_ALIGN + PKTALIGN)
-		printf ("packet too big!\n");
-
-	/*Receive the packet */
-	put_reg (RTL8019_REMOTESTARTADDRESS0, 0x04);
-	put_reg (RTL8019_REMOTESTARTADDRESS1, get_reg (RTL8019_BOUNDARY));
-
-	put_reg (RTL8019_REMOTEBYTECOUNT0, (rxlen & 0xff));
-	put_reg (RTL8019_REMOTEBYTECOUNT1, ((rxlen >> 8) & 0xff));
-
-
-	put_reg (RTL8019_COMMAND, RTL8019_REMOTEDMARD);
-
-	for (addr = (unsigned char *) NetRxPackets[0], i = rxlen; i > 0; i--)
-		*addr++ = get_reg (RTL8019_DMA_DATA);
-	/* Pass the packet up to the protocol layers. */
-	NetReceive (NetRxPackets[0], rxlen);
-
-	while (!(get_reg (RTL8019_INTERRUPTSTATUS)) & 0x40);	/* wait for the op. */
-
-	/*
-	 * To test whether the packets are all received,get the
-	 * location of current point
-	 */
-	put_reg (RTL8019_COMMAND, RTL8019_PAGE1);
-	current_point = get_reg (RTL8019_CURRENT);
-	put_reg (RTL8019_COMMAND, RTL8019_PAGE0);
-	put_reg (RTL8019_BOUNDARY, next_packet_pointer);
-	return current_point;
+	put_reg (dev, CR, CR_NODMA | CR_PAGE1);
+	for (i = 0; i < 6; i++)
+		put_reg(dev, PAR0 + i, dev->enetaddr[i]);
+	for (i = 0; i < 8; i++)
+		put_reg (dev, MAR0 + i, 0x00);
+	for (i = 0; i < sizeof(init_seq) / sizeof(init_seq[0]); i++)
+		put_reg(dev, init_seq[i].offset, init_seq[i].value);
+	return 0;
 }
 
-/* Get a data block via Ethernet */
-extern int eth_rx (void)
+static int rtl8019_rx (struct eth_device *dev)
 {
-	unsigned char temp, current_point;
-
-	put_reg (RTL8019_COMMAND, RTL8019_PAGE0);
+	u8 header[4];
+	unsigned short rxlen;
+	unsigned char cur,bndry;
+	unsigned char isr, cr;
+	int resend = 0;
 
 	while (1) {
-		temp = get_reg (RTL8019_INTERRUPTSTATUS);
-
-		if (temp & 0x90) {
-			/*overflow */
-			put_reg (RTL8019_COMMAND, RTL8019_PAGE0STOP);
-			udelay (2000);
-			put_reg (RTL8019_REMOTEBYTECOUNT0, 0);
-			put_reg (RTL8019_REMOTEBYTECOUNT1, 0);
-			put_reg (RTL8019_TRANSMITCONFIGURATION, 2);
-			do {
-				current_point = nic_to_pc ();
-			} while (get_reg (RTL8019_BOUNDARY) != current_point);
-
-			put_reg (RTL8019_TRANSMITCONFIGURATION, 0xe0);
-		}
-
-		if (temp & 0x1) {
-			/*packet received */
-			do {
-				put_reg (RTL8019_INTERRUPTSTATUS, 0x01);
-				current_point = nic_to_pc ();
-			} while (get_reg (RTL8019_BOUNDARY) != current_point);
-		}
-
-		if (!(temp & 0x1))
+		if (((isr = get_reg (dev, ISR)) & (ISR_OFLW | ISR_RXP | ISR_RXE)) == 0) {
+			put_reg (dev, ISR, isr);
 			return 0;
-		/* done and exit. */
+		}
+		if (isr & ISR_OFLW) {
+			printf(DRIVERNAME ": overflow\n");
+			/* overflow */
+			cr = get_reg (dev, CR);
+			
+			put_reg (dev, CR, CR_STOP | CR_NODMA);
+			udelay(1600);
+			
+			put_reg (dev, RBCL, 0);
+			put_reg (dev, RBCL, 0);
+			
+			resend = ((cr & CR_TXPKT) && (isr & (ISR_TXP | ISR_TXE)));
+			
+			put_reg (dev, TCR, TCR_LOCAL);
+			put_reg (dev, cr, CR_NODMA | CR_START);
+		}
+
+		put_reg (dev, CR, CR_PAGE1 | CR_NODMA | CR_START);
+		cur = get_reg(dev, CURP);
+		put_reg (dev, CR, CR_PAGE0 | CR_NODMA | CR_START);
+		bndry = get_reg(dev, BNDRY);
+		bndry = (++bndry == ENDPAGE)?RXPAGE:bndry;
+		if (bndry == cur) {
+			bndry = (--bndry < RXPAGE)?ENDPAGE -1:bndry;
+			put_reg(dev, BNDRY, bndry);
+			goto end;
+		}
+
+		remote_read(dev, bndry << 8, sizeof(header), header);
+		if (header[0] != 0) {
+			rxlen = (header[3] << 8 | header[2]) - sizeof(header);
+			remote_read(dev, (bndry << 8) +  sizeof(header), rxlen, NetRxPackets[0]);
+			NetReceive (NetRxPackets[0], rxlen);
+			bndry = header[1];
+			bndry = (--bndry < RXPAGE)?ENDPAGE - 1:bndry;
+			put_reg (dev, BNDRY, bndry);
+		} else {
+			put_reg (dev, CR, CR_NODMA | CR_PAGE1 | CR_START);
+			put_reg (dev, CURP, RXPAGE);
+			put_reg (dev, CR, CR_NODMA | CR_PAGE0 | CR_START);
+			put_reg (dev, BNDRY, ENDPAGE - 1);
+		}
+
 	}
+end:
+	if ((isr & ISR_OFLW) && resend)
+		put_reg (dev, CR, CR_NODMA | CR_TXPKT |CR_START);
+	put_reg (dev, ISR, isr);
+	return 0;
 }
 
 /* Send a data block via Ethernet. */
-extern int eth_send (volatile void *packet, int length)
+static int rtl8019_send (struct eth_device *dev, volatile void *packet, int length)
 {
-	volatile unsigned char *p;
-	unsigned int pn;
+	while (get_reg (dev, CR) & CR_TXPKT);
 
-	pn = length;
-	p = (volatile unsigned char *) packet;
+	put_reg (dev, ISR, 0x40);
+	remote_write(dev, TXPAGE << 8, length, (char *)packet);
 
-	while (get_reg (RTL8019_COMMAND) == RTL8019_TRANSMIT);
-
-	put_reg (RTL8019_REMOTESTARTADDRESS0, 0);
-	put_reg (RTL8019_REMOTESTARTADDRESS1, RTL8019_TPSTART);
-	put_reg (RTL8019_REMOTEBYTECOUNT0, (pn & 0xff));
-	put_reg (RTL8019_REMOTEBYTECOUNT1, ((pn >> 8) & 0xff));
-
-	put_reg (RTL8019_COMMAND, RTL8019_REMOTEDMAWR);
-	while (pn > 0) {
-		put_reg (RTL8019_DMA_DATA, *p++);
-		pn--;
+	if (length < 60) {
+		put_reg (dev, RSAL, length);
+		put_reg (dev, RSAH, TXPAGE);
+		put_reg (dev, RBCL, (60 - length));
+		put_reg (dev, RBCH, 0);
+		put_reg (dev, CR, CR_WDMA | CR_START);
+		for (; length < 60; length++)
+			put_reg (dev, DATA, 0);
 	}
+	while (!(get_reg (dev, ISR)) & ISR_RDC);
 
-	pn = length;
-
-	while (pn < 60) {	/*Padding */
-		put_reg (RTL8019_DMA_DATA, 0);
-		pn++;
-	}
-
-	while (!(get_reg (RTL8019_INTERRUPTSTATUS)) & 0x40);
-
-	put_reg (RTL8019_INTERRUPTSTATUS, 0x40);
-	put_reg (RTL8019_TRANSMITPAGE, RTL8019_TPSTART);
-	put_reg (RTL8019_TRANSMITBYTECOUNT0, (pn & 0xff));
-	put_reg (RTL8019_TRANSMITBYTECOUNT1, ((pn >> 8 & 0xff)));
-	put_reg (RTL8019_COMMAND, RTL8019_TRANSMIT);
-
+	put_reg (dev, ISR, ISR_RDC | ISR_TXP |ISR_TXE);
+	put_reg (dev, TBCL, (length & 0xff));
+	put_reg (dev, TBCH, ((length >> 8) & 0xff));
+	put_reg (dev, TPSR, TXPAGE);
+	put_reg (dev, CR, CR_NODMA | CR_TXPKT | CR_START);
 	return 0;
+}
+
+static int read_address(struct eth_device *dev)
+{
+	u8 prom[32];
+	int i;
+	const static struct rtl8019_commands init_seq[] = {
+		{DCR,  0x48},
+		{RBCH, 0},
+		{RBCL, 0},
+		{ISR,  0xFF},
+		{IMR,  0x00},
+		{RCR,  0x20},
+		{TCR,  0x02},
+	};
+	
+	/* reset */
+	put_reg(dev, RESET, get_reg(dev, RESET));
+	udelay (2000);		/* wait for reset complete */
+	if (! (get_reg(dev, ISR) & 0x80))
+		return 0;	/* reset failed */
+	put_reg(dev, ISR, 0xff);
+
+	for(i = 0; i < sizeof(init_seq) / sizeof(init_seq[0]); i++)
+		put_reg(dev, init_seq[i].offset, init_seq[i].value);
+
+	/* read prom */
+	remote_read(dev, 0x0000, 32, prom);
+	if ((prom[0] == 0xff) && (prom[2] == 0xff) && (prom[4] == 0xff))
+		return 0;	/* invalid data */
+
+	for (i = 0;  i < 6; i++)
+		dev->enetaddr[i] = prom[i * 2];
+	return 1;
+}
+
+int rtl8019_initialize(bd_t *bis, int base_adr)
+{
+	struct eth_device *dev;
+	
+	dev = malloc(sizeof(*dev));
+	if (dev == NULL)
+		return 0;
+
+	dev->iobase = base_adr;
+
+	/* read address */
+	if (!read_address(dev)) {
+		return 0;	/* not found */
+	}
+	
+	dev->init = rtl8019_init;
+	dev->halt = rtl8019_halt;
+	dev->send = rtl8019_send;
+	dev->recv = rtl8019_rx;
+	sprintf(dev->name, DRIVERNAME);
+
+	eth_register(dev);
+	return 1;
 }
