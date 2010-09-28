@@ -35,19 +35,15 @@ void serial_setbrg(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 
-#if 0
 	outb(BRR_VALUE(gd->baudrate, CONFIG_SYS_HZ), BRR);
-#endif
 }
 
 int serial_init(void)
 {
-#if 0
 	outb(0, SCR);
 	outb(0, SMR);
 	serial_setbrg();
 	outb(0x30, SCR);
-#endif
 	return 0;
 }
 
