@@ -992,6 +992,7 @@ static ulong load_serial_ymodem (ulong offset)
 						  store_addr, res);
 				if (rc != 0) {
 					flash_perror (rc);
+					xyzModem_stream_close (&err);
 					return (~0);
 				}
 			} else

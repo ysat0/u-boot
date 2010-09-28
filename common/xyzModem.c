@@ -58,6 +58,7 @@
 #include <xyzModem.h>
 #include <stdarg.h>
 #include <crc.h>
+#include <malloc.h>
 
 /* Assumption - run xyzModem protocol over the console port */
 
@@ -81,7 +82,7 @@ static struct
 #else
   int *__chan;
 #endif
-  unsigned char pkt[1024], *bufp;
+  unsigned char *pkt, *bufp;
   unsigned char blk, cblk, crc1, crc2;
   unsigned char next_blk;	/* Expected block */
   int len, mode, total_retries;
@@ -560,6 +561,9 @@ xyzModem_stream_open (connection_info_t * info, int *err)
   xyz.read_length = 0;
   xyz.file_length = 0;
 #endif
+  xyz.pkt = malloc(1024);
+  if (xyz.pkt == NULL)
+	  return -1;
 
   CYGACC_COMM_IF_PUTC (*xyz.__chan, (xyz.crc_mode ? 'C' : NAK));
 
@@ -743,6 +747,7 @@ xyzModem_stream_close (int *err)
      xyz.crc_mode ? "CRC" : "Cksum", xyz.total_SOH, xyz.total_STX,
      xyz.total_CAN, xyz.total_retries);
   ZM_DEBUG (zm_flush ());
+  free(xyz.pkt);
 }
 
 /* Need to be able to clean out the input buffer, so have to take the */
