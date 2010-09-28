@@ -51,15 +51,6 @@ extern int watchdog_disable(void);
 # define INIT_FUNC_IDE_INIT
 #endif /* CONFIG_CMD_IDE */
 
-#if defined(CONFIG_CMD_NET)
-static int sh_net_init(void)
-{
-	DECLARE_GLOBAL_DATA_PTR;
-	gd->bd->bi_ip_addr = getenv_IPaddr("ipaddr");
-	return 0;
-}
-#endif
-
 typedef int (init_fnc_t) (void);
 
 const static init_fnc_t *init_sequence[] =
@@ -112,7 +103,7 @@ void h8300_generic_init(gd_t *_gd)
 	bd->bi_baudrate	= CONFIG_BAUDRATE;
 
 	mem_malloc_init((unsigned long)_gd + CONFIG_SYS_GBL_DATA_SIZE,
-			CONFIG_SYS_MALLOC_LEN - 16);
+			CONFIG_SYS_MALLOC_LEN);
 	env_relocate();
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
 		WATCHDOG_RESET();
