@@ -25,13 +25,11 @@
 	.align	2
 
 _lowlevel_init:
-	rts
-
 	mov.l	#init_table,er4
-1:
-	mov.w	@er4,r5
-	beq	3f
 	mov.w	#0x00fe,e5	/* 0xfee0xx */
+1:
+	mov.w	@er4+,r5
+	beq	3f
 	mov.w	@er4+,r0
 	mov.b	r0l,@er5
 	bra	1b
@@ -55,6 +53,7 @@ init_table:
 	.word	0xe001,0xff	/* P2DDR */
 	.word	0xe004,0xf1	/* P5DDR */
 	.word	0xe007,0xee	/* P8DDR */
+	.word	0xe009,0xff	/* PADDR */
 	.word	0
 
 	.end
