@@ -51,8 +51,8 @@ _start:
 	adds	#4,er4
 	dec.l	#1,er5
 	bne	1b
-	mov.l	#__ram_vec - CONFIG_SYS_GBL_DATA_SIZE - CONFIG_SYS_MALLOC_LEN, sp
-	mov.l	sp,er0		/* global data */
+	mov.l	#__ram_vec,sp
+	mov.l	#_bss_end,er0		/* global data */
 	jsr	@_h8300_generic_init
 	
 	bra	.
