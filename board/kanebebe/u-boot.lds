@@ -44,7 +44,7 @@ SECTIONS
 	.config :
 	{
 		*(.config)
-	}			
+	} > config		
 	PROVIDE (__start = .);
 	PROVIDE (__ftext = .);
 	.text :
@@ -53,13 +53,13 @@ SECTIONS
 		. = ALIGN(4);
 		*(.text)
 		. = ALIGN(4);
-	} > dram
+	} > irom
 	PROVIDE (__ecode = .);
 	.rodata :
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
-	} > dram
+	} > irom
 	PROVIDE (__etext = .);
 
 	PROVIDE (___u_boot_cmd_start = .);
@@ -67,7 +67,7 @@ SECTIONS
 	{
 		*(.u_boot_cmd)
 		. = ALIGN(4);
-	} > dram
+	} > irom
 	PROVIDE (___u_boot_cmd_end = .);
 
 	PROVIDE (__fdata = .);
@@ -77,7 +77,7 @@ SECTIONS
 		*(.text2)
 		*(.data)
 		. = ALIGN(4);
-	} >iram AT>dram
+	} >iram AT>irom
 	PROVIDE (__sizeof_data = SIZEOF(.data));
 	PROVIDE (__edata = .);
 
