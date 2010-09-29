@@ -126,13 +126,17 @@ the string "u_boot" or on "U_BOOT". Example:
 Versioning:
 ===========
 
-U-Boot uses a 3 level version number containing a version, a
-sub-version, and a patchlevel: "U-Boot-2.34.5" means version "2",
-sub-version "34", and patchlevel "4".
+Starting with the release in October 2008, the names of the releases
+were changed from numerical release numbers without deeper meaning
+into a time stamp based numbering. Regular releases are identified by
+names consisting of the calendar year and month of the release date.
+Additional fields (if present) indicate release candidates or bug fix
+releases in "stable" maintenance trees.
 
-The patchlevel is used to indicate certain stages of development
-between released versions, i. e. officially released versions of
-U-Boot will always have a patchlevel of "0".
+Examples:
+	U-Boot v2009.11     - Release November 2009
+	U-Boot v2009.11.1   - Release 1 in version November 2009 stable tree
+	U-Boot v2010.09-rc1 - Release candiate 1 for September 2010 release
 
 
 Directory Hierarchy:
@@ -531,25 +535,6 @@ The following options need to be configured:
 		If using CONFIG_SYS_SMC_RXBUFLEN also CONFIG_SYS_MAXIDLE
 		must be defined, to setup the maximum idle timeout for
 		the SMC.
-
-- Interrupt driven serial port input:
-		CONFIG_SERIAL_SOFTWARE_FIFO
-
-		PPC405GP only.
-		Use an interrupt handler for receiving data on the
-		serial port. It also enables using hardware handshake
-		(RTS/CTS) and UART's built-in FIFO. Set the number of
-		bytes the interrupt driven input buffer should have.
-
-		Leave undefined to disable this feature, including
-		disable the buffer and hardware handshake.
-
-- Console UART Number:
-		CONFIG_UART1_CONSOLE
-
-		AMCC PPC4xx only.
-		If defined internal UART1 (and not UART0) is used
-		as default U-Boot console.
 
 - Boot Delay:	CONFIG_BOOTDELAY - in seconds
 		Delay before automatically booting the default image;
@@ -2363,6 +2348,14 @@ Configuration Settings:
 		buffers can be full shortly after enabling the interface
 		on high Ethernet traffic.
 		Defaults to 4 if not defined.
+
+- CONFIG_ENV_MAX_ENTRIES
+
+        Maximum number of entries in the hash table that is used
+        internally to store the environment settings. The default
+        setting is supposed to be generous and should work in most
+        cases. This setting can be used to tune behaviour; see
+        lib/hashtable.c for details.
 
 The following definitions that deal with the placement and management
 of environment data (variable area); in general, we support the
