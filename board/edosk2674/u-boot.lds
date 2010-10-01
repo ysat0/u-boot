@@ -38,7 +38,7 @@ SECTIONS
 
 	.text :
 	{
-		cpu/h8300s/start.o		(.text)
+		arch/h8300/cpu/h8300s/start.o		(.text)
 		. = ALIGN(4);
 		*(.text)
 		. = ALIGN(4);
