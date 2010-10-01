@@ -28,9 +28,8 @@
 	.long	_start
 	.long	_start
 vector	=	2
-	.rept	126
-	.long	nmi
-	/*.long	__ram_vec + (vector * 4)*/
+	.rept	254
+	.long	__ram_vec + (vector * 4)
 vector	=	vector + 1
 	.endr
 
@@ -46,29 +45,13 @@ _start:
 	mov.l	#_bss_start,er4
 	mov.l	#_bss_end,er5
 	sub	er4,er5
+	shlr.l	#2,er5
 	mov	#0,er0
 1:	mov.l	er0,@er4		/* bss clear */
 	adds	#4,er4
 	dec.l	#1,er5
 	bne	1b
 #endif
-	mov.b	#0xf0,r0l
-	mov.b	r0l,@0x41:8
-	mov.b	#0x02,r0l
-	mov.b	r0l,@0x8a:8
-	mov.b	#0,r0l
-	mov.b	r0l,@0x88:8
-	mov.b	#0xff,r0l
-	mov.b	r0l,@0x89:8
-	mov.b	#0x32,r0l
-	mov.b	r0l,@0x8a:8
-1:	btst	#7,@0x8c:8
-	beq	1b
-	mov.b	#'1',r0l
-	mov.b	r0l,@0x8b:8
-	bclr	#7,@0x8c:8
-	mov.b	#0x08,r0l
-	mov.b	r0l,@0x31:8
 	mov.l	#CONFIG_SYS_LOAD_ADDR - CONFIG_SYS_GBL_DATA_SIZE - CONFIG_SYS_MALLOC_LEN,er0
 	mov.l	er0,sp
 	jsr	@_h8300_generic_init
