@@ -97,9 +97,6 @@ static int rtl8019_init(struct eth_device *dev, bd_t *bis)
 	};
 	int i;
 
-	put_reg (dev, CR, CR_NODMA | CR_PAGE1);
-	for (i = 0; i < 6; i++)
-		put_reg(dev, PAR0 + i, dev->enetaddr[i]);
 	for (i = 0; i < 8; i++)
 		put_reg (dev, MAR0 + i, 0x00);
 	for (i = 0; i < sizeof(init_seq) / sizeof(init_seq[0]); i++)
@@ -198,6 +195,15 @@ static int rtl8019_send (struct eth_device *dev, volatile void *packet, int leng
 	return 0;
 }
 
+static int rtl8019_writeaddr(struct eth_device *dev)
+{
+	int i;
+	put_reg (dev, CR, CR_NODMA | CR_PAGE1);
+	for (i = 0; i < 6; i++)
+		put_reg(dev, PAR0 + i, dev->enetaddr[i]);
+	return 0;
+}
+
 static int read_address(struct eth_device *dev)
 {
 	u8 prom[32];
@@ -240,6 +246,7 @@ int rtl8019_initialize(bd_t *bis, int base_adr)
 	if (dev == NULL)
 		return 0;
 
+	memset(dev, 0 ,sizeof(*dev));
 	dev->iobase = base_adr;
 
 	/* read address */
@@ -251,6 +258,7 @@ int rtl8019_initialize(bd_t *bis, int base_adr)
 	dev->halt = rtl8019_halt;
 	dev->send = rtl8019_send;
 	dev->recv = rtl8019_rx;
+	dev->write_hwaddr = rtl8019_writeaddr;
 	sprintf(dev->name, DRIVERNAME);
 
 	eth_register(dev);
