@@ -41,7 +41,6 @@ int dram_init(void)
 	gd->bd->bi_memsize = CONFIG_SYS_SDRAM_SIZE;
 	
 	printf("SDRAM:  %dMB\n", CONFIG_SYS_DRAM_SIZE / (1024 * 1024));
-	asm("jmp @@0");
 	return 0;
 }
 
