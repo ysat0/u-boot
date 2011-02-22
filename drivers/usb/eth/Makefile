@@ -1,13 +1,5 @@
 #
-# (C) Copyright 2008
-# Graeme Russ, graeme.russ@gmail.com.
-#
-# (C) Copyright 2006
-# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# (C) Copyright 2002
-# Daniel Engström, Omicron Ceti AB, daniel@omicron.se.
-#
+# Copyright (c) 2011 The Chromium OS Authors.
 # See file CREDITS for list of people who contributed to this
 # project.
 #
@@ -18,7 +10,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -29,23 +21,22 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)lib$(SOC).o
+LIB	:= $(obj)libusb_eth.a
 
-COBJS-$(CONFIG_SYS_SC520) += sc520.o
-COBJS-$(CONFIG_PCI) += sc520_pci.o
-COBJS-$(CONFIG_SYS_SC520) += sc520_sdram.o
-COBJS-$(CONFIG_SYS_SC520_SSI) += sc520_ssi.o
-COBJS-$(CONFIG_SYS_SC520_TIMER) += sc520_timer.o
+# new USB host ethernet layer dependencies
+COBJS-$(CONFIG_USB_HOST_ETHER) += usb_ether.o
+ifdef CONFIG_USB_ETHER_ASIX
+COBJS-y += asix.o
+endif
 
-SOBJS-$(CONFIG_SYS_SC520) += sc520_car.o
+COBJS	:= $(COBJS-y)
+SRCS	:= $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
 
-SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
+all:	$(LIB)
 
-all: $(obj).depend $(LIB)
-
-$(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+$(LIB):	$(obj).depend $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 
