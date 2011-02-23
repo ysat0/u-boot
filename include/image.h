@@ -106,6 +106,7 @@
 #define IH_ARCH_BLACKFIN	16	/* Blackfin	*/
 #define IH_ARCH_AVR32		17	/* AVR32	*/
 #define IH_ARCH_ST200	        18	/* STMicroelectronics ST200  */
+#define IH_ARCH_RX		19	/* RX		*/
 
 /*
  * Image Types
@@ -504,6 +505,8 @@ static inline int image_check_target_arch (const image_header_t *hdr)
 	if (!image_check_arch (hdr, IH_ARCH_SH))
 #elif defined(__sparc__)
 	if (!image_check_arch (hdr, IH_ARCH_SPARC))
+#elif defined(__RX__)
+	if (!image_check_arch (hdr, IH_ARCH_RX))
 #else
 # error Unknown CPU type
 #endif
@@ -656,6 +659,8 @@ static inline int fit_image_check_target_arch (const void *fdt, int node)
 	if (!fit_image_check_arch (fdt, node, IH_ARCH_SH))
 #elif defined(__sparc__)
 	if (!fit_image_check_arch (fdt, node, IH_ARCH_SPARC))
+#elif defined(__rx__)
+	if (!fit_image_check_arch (fdt, node, IH_ARCH_RX))
 #else
 # error Unknown CPU type
 #endif
