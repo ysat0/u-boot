@@ -1,8 +1,7 @@
 /*
- * (C) Copyright 2010
+ * (C) Copyright 2011
  * Marvell Semiconductor <www.marvell.com>
- * Written-by: Prafulla Wadaskar <prafulla@marvell.com>
- * Contributor: Mahavir Jain <mjain@marvell.com>
+ * Written-by: Lei Wen <leiwen@marvell.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -23,27 +22,22 @@
  * MA 02110-1301 USA
  */
 
-#ifndef __CONFIG_ASPENITE_H
-#define __CONFIG_ASPENITE_H
+#ifndef __CONFIG_DKB_H
+#define __CONFIG_DKB_H
 
 /*
  * Version number information
  */
-#define CONFIG_IDENT_STRING	"\nMarvell-Aspenite DB"
+#define CONFIG_IDENT_STRING	"\nMarvell-TTC DKB"
 
 /*
  * High Level Configuration Options
  */
 #define CONFIG_SHEEVA_88SV331xV5	1	/* CPU Core subversion */
-#define CONFIG_ARMADA100		1	/* SOC Family Name */
-#define CONFIG_ARMADA168		1	/* SOC Used on this Board */
-#define CONFIG_MACH_ASPENITE			/* Machine type */
+#define CONFIG_PANTHEON			1	/* SOC Family Name */
+#define CONFIG_MACH_TTC_DKB		1	/* Machine type */
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
 
-/*
- * There is no internal RAM in ARMADA100, using DRAM
- * TBD: dcache to be used for this
- */
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_TEXT_BASE - 0x00200000)
 #define CONFIG_NR_DRAM_BANKS_MAX	2
 
@@ -60,12 +54,12 @@
  * to enable certain macros
  */
 #include "mv-common.h"
-#undef CONFIG_ARCH_MISC_INIT
 
+#undef CONFIG_ARCH_MISC_INIT
 /*
  * Environment variables configurations
  */
 #define CONFIG_ENV_IS_NOWHERE	1	/* if env in SDRAM */
 #define CONFIG_ENV_SIZE	0x20000	/* 64k */
 
-#endif	/* __CONFIG_ASPENITE_H */
+#endif	/* __CONFIG_DKB_H */
