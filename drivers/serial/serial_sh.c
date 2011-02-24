@@ -39,17 +39,72 @@
 # error "Default SCIF doesn't set....."
 #endif
 
-#if defined(CONFIG_SCIF_A)
-	#define SCIF_BASE_PORT	PORT_SCIFA
+#if defined(CONFIG_SCI)
+# define PORT_TYPE	PORT_SCI
+#elif defined(CONFIG_SCIF_A)
+# define PORT_TYPE	PORT_SCIFA
 #else
-	#define SCIF_BASE_PORT	PORT_SCIF
+# define PORT_TYPE	PORT_SCIF
 #endif
 
 static struct uart_port sh_sci = {
 	.membase	= (unsigned char*)SCIF_BASE,
 	.mapbase	= SCIF_BASE,
-	.type		= SCIF_BASE_PORT,
+	.type		= PORT_TYPE,
 };
+
+/* TDRE / RDRF emulation for RX610 */
+/* RX610's SCI don't have TDRE and RDRF in SSR
+   This part emulate these flags of IR */
+#if defined(CONFIG_CPU_RX610)
+
+#define port_to_irq(port) ((((port)->mapbase - 0x88240) / 8) + 214)
+#define read_ir(irq) __raw_readb((unsigned char *)(0x00087000 + (irq)))
+#define clear_ir(irq) __raw_writeb(0, (unsigned char *)(0x00087000 + (irq)))
+
+#define write_ier(flg, irq)			\
+do { \
+	unsigned char ier = __raw_readb((unsigned char *)(0x00087200 + ((irq) >> 3))); \
+	ier &= ~(1 << ((irq) & 7));					\
+	if (flg) \
+		ier |= (1 << ((irq) & 7));			       \
+	__raw_writeb(ier, (unsigned char *)(0x00087200 + ((irq) >> 3))); \
+} while(0)
+
+
+static unsigned int sci_SCxSR_in(struct uart_port *port)
+{
+	int irq = port_to_irq(port);
+	unsigned char ssr;
+	ssr = __raw_readb(port->membase + 4);
+	ssr &= ~0xc0;
+	/* map to RXI -> RDRF and TXI -> TDRE */
+	ssr |= read_ir(irq + 1) << 6 | read_ir(irq + 2) << 7;
+	return ssr;
+}
+
+static void sci_SCxSR_out(struct uart_port *port, unsigned int value)
+{
+	int irq = port_to_irq(port);
+	/* clear ir */
+	if ((value & 0x84) != 0x84)
+		clear_ir(irq + 2);
+	if ((value & 0x40) == 0)
+		clear_ir(irq + 1);
+	value |= 0xc0;		/* b7 and b6 is always 1 */
+	value &= ~0x01;		/* b0 is always 0 */
+	__raw_writeb(value, port->membase + 4);
+}
+
+static void sci_SCSCR_out(struct uart_port *port, unsigned int value)
+{
+	int irq = port_to_irq(port);
+	write_ier(value & 0x40, irq + 1);
+	write_ier(value & 0x80, irq + 2);
+	/* TXI and RXI always enabled */
+	__raw_writeb(value | 0xc0, port->membase + 2);
+}
+#endif
 
 void serial_setbrg(void)
 {
@@ -99,6 +154,11 @@ static int scif_rxfill(struct uart_port *port)
 	else
 		return sci_in(port, SCRFDR);
 }
+#elif defined(CONFIG_SCI)
+static int scif_rxfill(struct uart_port *port)
+{
+	return (sci_in(port, SCxSR) & SCxSR_RDxF(port))?1:0;
+}
 #else
 static int scif_rxfill(struct uart_port *port)
 {
@@ -120,7 +180,7 @@ void serial_raw_putc(const char c)
 	}
 
 	sci_out(&sh_sci, SCxTDR, c);
-	sci_out(&sh_sci, SCxSR, sci_in(&sh_sci, SCxSR) & ~SCxSR_TEND(&sh_sci));
+	sci_out(&sh_sci, SCxSR, sci_in(&sh_sci, SCxSR) & ~(SCxSR_TEND(&sh_sci) | SCxSR_TDxE(&sh_sci)) );
 }
 
 void serial_putc(const char c)
@@ -156,7 +216,7 @@ int serial_getc_check(void)
 
 	status = sci_in(&sh_sci, SCxSR);
 
-	if (status & SCIF_ERRORS)
+	if (status & SCxSR_ERRORS(&sh_sci))
 		handle_error();
 	if (sci_in(&sh_sci, SCLSR) & SCxSR_ORER(&sh_sci))
 		handle_error();
