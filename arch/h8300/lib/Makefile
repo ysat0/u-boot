@@ -19,7 +19,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(ARCH).a
+LIB	= $(obj)lib$(ARCH).o
 
 SOBJS-y	+=
 

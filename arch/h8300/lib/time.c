@@ -57,7 +57,7 @@ unsigned long long get_ticks(void)
 
 ulong get_timer(ulong base)
 {
-	return get_ticks() / (CONFIG_SYS_HZ / 1000) - base;
+	return get_ticks() / (CONFIG_SYS_CLK_FREQ / 1000) - base;
 }
 
 void set_timer(ulong t)
@@ -75,12 +75,13 @@ void reset_timer(void)
 
 void __udelay(unsigned long usec)
 {
-	unsigned long long end = get_ticks() + (usec * (CONFIG_SYS_HZ / 8000000));
+	unsigned long long end = get_ticks() + 
+		(usec * (CONFIG_SYS_CLK_FREQ / 8000000));
 
 	while (get_ticks() < end);
 }
 
 unsigned long get_tbclk(void)
 {
-	return CONFIG_SYS_HZ / 8;
+	return CONFIG_SYS_CLK_FREQ / 8;
 }

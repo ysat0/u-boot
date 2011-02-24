@@ -53,13 +53,13 @@ extern int watchdog_disable(void);
 
 typedef int (init_fnc_t) (void);
 
-const static init_fnc_t *init_sequence[] =
+static init_fnc_t * const init_sequence[] =
 {
 	cpu_init,		/* basic cpu dependent setup */
 	board_init,		/* basic board dependent setup */
 	interrupt_init,	/* set up exceptions */
 	env_init,		/* event init */
-	serial_init,	/* SCIF init */
+	serial_init,	/* SCI init */
 	INIT_FUNC_WATCHDOG_INIT	/* watchdog init */
 	console_init_f,
 	display_options,
@@ -67,31 +67,27 @@ const static init_fnc_t *init_sequence[] =
 	checkboard,		/* Check support board */
 	dram_init,
 	timer_init,
-	stdio_init,
-	console_init_r,
 	interrupt_init,
 	NULL			/* Terminate this list */
 };
 
 
-gd_t *gd;
+DECLARE_GLOBAL_DATA_PTR;
 
 void h8300_generic_init(gd_t *_gd)
 {
-	DECLARE_GLOBAL_DATA_PTR;
-
 	bd_t *bd;
-	init_fnc_t **init_fnc_ptr;
+	init_fnc_t * const *init_fnc_ptr;
 	gd = _gd;
 
-	memset(gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
+	memset((void *)gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
 
 	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
 
 	gd->bd = (bd_t *)(gd + 1);	/* At end of global data */
 	gd->baudrate = CONFIG_BAUDRATE;
 
-	gd->cpu_clk = CONFIG_SYS_HZ;
+	gd->cpu_clk = CONFIG_SYS_CLK_FREQ;
 
 	bd = gd->bd;
 	bd->bi_memstart	= CONFIG_SYS_DRAM_BASE;
@@ -104,12 +100,16 @@ void h8300_generic_init(gd_t *_gd)
 
 	mem_malloc_init((unsigned long)_gd + CONFIG_SYS_GBL_DATA_SIZE,
 			CONFIG_SYS_MALLOC_LEN);
-	env_relocate();
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
 		WATCHDOG_RESET();
 		if ((*init_fnc_ptr) () != 0)
 			hang();
 	}
+
+	env_relocate();
+	stdio_init();
+	console_init_r();
+
 #ifdef CONFIG_WATCHDOG
 	/* disable watchdog if environment is set */
 	{

@@ -64,6 +64,11 @@ extern void __raw_readsl(unsigned int addr, void *data, int longlen);
 #define insw(p, d, l)			__raw_readsw(p, d, l)
 #define insl(p, d, l)			__raw_readsl(p, d, l)
 
+#define readb(p) 			__raw_readb(p)
+#define readw(p) 			__raw_readw(p)
+#define writeb(v, p) 			__raw_writeb(v, p)
+#define writew(v, p) 			__raw_writew(v, p)
+
 #define outb_p(val, port)		outb((val), (port))
 #define outw_p(val, port)		outw((val), (port))
 #define outl_p(val, port)		outl((val), (port))

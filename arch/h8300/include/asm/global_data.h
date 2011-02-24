@@ -24,8 +24,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef	__ASM_H8300_GLOBALDATA_H_
-#define __ASM_H8300_GLOBALDATA_H_
+#ifndef	__ASM_RX_GLOBALDATA_H_
+#define __ASM_RX_GLOBALDATA_H_
 
 typedef	struct global_data
 {
@@ -50,8 +50,6 @@ typedef	struct global_data
 #define GD_FLG_DISABLE_CONSOLE	0x00040	/* Disable console (in & out)	 */
 #define GD_FLG_ENV_READY	0x00080 /* Environment imported into hash table */
 
-extern gd_t *gd;
+#define DECLARE_GLOBAL_DATA_PTR gd_t *gd;
 
-#define DECLARE_GLOBAL_DATA_PTR
-
-#endif /* __ASM_H8300_GLOBALDATA_H_ */
+#endif /* __ASM_RX_GLOBALDATA_H_ */
