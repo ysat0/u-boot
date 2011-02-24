@@ -68,8 +68,6 @@ ELF	:= $(addprefix $(obj),$(ELF))
 BIN	:= $(addprefix $(obj),$(BIN))
 SREC	:= $(addprefix $(obj),$(SREC))
 
-gcclibdir := $(shell dirname `$(CC) -print-libgcc-file-name`)
-
 CPPFLAGS += -I..
 
 # For PowerPC there's no need to compile standalone applications as a
@@ -86,6 +84,7 @@ endif
 # application's entry point will be the first function in the application's
 # source file.
 CFLAGS += $(call cc-option,-fno-toplevel-reorder)
+gcclibdir := $(shell dirname `$(CC) $(CFLAGS) -print-libgcc-file-name`)
 
 all:	$(obj).depend $(OBJS) $(LIB) $(SREC) $(BIN) $(ELF)
 
