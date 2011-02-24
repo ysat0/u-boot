@@ -41,6 +41,8 @@
 #define CONFIG_SYS_CLK_FREQ	33333333	/* external freq to pll	*/
 #define CONFIG_SYS_4xx_RESET_TYPE	0x2	/* use chip reset on this board	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFFA0000
+
 /*
  * Enable this board for more than 2GB of SDRAM
  */
@@ -94,10 +96,9 @@
 #define CONFIG_SYS_TEMP_STACK_OCM	1
 #define CONFIG_SYS_OCM_DATA_ADDR	CONFIG_SYS_ISRAM_BASE
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_ISRAM_BASE	/* Initial RAM address	*/
-#define CONFIG_SYS_INIT_RAM_END	0x2000		/* End of used area in RAM */
-#define CONFIG_SYS_GBL_DATA_SIZE	128		/* num bytes initial data */
+#define CONFIG_SYS_INIT_RAM_SIZE	0x2000		/* Size of used area in RAM */
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
 
 /*-----------------------------------------------------------------------

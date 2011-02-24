@@ -23,7 +23,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)libgeneric.a
+LIB	= $(obj)libgeneric.o
 
 COBJS-$(CONFIG_ADDR_MAP) += addr_map.o
 COBJS-$(CONFIG_BZIP2) += bzlib.o
@@ -32,6 +32,7 @@ COBJS-$(CONFIG_BZIP2) += bzlib_decompress.o
 COBJS-$(CONFIG_BZIP2) += bzlib_randtable.o
 COBJS-$(CONFIG_BZIP2) += bzlib_huffman.o
 COBJS-$(CONFIG_USB_TTY) += circbuf.o
+COBJS-y += crc7.o
 COBJS-y += crc16.o
 COBJS-y += crc32.o
 COBJS-y += ctype.o
@@ -59,7 +60,7 @@ SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 #########################################################################
 

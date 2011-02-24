@@ -34,6 +34,8 @@
 #define CONFIG_4xx		1		/* ... PPC4xx family	*/
 #define CONFIG_405EP		1		/* Specifc 405EP support*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
+
 #define CONFIG_SYS_CLK_FREQ     33000000 /* external frequency to pll   */
 
 #define CONFIG_BOARD_EARLY_INIT_F 1		/* Call board_early_init_f */
@@ -94,7 +96,7 @@
 #define CONFIG_SYS_POST_ETHER_EXT_LOOPBACK	/* eth POST using ext loopack connector	*/
 
 /* Define here the base-addresses of the UARTs to test in POST */
-#define CONFIG_SYS_POST_UART_TABLE	{UART0_BASE}
+#define CONFIG_SYS_POST_UART_TABLE	{ CONFIG_SYS_NS16550_COM1 }
 
 #define CONFIG_LOGBUFFER
 #define CONFIG_SYS_POST_CACHE_ADDR	0x00800000 /* free virtual address	*/
@@ -251,10 +253,9 @@
 #define CONFIG_SYS_OCM_DATA_ADDR	0xF8000000
 #define CONFIG_SYS_OCM_DATA_SIZE	0x1000
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_DATA_ADDR /* inside of OCM		*/
-#define CONFIG_SYS_INIT_RAM_END	CONFIG_SYS_OCM_DATA_SIZE /* End of used area in RAM	*/
+#define CONFIG_SYS_INIT_RAM_SIZE	CONFIG_SYS_OCM_DATA_SIZE /* Size of used area in RAM	*/
 
-#define CONFIG_SYS_GBL_DATA_SIZE	128  /* size in bytes reserved for initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 /* reserve some memory for POST and BOOT limit info */
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 16)
 
@@ -301,14 +302,6 @@
 /* Time in milli-seconds */
 #define CONFIG_SYS_TIME_POST		5000
 #define CONFIG_SYS_TIME_FACTORY_RESET	10000
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM		0x02		/* Software reboot			*/
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400		/* speed to run kgdb serial port */

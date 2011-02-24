@@ -32,6 +32,8 @@
 #define CONFIG_4xx		1	/* ...member of PPC4xx family	*/
 #define CONFIG_PMC405		1	/* ...on a PMC405 board		*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF80000
+
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* call board_early_init_f()	*/
 #define CONFIG_MISC_INIT_R	1	/* call misc_init_r()		*/
 
@@ -195,8 +197,8 @@
  * Please note that CONFIG_SYS_SDRAM_BASE _must_ start at 0
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
-#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE
-#define CONFIG_SYS_MONITOR_LEN		(~(TEXT_BASE) + 1)
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_MONITOR_LEN		(~(CONFIG_SYS_TEXT_BASE) + 1)
 #define CONFIG_SYS_MALLOC_LEN		(128 * 1024) /* 128 kB for malloc() */
 
 #define CONFIG_PRAM			0 /* use pram variable to overwrite */
@@ -326,21 +328,12 @@
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_DATA_ADDR
 
 /* End of used area in RAM */
-#define CONFIG_SYS_INIT_RAM_END		CONFIG_SYS_OCM_DATA_SIZE
+#define CONFIG_SYS_INIT_RAM_SIZE		CONFIG_SYS_OCM_DATA_SIZE
 
 /* size in bytes reserved for initial data */
-#define CONFIG_SYS_GBL_DATA_SIZE	128
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - \
-					 CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
+					 GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02		/* Software reboot */
 
 #define CONFIG_OF_LIBFDT
 #define CONFIG_OF_BOARD_SETUP

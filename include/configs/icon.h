@@ -35,6 +35,9 @@
 #define CONFIG_4xx		1		/* ... PPC4xx family	*/
 #define CONFIG_440		1		/* ... PPC440 family	*/
 #define CONFIG_440SPE		1		/* Specifc SPe support	*/
+
+#define	CONFIG_SYS_TEXT_BASE	0xFFFA0000
+
 #define CONFIG_SYS_CLK_FREQ	33333333	/* external freq to pll	*/
 #define CONFIG_SYS_4xx_RESET_TYPE 0x2	/* use chip reset on this board	*/
 
@@ -94,11 +97,10 @@
 #define CONFIG_SYS_TEMP_STACK_OCM	1
 #define CONFIG_SYS_OCM_DATA_ADDR	CONFIG_SYS_ISRAM_BASE
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_ISRAM_BASE	/* Init RAM */
-#define CONFIG_SYS_INIT_RAM_END		0x2000		/* end used area */
-#define CONFIG_SYS_GBL_DATA_SIZE	128		/* sizeof init data */
+#define CONFIG_SYS_INIT_RAM_SIZE	0x2000		/* size of used area */
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - \
-					 CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
+					 GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
 
 /*

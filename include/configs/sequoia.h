@@ -42,6 +42,10 @@
 #define CONFIG_440		1	/* ... PPC440 family		*/
 #define CONFIG_4xx		1	/* ... PPC4xx family		*/
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFF80000
+#endif
+
 /*
  * Include common defines/options for all AMCC eval boards
  */
@@ -53,7 +57,7 @@
 
 /*
  * Define this if you want support for video console with radeon 9200 pci card
- * Also set TEXT_BASE to 0xFFF80000 in board/amcc/sequoia/config.mk in this case
+ * Also set CONFIG_SYS_TEXT_BASE to 0xFFF80000 in board/amcc/sequoia/config.mk in this case
  */
 #undef CONFIG_VIDEO
 
@@ -94,9 +98,8 @@
  */
 /* 440EPx/440GRx have 16KB of internal SRAM, so no need for D-Cache	*/
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_BASE	/* OCM			*/
-#define CONFIG_SYS_INIT_RAM_END	(4 << 10)
-#define CONFIG_SYS_GBL_DATA_SIZE	256	/* num bytes initial data	*/
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	(4 << 10)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
 
 /*

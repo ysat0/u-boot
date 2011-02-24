@@ -37,6 +37,10 @@
 #define CONFIG_4xx		1		/* ... PPC4xx family	*/
 #define CONFIG_SYS_CLK_FREQ	33333400	/* external freq to pll	*/
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFFA0000
+#endif
+
 #define CONFIG_BOARD_EARLY_INIT_F 1		/* Call board_early_init_f */
 #define CONFIG_MISC_INIT_R	1		/* Call misc_init_r	*/
 #define CONFIG_LAST_STAGE_INIT  1               /* last_stage_init      */
@@ -51,7 +55,7 @@
 #define CONFIG_SYS_BOOT_BASE_ADDR	0xf0000000
 #define CONFIG_SYS_SDRAM_BASE		0x00000000	/* _must_ be 0		*/
 #define CONFIG_SYS_FLASH_BASE		0xfc000000	/* start of FLASH	*/
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_NAND0_ADDR		0xd0000000      /* NAND Flash		*/
 #define CONFIG_SYS_NAND1_ADDR		0xd0100000      /* NAND Flash		*/
 #define CONFIG_SYS_OCM_BASE		0xe0010000      /* ocm			*/
@@ -75,9 +79,8 @@
 #define CONFIG_SYS_INIT_RAM_OCM	1		/* OCM as init ram	*/
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_BASE	/* OCM			*/
 
-#define CONFIG_SYS_INIT_RAM_END	(4 << 10)
-#define CONFIG_SYS_GBL_DATA_SIZE	256		/* num bytes initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	(4 << 10)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 /*
@@ -416,14 +419,6 @@ int du440_phy_addr(int devnum);
 #define CONFIG_SYS_NAND_SELECT_DEVICE  1	/* nand driver supports mutipl. chips */
 #define CONFIG_SYS_NAND_BASE_LIST	{CONFIG_SYS_NAND0_ADDR + CONFIG_SYS_NAND0_CS, \
 				 CONFIG_SYS_NAND1_ADDR + CONFIG_SYS_NAND1_CS}
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02		/* Software reboot */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */

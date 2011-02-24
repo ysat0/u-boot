@@ -36,6 +36,10 @@
 #define CONFIG_4xx		1	/* ... PPC4xx family	        */
 #define CONFIG_SYS_CLK_FREQ	33333333    /* external freq to pll	*/
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFFA0000
+#endif
+
 /*
  * Include common defines/options for all AMCC eval boards
  */
@@ -76,9 +80,8 @@
  *----------------------------------------------------------------------*/
 #define CONFIG_SYS_INIT_RAM_DCACHE	1		/* d-cache as init ram	*/
 #define CONFIG_SYS_INIT_RAM_ADDR	0x70000000	/* DCache       */
-#define CONFIG_SYS_INIT_RAM_END	(4 << 10)
-#define CONFIG_SYS_GBL_DATA_SIZE	256		/* num bytes initial data	*/
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	(4 << 10)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 /*-----------------------------------------------------------------------

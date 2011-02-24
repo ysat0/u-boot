@@ -30,6 +30,8 @@
 #define CONFIG_KMETER1		1 /* KMETER1 board specific */
 #define CONFIG_HOSTNAME		kmeter1
 
+#define	CONFIG_SYS_TEXT_BASE	0xF0000000
+
 /* include common defines/options for all Keymile boards */
 #include "keymile-common.h"
 
@@ -157,7 +159,7 @@
 /*
  * The reserved memory
  */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE /* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE /* start of monitor */
 #define CONFIG_SYS_FLASH_BASE		0xF0000000
 #define CONFIG_SYS_PIGGY_BASE		0xE8000000
 #define	CONFIG_SYS_PIGGY_SIZE		128
@@ -177,9 +179,8 @@
  */
 #define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xE6000000 /* Initial RAM address */
-#define CONFIG_SYS_INIT_RAM_END	0x1000 /* End of used area in RAM */
-#define CONFIG_SYS_GBL_DATA_SIZE	0x100 /* num bytes initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	0x1000 /* Size of used area in RAM */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 
 /*
  * Local Bus Configuration & Clock Setup
@@ -439,14 +440,6 @@
 #define CONFIG_SYS_DBAT7L	CONFIG_SYS_IBAT7L
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
 #endif /* CONFIG_PCI */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01 /* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02 /* Software reboot */
 
 #define BOOTFLASH_START	F0000000
 

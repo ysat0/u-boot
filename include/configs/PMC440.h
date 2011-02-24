@@ -39,6 +39,10 @@
 #define CONFIG_440		1	/* ... PPC440 family    */
 #define CONFIG_4xx		1	/* ... PPC4xx family    */
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFF90000
+#endif
+
 #define CONFIG_SYS_CLK_FREQ	33333400
 
 #if 0 /* temporary disabled because OS/9 does not like dcache on startup */
@@ -53,7 +57,7 @@
  * Base addresses -- Note these are effective addresses where the
  * actual resources get mapped (not physical addresses)
  *----------------------------------------------------------------------*/
-#define CONFIG_SYS_MONITOR_LEN		(~(TEXT_BASE) + 1)
+#define CONFIG_SYS_MONITOR_LEN		(~(CONFIG_SYS_TEXT_BASE) + 1)
 #define CONFIG_SYS_MALLOC_LEN		(1024 * 1024)	/* Reserve 256 kB for malloc()  */
 
 #define CONFIG_PRAM		0	/* use pram variable to overwrite */
@@ -61,7 +65,7 @@
 #define CONFIG_SYS_BOOT_BASE_ADDR	0xf0000000
 #define CONFIG_SYS_SDRAM_BASE		0x00000000	/* _must_ be 0          */
 #define CONFIG_SYS_FLASH_BASE		0xfc000000	/* start of FLASH       */
-#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_NAND_ADDR		0xd0000000	/* NAND Flash           */
 #define CONFIG_SYS_OCM_BASE		0xe0010000	/* ocm                  */
 #define CONFIG_SYS_OCM_DATA_ADDR	CONFIG_SYS_OCM_BASE
@@ -84,9 +88,8 @@
  *----------------------------------------------------------------------*/
 /* 440EPx/440GRx have 16KB of internal SRAM, so no need for D-Cache	*/
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_BASE	/* OCM                  */
-#define CONFIG_SYS_INIT_RAM_END	(4 << 10)
-#define CONFIG_SYS_GBL_DATA_SIZE	256	/* num bytes initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	(4 << 10)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
 
 /*-----------------------------------------------------------------------
@@ -502,14 +505,6 @@
 #define CONFIG_SYS_NAND_BASE		(CONFIG_SYS_NAND_ADDR + CONFIG_SYS_NAND_CS)
 #define CONFIG_SYS_NAND_SELECT_DEVICE	1 /* nand driver supports mutipl. chips */
 #define CONFIG_SYS_NAND_QUIET_TEST	1
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH     */
-#define BOOTFLAG_WARM	0x02	/* Software reboot                      */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */

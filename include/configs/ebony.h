@@ -37,6 +37,8 @@
 #define CONFIG_BOARD_EARLY_INIT_F 1	    /* Call board_early_init_f	*/
 #define CONFIG_SYS_CLK_FREQ	33333333    /* external freq to pll	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
+
 /*
  * Include common defines/options for all AMCC eval boards
  */
@@ -71,10 +73,9 @@
  * Initial RAM & stack pointer (placed in internal SRAM)
  *----------------------------------------------------------------------*/
 #define CONFIG_SYS_INIT_RAM_ADDR   CONFIG_SYS_ISRAM_BASE  /* Initial RAM address	*/
-#define CONFIG_SYS_INIT_RAM_END    0x2000	    /* End of used area in RAM	*/
-#define CONFIG_SYS_GBL_DATA_SIZE  128		    /* num bytes initial data	*/
+#define CONFIG_SYS_INIT_RAM_SIZE    0x2000	    /* Size of used area in RAM	*/
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 /*-----------------------------------------------------------------------

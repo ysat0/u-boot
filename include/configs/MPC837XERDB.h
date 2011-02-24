@@ -30,6 +30,8 @@
 #define CONFIG_MPC837x		1 /* MPC837x CPU specific */
 #define CONFIG_MPC837XERDB	1
 
+#define	CONFIG_SYS_TEXT_BASE	0xFE000000
+
 #define CONFIG_PCI	1
 
 #define CONFIG_BOARD_EARLY_INIT_F
@@ -220,7 +222,7 @@
 /*
  * The reserved memory
  */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE /* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE /* start of monitor */
 
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #define CONFIG_SYS_RAMBOOT
@@ -236,9 +238,8 @@
  */
 #define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xE6000000 /* Initial RAM address */
-#define CONFIG_SYS_INIT_RAM_END	0x1000 /* End of used area in RAM */
-#define CONFIG_SYS_GBL_DATA_SIZE	0x100 /* num bytes initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	0x1000 /* Size of used area in RAM */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 
 /*
  * Local Bus Configuration & Clock Setup
@@ -516,6 +517,7 @@
 
 #ifdef CONFIG_MMC
 #define CONFIG_FSL_ESDHC
+#define CONFIG_FSL_ESDHC_PIN_MUX
 #define CONFIG_SYS_FSL_ESDHC_ADDR	CONFIG_SYS_MPC83xx_ESDHC_ADDR
 #define CONFIG_CMD_MMC
 #define CONFIG_GENERIC_MMC
@@ -627,14 +629,6 @@
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
 #endif
 
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01 /* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02 /* Software reboot */
-
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed of kgdb serial port */
 #define CONFIG_KGDB_SER_INDEX	2	/* which serial port to use */
@@ -667,11 +661,11 @@
 	"netdev=" MK_STR(CONFIG_NETDEV) "\0"				\
 	"uboot=" MK_STR(CONFIG_UBOOTPATH) "\0"				\
 	"tftpflash=tftp $loadaddr $uboot;"				\
-		"protect off " MK_STR(TEXT_BASE) " +$filesize; "	\
-		"erase " MK_STR(TEXT_BASE) " +$filesize; "		\
-		"cp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize; "	\
-		"protect on " MK_STR(TEXT_BASE) " +$filesize; "		\
-		"cmp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize\0"	\
+		"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
+		"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+		"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; "	\
+		"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+		"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0"	\
 	"fdtaddr=780000\0"						\
 	"fdtfile=" MK_STR(CONFIG_FDTFILE) "\0"				\
 	"ramdiskaddr=1000000\0"						\

@@ -33,6 +33,9 @@
 #define CONFIG_4xx		1	    /* ... PPC4xx family	*/
 #define CONFIG_BOARD_EARLY_INIT_F 1	    /* Call board_pre_init	*/
 #define CONFIG_LAST_STAGE_INIT	1	    /* call last_stage_init()	*/
+
+#define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
+
 #define CONFIG_SYS_CLK_FREQ	33333333    /* external freq to pll	*/
 #define CONFIG_4xx_DCACHE		/* Enable i- and d-cache	*/
 
@@ -61,10 +64,9 @@
 #define CONFIG_SYS_TEMP_STACK_OCM  1
 #define CONFIG_SYS_OCM_DATA_ADDR   CONFIG_SYS_ISRAM_BASE
 #define CONFIG_SYS_INIT_RAM_ADDR   CONFIG_SYS_ISRAM_BASE  /* Initial RAM address	*/
-#define CONFIG_SYS_INIT_RAM_END    0x2000	    /* End of used area in RAM	*/
-#define CONFIG_SYS_GBL_DATA_SIZE   128		    /* num bytes initial data	*/
+#define CONFIG_SYS_INIT_RAM_SIZE    0x2000	    /* Size of used area in RAM	*/
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
 
 #define CONFIG_SYS_MONITOR_LEN	    (256 * 1024)    /* Reserve 256 kB for Mon	*/
@@ -361,14 +363,6 @@
  * the maximum mapped by the Linux kernel during initialization.
  */
 #define CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */

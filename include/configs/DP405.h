@@ -37,6 +37,8 @@
 #define CONFIG_4xx		1	/* ...member of PPC4xx family	*/
 #define CONFIG_DP405		1	/* ...on a DP405 board		*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFFD0000
+
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* call board_early_init_f()	*/
 #define CONFIG_MISC_INIT_R	1	/* call misc_init_r()		*/
 
@@ -63,6 +65,7 @@
 #define CONFIG_CMD_EEPROM
 
 #undef CONFIG_CMD_NET
+#undef CONFIG_CMD_NFS
 
 #undef	CONFIG_WATCHDOG			/* watchdog disabled		*/
 
@@ -157,8 +160,8 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_FLASH_BASE		CONFIG_SYS_MONITOR_BASE
-#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE
-#define CONFIG_SYS_MONITOR_LEN		(~(TEXT_BASE) + 1)
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_MONITOR_LEN		(~(CONFIG_SYS_TEXT_BASE) + 1)
 #define CONFIG_SYS_MALLOC_LEN		(256 * 1024)
 
 #if (CONFIG_SYS_MONITOR_BASE < FLASH_BASE0_PRELIM)
@@ -226,10 +229,9 @@
 #define CONFIG_SYS_OCM_DATA_ADDR	0xF8000000
 #define CONFIG_SYS_OCM_DATA_SIZE	0x1000
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_DATA_ADDR /* inside of SDRAM		*/
-#define CONFIG_SYS_INIT_RAM_END	CONFIG_SYS_OCM_DATA_SIZE /* End of used area in RAM	*/
+#define CONFIG_SYS_INIT_RAM_SIZE	CONFIG_SYS_OCM_DATA_SIZE /* Size of used area in RAM	*/
 
-#define CONFIG_SYS_GBL_DATA_SIZE      128  /* size in bytes reserved for initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET    (CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_OFFSET    (CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 /*-----------------------------------------------------------------------
@@ -255,14 +257,6 @@
 #define CONFIG_SYS_GPIO0_TSRL		0x00000000  /*	0 ... 15 */
 #define CONFIG_SYS_GPIO0_TSRH		0x00000000  /* 16 ... 31 */
 #define CONFIG_SYS_GPIO0_TCR		0xB7FE0014  /*	0 ... 31 */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 /*
  * Default speed selection (cpu_plb_opb_ebc) in mhz.

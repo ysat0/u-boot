@@ -45,6 +45,9 @@
 # include <linux/string.h>
 #endif
 
+#ifndef	CONFIG_ENV_MIN_ENTRIES	/* minimum number of entries */
+#define	CONFIG_ENV_MIN_ENTRIES 64
+#endif
 #ifndef	CONFIG_ENV_MAX_ENTRIES	/* maximum number of entries */
 #define	CONFIG_ENV_MAX_ENTRIES 512
 #endif
@@ -53,13 +56,8 @@
 
 /*
  * [Aho,Sethi,Ullman] Compilers: Principles, Techniques and Tools, 1986
- * [Knuth]            The Art of Computer Programming, part 3 (6.4)
+ * [Knuth]	      The Art of Computer Programming, part 3 (6.4)
  */
-
-/*
- * The non-reentrant version use a global space for storing the hash table.
- */
-static struct hsearch_data htab;
 
 /*
  * The reentrant version has no static variables to maintain the state.
@@ -94,11 +92,6 @@ static int isprime(unsigned int number)
 	return number % div != 0;
 }
 
-int hcreate(size_t nel)
-{
-	return hcreate_r(nel, &htab);
-}
-
 /*
  * Before using the hash table we must allocate memory for it.
  * Test for an existing table are done. We allocate one element
@@ -107,6 +100,7 @@ int hcreate(size_t nel)
  * The contents of the table is zeroed, especially the field used
  * becomes zero.
  */
+
 int hcreate_r(size_t nel, struct hsearch_data *htab)
 {
 	/* Test for correct arguments.  */
@@ -140,15 +134,12 @@ int hcreate_r(size_t nel, struct hsearch_data *htab)
 /*
  * hdestroy()
  */
-void hdestroy(void)
-{
-	hdestroy_r(&htab);
-}
 
 /*
  * After using the hash table it has to be destroyed. The used memory can
  * be freed and the local static variable can be marked as not used.
  */
+
 void hdestroy_r(struct hsearch_data *htab)
 {
 	int i;
@@ -211,13 +202,24 @@ void hdestroy_r(struct hsearch_data *htab)
  *   example for functions like hdelete().
  */
 
-ENTRY *hsearch(ENTRY item, ACTION action)
+int hmatch_r(const char *match, int last_idx, ENTRY ** retval,
+	     struct hsearch_data *htab)
 {
-	ENTRY *result;
+	unsigned int idx;
+	size_t key_len = strlen(match);
 
-	(void) hsearch_r(item, action, &result, &htab);
+	for (idx = last_idx + 1; idx < htab->size; ++idx) {
+		if (!htab->table[idx].used)
+			continue;
+		if (!strncmp(match, htab->table[idx].entry.key, key_len)) {
+			*retval = &htab->table[idx].entry;
+			return idx;
+		}
+	}
 
-	return result;
+	__set_errno(ESRCH);
+	*retval = NULL;
+	return 0;
 }
 
 int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
@@ -249,7 +251,7 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 
 	if (htab->table[idx].used) {
 		/*
-                 * Further action might be required according to the
+		 * Further action might be required according to the
 		 * action value.
 		 */
 		unsigned hval2;
@@ -280,8 +282,8 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 
 		do {
 			/*
-                         * Because SIZE is prime this guarantees to
-                         * step through all available indices.
+			 * Because SIZE is prime this guarantees to
+			 * step through all available indices.
 			 */
 			if (idx <= hval2)
 				idx = htab->size + idx - hval2;
@@ -320,8 +322,8 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 	/* An empty bucket has been found. */
 	if (action == ENTER) {
 		/*
-                 * If table is full and another entry should be
-                 * entered return with error.
+		 * If table is full and another entry should be
+		 * entered return with error.
 		 */
 		if (htab->filled == htab->size) {
 			__set_errno(ENOMEM);
@@ -365,11 +367,6 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
  * to delete any entries from the hash table.  We extend the code to
  * do that.
  */
-
-int hdelete(const char *key)
-{
-	return hdelete_r(key, &htab);
-}
 
 int hdelete_r(const char *key, struct hsearch_data *htab)
 {
@@ -438,11 +435,6 @@ int hdelete_r(const char *key, struct hsearch_data *htab)
  *		be returned if the size is not sufficient.  Any unused
  *		bytes in the string will be '\0'-padded.
  */
-
-ssize_t hexport(const char sep, char **resp, size_t size)
-{
-	return hexport_r(&htab, sep, resp, size);
-}
 
 static int cmpkey(const void *p1, const void *p2)
 {
@@ -602,11 +594,6 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep,
  * '\0' and '\n' have really been tested.
  */
 
-int himport(const char *env, size_t size, const char sep, int flag)
-{
-	return himport_r(&htab, env, size, sep, flag);
-}
-
 int himport_r(struct hsearch_data *htab,
 	      const char *env, size_t size, const char sep, int flag)
 {
@@ -647,13 +634,14 @@ int himport_r(struct hsearch_data *htab,
 	 * (CONFIG_ENV_SIZE).  This heuristics will result in
 	 * unreasonably large numbers (and thus memory footprint) for
 	 * big flash environments (>8,000 entries for 64 KB
-	 * envrionment size), so we clip it to a reasonable value
-	 * (which can be overwritten in the board config file if
-	 * needed).
+	 * envrionment size), so we clip it to a reasonable value.
+	 * On the other hand we need to add some more entries for free
+	 * space when importing very small buffers. Both boundaries can
+	 * be overwritten in the board config file if needed.
 	 */
 
 	if (!htab->table) {
-		int nent = size / 8;
+		int nent = CONFIG_ENV_MIN_ENTRIES + size / 8;
 
 		if (nent > CONFIG_ENV_MAX_ENTRIES)
 			nent = CONFIG_ENV_MAX_ENTRIES;

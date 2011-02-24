@@ -33,6 +33,8 @@
 #define CONFIG_MPC8308		1 /* MPC8308 CPU specific */
 #define CONFIG_MPC8308RDB	1 /* MPC8308RDB board specific */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFE000000
+
 #define CONFIG_MISC_INIT_R
 
 /*
@@ -200,7 +202,7 @@
 /*
  * The reserved memory
  */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE /* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE /* start of monitor */
 
 #define CONFIG_SYS_MONITOR_LEN	(384 * 1024) /* Reserve 384 kB for Mon */
 #define CONFIG_SYS_MALLOC_LEN	(512 * 1024) /* Reserved for malloc */
@@ -210,10 +212,9 @@
  */
 #define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xE6000000 /* Initial RAM address */
-#define CONFIG_SYS_INIT_RAM_END		0x1000 /* End of used area in RAM */
-#define CONFIG_SYS_GBL_DATA_SIZE	0x100 /* num bytes initial data */
+#define CONFIG_SYS_INIT_RAM_SIZE		0x1000 /* Size of used area in RAM */
 #define CONFIG_SYS_GBL_DATA_OFFSET	\
-	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 
 /*
  * Local Bus Configuration & Clock Setup
@@ -494,14 +495,6 @@
 					BATU_VS | BATU_VP)
 #define CONFIG_SYS_DBAT3L	CONFIG_SYS_IBAT3L
 #define CONFIG_SYS_DBAT3U	CONFIG_SYS_IBAT3U
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01 /* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02 /* Software reboot */
 
 /*
  * Environment Configuration

@@ -35,6 +35,29 @@
 #define CONFIG_MPC8313		1
 #define CONFIG_MPC8313ERDB	1
 
+#define CONFIG_SYS_NAND_U_BOOT_SIZE  (512 << 10)
+#define CONFIG_SYS_NAND_U_BOOT_DST   0x00100000
+#define CONFIG_SYS_NAND_U_BOOT_START 0x00100100
+#define CONFIG_SYS_NAND_U_BOOT_OFFS  16384
+#define CONFIG_SYS_NAND_U_BOOT_RELOC 0x00010000
+#define CONFIG_SYS_NAND_U_BOOT_RELOC_SP (CONFIG_SYS_NAND_U_BOOT_RELOC + 0x10000)
+
+#ifdef CONFIG_NAND_U_BOOT
+#define CONFIG_SYS_TEXT_BASE	0x00100000 /* CONFIG_SYS_NAND_U_BOOT_DST */
+#define CONFIG_SYS_TEXT_BASE_SPL 0xfff00000
+#ifdef CONFIG_NAND_SPL
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE_SPL /* start of monitor */
+#endif /* CONFIG_NAND_SPL */
+#endif /* CONFIG_NAND_U_BOOT */
+
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFE000000
+#endif
+
+#ifndef CONFIG_SYS_MONITOR_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
+#endif
+
 #define CONFIG_PCI
 #define CONFIG_FSL_ELBC 1
 
@@ -196,18 +219,15 @@
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
-
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE) && !defined(CONFIG_NAND_SPL)
 #define CONFIG_SYS_RAMBOOT
 #endif
 
 #define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xFD000000	/* Initial RAM address */
-#define CONFIG_SYS_INIT_RAM_END	0x1000		/* End of used area in RAM*/
+#define CONFIG_SYS_INIT_RAM_SIZE	0x1000		/* Size of used area in RAM*/
 
-#define CONFIG_SYS_GBL_DATA_SIZE	0x100		/* num bytes initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 /* CONFIG_SYS_MONITOR_LEN must be a multiple of CONFIG_ENV_SECT_SIZE */
@@ -245,12 +265,6 @@
 #define CONFIG_NAND_FSL_ELBC 1
 #define CONFIG_SYS_NAND_BLOCK_SIZE 16384
 
-#define CONFIG_SYS_NAND_U_BOOT_SIZE  (512 << 10)
-#define CONFIG_SYS_NAND_U_BOOT_DST   0x00100000
-#define CONFIG_SYS_NAND_U_BOOT_START 0x00100100
-#define CONFIG_SYS_NAND_U_BOOT_OFFS  16384
-#define CONFIG_SYS_NAND_U_BOOT_RELOC 0x00010000
-#define CONFIG_SYS_NAND_U_BOOT_RELOC_SP (CONFIG_SYS_NAND_U_BOOT_RELOC + 0x10000)
 
 #define CONFIG_SYS_NAND_BR_PRELIM	( CONFIG_SYS_NAND_BASE \
 				| (2<<BR_DECC_SHIFT)	/* Use HW ECC */ \
@@ -577,14 +591,6 @@
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
 
 /*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02	/* Software reboot */
-
-/*
  * Environment Configuration
  */
 #define CONFIG_ENV_OVERWRITE
@@ -609,11 +615,11 @@
 	"ethprime=TSEC1\0"						\
 	"uboot=" MK_STR(CONFIG_UBOOTPATH) "\0"				\
 	"tftpflash=tftpboot $loadaddr $uboot; "				\
-		"protect off " MK_STR(TEXT_BASE) " +$filesize; "	\
-		"erase " MK_STR(TEXT_BASE) " +$filesize; "		\
-		"cp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize; "	\
-		"protect on " MK_STR(TEXT_BASE) " +$filesize; "		\
-		"cmp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize\0"	\
+		"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
+		"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+		"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; "	\
+		"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+		"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0"	\
 	"fdtaddr=780000\0"						\
 	"fdtfile=" MK_STR(CONFIG_FDTFILE) "\0"				\
 	"console=ttyS0\0"						\

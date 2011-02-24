@@ -29,6 +29,12 @@ STANDALONE_LOAD_ADDR += -EB
 endif
 
 PLATFORM_CPPFLAGS += -DCONFIG_SH -D__SH__
-PLATFORM_LDFLAGS += -e $(TEXT_BASE) --defsym reloc_dst=$(TEXT_BASE)
+PLATFORM_LDFLAGS += -e $(CONFIG_SYS_TEXT_BASE) --defsym reloc_dst=$(CONFIG_SYS_TEXT_BASE)
+LDFLAGS_u-boot = --gc-sections
 
+ifdef CONFIG_SYS_LDSCRIPT
+LDSCRIPT := $(subst ",,$(CONFIG_SYS_LDSCRIPT))
+else
 LDSCRIPT := $(SRCTREE)/$(CPUDIR)/u-boot.lds
+endif
+

@@ -41,7 +41,7 @@
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x800
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	0x30000
 
-#define CONFIG_SYS_NAND_U_BOOT_DST      (0x81fc0000)
+#define CONFIG_SYS_NAND_U_BOOT_DST      (0x81200000)
 #define CONFIG_SYS_NAND_U_BOOT_START    CONFIG_SYS_NAND_U_BOOT_DST
 
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048
@@ -66,7 +66,6 @@
 /* malloc() len */
 #define CONFIG_SYS_MALLOC_LEN		(1 << 20)	/* 1 MiB */
 /* reserved for initial data */
-#define CONFIG_SYS_GBL_DATA_SIZE	128
 /*
  * Board has 2 32MB banks of DRAM but there is a bug when using
  * both so only the first is configured
@@ -176,10 +175,9 @@
 	"update=nand erase 0 40000;nand write ${loadaddr} 0 40000\0"	\
 	"upd=run load update\0"						\
 
-/* additions for new relocation code, must added to all boards */
-#undef CONFIG_SYS_ARM_WITHOUT_RELOC /* This board is tested with relocation support */
+/* additions for new relocation code, must be added to all boards */
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x1000 - /* Fix this */ \
-					CONFIG_SYS_GBL_DATA_SIZE)
+					GENERATED_GBL_DATA_SIZE)
 
 #endif /* __CONFIG_H */

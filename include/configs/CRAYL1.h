@@ -36,6 +36,13 @@
 
 #define CONFIG_405GP		1	/* This is a PPC405 CPU	*/
 #define CONFIG_4xx		    1   /* ...member of PPC405 family */
+
+/*
+ * Note: I make an "image" from U-Boot itself, which prefixes 0x40
+ * bytes of header info, hence start address is thus shifted.
+ */
+#define	CONFIG_SYS_TEXT_BASE	0xFFFD0040
+
 #define CONFIG_SYS_CLK_FREQ 25000000
 #define CONFIG_BAUDRATE		9600
 #define CONFIG_BOOTDELAY	5	/* autoboot after 5 seconds	*/
@@ -159,7 +166,7 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_FLASH_BASE		0xFFC00000
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 
 
 #define CONFIG_SYS_MONITOR_LEN		(192 * 1024)	/* Reserve 192 kB for Monitor	*/
@@ -221,17 +228,15 @@
 #define CONFIG_SYS_OCM_DATA_SIZE	0x1000
 
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_DATA_ADDR /* inside of SDRAM		*/
-#define CONFIG_SYS_INIT_RAM_END	CONFIG_SYS_OCM_DATA_SIZE /* End of used area in RAM	*/
-#define CONFIG_SYS_GBL_DATA_SIZE      256  /* size in bytes reserved for initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET    (CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	CONFIG_SYS_OCM_DATA_SIZE /* Size of used area in RAM	*/
+#define CONFIG_SYS_GBL_DATA_OFFSET    (CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET      CONFIG_SYS_GBL_DATA_OFFSET
 #else
 #define CONFIG_SYS_OCM_DATA_ADDR	0xF0000000
 #define CONFIG_SYS_OCM_DATA_SIZE	0x1000
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_DATA_ADDR	/* inside of On Chip SRAM    */
-#define CONFIG_SYS_INIT_RAM_END	CONFIG_SYS_OCM_DATA_SIZE	/* End of On Chip SRAM	     */
-#define CONFIG_SYS_GBL_DATA_SIZE	64	/* size in bytes reserved for initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	CONFIG_SYS_OCM_DATA_SIZE	/* Size of On Chip SRAM	     */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 #endif
 
@@ -240,13 +245,5 @@
  */
 #define EEPROM_WRITE_ADDRESS 0xA0
 #define EEPROM_READ_ADDRESS  0xA1
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #endif	/* __CONFIG_H */

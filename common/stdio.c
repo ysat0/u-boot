@@ -105,7 +105,7 @@ struct list_head* stdio_get_list(void)
 	return &(devs.list);
 }
 
-struct stdio_dev* stdio_get_by_name(char* name)
+struct stdio_dev* stdio_get_by_name(const char *name)
 {
 	struct list_head *pos;
 	struct stdio_dev *dev;
@@ -155,7 +155,7 @@ int stdio_register (struct stdio_dev * dev)
  * returns 0 if success, -1 if device is assigned and 1 if devname not found
  */
 #ifdef	CONFIG_SYS_STDIO_DEREGISTER
-int stdio_deregister(char *devname)
+int stdio_deregister(const char *devname)
 {
 	int l;
 	struct list_head *pos;
@@ -193,7 +193,7 @@ int stdio_deregister(char *devname)
 
 int stdio_init (void)
 {
-#if !defined(CONFIG_RELOC_FIXUP_WORKS)
+#if defined(CONFIG_NEEDS_MANUAL_RELOC)
 	/* already relocated for current ARM implementation */
 	ulong relocation_offset = gd->reloc_off;
 	int i;
@@ -203,7 +203,7 @@ int stdio_init (void)
 		stdio_names[i] = (char *) (((ulong) stdio_names[i]) +
 						relocation_offset);
 	}
-#endif /* !CONFIG_RELOC_FIXUP_WORKS */
+#endif /* CONFIG_NEEDS_MANUAL_RELOC */
 
 	/* Initialize the list */
 	INIT_LIST_HEAD(&(devs.list));

@@ -35,6 +35,9 @@
 #define CONFIG_405GP		1	/* This is a PPC405 CPU		*/
 #define CONFIG_4xx		1	/* ...member of PPC4xx family	*/
 #define CONFIG_MIP405		1	/* ...on a MIP405 board		*/
+
+#define	CONFIG_SYS_TEXT_BASE	0xFFF80000
+
 /***********************************************************
  * Note that it may also be a MIP405T board which is a subset of the
  * MIP405
@@ -305,24 +308,14 @@
 #define CONFIG_SYS_OCM_DATA_ADDR	0xF0000000
 #define CONFIG_SYS_OCM_DATA_SIZE	0x1000
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_OCM_DATA_ADDR	/* inside of On Chip SRAM    */
-#define CONFIG_SYS_INIT_RAM_END	CONFIG_SYS_OCM_DATA_SIZE	/* End of On Chip SRAM	       */
-#define CONFIG_SYS_GBL_DATA_SIZE	64		/* size in bytes reserved for initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	CONFIG_SYS_OCM_DATA_SIZE	/* Size of On Chip SRAM	       */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 /* reserve some memory for POST and BOOT limit info */
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 32)
 
 #ifdef CONFIG_BOOTCOUNT_LIMIT /* reserve 2 word for bootcount limit */
 #define CONFIG_SYS_BOOTCOUNT_ADDR (CONFIG_SYS_GBL_DATA_OFFSET - 12)
 #endif
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
-
 
 /***********************************************************************
  * External peripheral base address

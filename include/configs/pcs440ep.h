@@ -40,6 +40,9 @@
 #define CONFIG_440EP		1	/* Specific PPC440EP support    */
 #define CONFIG_440		1	/* ... PPC440 family	        */
 #define CONFIG_4xx		1	/* ... PPC4xx family	        */
+
+#define	CONFIG_SYS_TEXT_BASE	0xFFFA0000
+
 #define CONFIG_SYS_CLK_FREQ	33333333    /* external freq to pll	*/
 
 #define CONFIG_BOARD_EARLY_INIT_F 1     /* Call board_early_init_f	*/
@@ -71,9 +74,8 @@
  *----------------------------------------------------------------------*/
 #define CONFIG_SYS_INIT_RAM_DCACHE	1		/* d-cache as init ram	*/
 #define CONFIG_SYS_INIT_RAM_ADDR	0x70000000		/* DCache       */
-#define CONFIG_SYS_INIT_RAM_END	(4 << 10)
-#define CONFIG_SYS_GBL_DATA_SIZE	256			/* num bytes initial data*/
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	(4 << 10)
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 /*-----------------------------------------------------------------------
@@ -442,14 +444,6 @@
 {GPIO1_BASE, GPIO_IN,  GPIO_SEL, GPIO_OUT_NO_CHG},  /* GPIO63  Unselect via TraceSelect Bit	*/	\
 }											\
 }
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */

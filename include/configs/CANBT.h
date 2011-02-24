@@ -37,6 +37,8 @@
 #define CONFIG_4xx		1	/* ...member of PPC4xx family	*/
 #define CONFIG_CANBT		1	/* ...on a CANBT board		*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
+
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* call board_early_init_f()	*/
 
 #define CONFIG_SYS_CLK_FREQ	25000000 /* external frequency to pll	*/
@@ -75,7 +77,7 @@
 #define CONFIG_CMD_EEPROM
 
 #undef CONFIG_CMD_NET
-
+#undef CONFIG_CMD_NFS
 
 #undef CONFIG_WATCHDOG			/* watchdog disabled		*/
 
@@ -127,8 +129,8 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_FLASH_BASE		CONFIG_SYS_MONITOR_BASE
-#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE
-#define CONFIG_SYS_MONITOR_LEN		(~(TEXT_BASE) + 1)
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_MONITOR_LEN		(~(CONFIG_SYS_TEXT_BASE) + 1)
 #define CONFIG_SYS_MALLOC_LEN		(128 * 1024)	/* Reserve 128 kB for malloc()	*/
 
 /*
@@ -221,18 +223,8 @@
  * Definitions for initial stack pointer and data area (in RAM)
  */
 #define CONFIG_SYS_INIT_RAM_ADDR	0x00ef0000 /* inside of SDRAM			*/
-#define CONFIG_SYS_INIT_RAM_END	0x0f00	/* End of used area in RAM	       */
-#define CONFIG_SYS_GBL_DATA_SIZE	64  /* size in bytes reserved for initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	0x0f00	/* Size of used area in RAM	       */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
-
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #endif	/* __CONFIG_H */

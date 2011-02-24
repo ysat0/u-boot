@@ -53,7 +53,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SCCR2_CLOCKS_EN	(CLOCK_SCCR2_DIU_EN |		\
 			 CLOCK_SCCR2_I2C_EN |		\
 			 CLOCK_SCCR2_MEM_EN |		\
-			 CLOCK_SCCR2_SPDIF_EN)
+			 CLOCK_SCCR2_SPDIF_EN |  	\
+			 CLOCK_SCCR2_USB1_EN | 		\
+			 CLOCK_SCCR2_USB2_EN)
 
 void __mpc5121_nfc_select_chip(struct mtd_info *mtd, int chip);
 
@@ -102,7 +104,7 @@ int board_early_init_f(void)
 	 * write commands in order to establish the device ID.
 	 */
 
-#ifdef CONFIG_ADS5121_REV2
+#ifdef CONFIG_MPC5121ADS_REV2
 	out_8((u8 *)(CONFIG_SYS_CPLD_BASE + 0x08), 0xC1);
 #else
 	if (in_8((u8 *)(CONFIG_SYS_CPLD_BASE + 0x08)) & 0x04) {
@@ -329,7 +331,7 @@ int checkboard (void)
 	volatile immap_t *im = (immap_t *) CONFIG_SYS_IMMR;
 	u32 spridr = in_be32(&im->sysconf.spridr);
 
-	printf ("Board: ADS5121 rev. 0x%04x (CPLD rev. 0x%02x)\n",
+	printf ("Board: MPC5121ADS rev. 0x%04x (CPLD rev. 0x%02x)\n",
 		brd_rev, cpld_rev);
 
 	/* initialize function mux & slew rate IO inter alia on IO Pins  */

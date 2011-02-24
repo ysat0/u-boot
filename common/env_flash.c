@@ -82,9 +82,6 @@ uchar env_get_char_spec(int index)
 	return (*((uchar *)(gd->env_addr + index)));
 }
 
-#undef debug
-#define debug printf
-
 #ifdef CONFIG_ENV_ADDR_REDUND
 
 int  env_init(void)
@@ -158,7 +155,7 @@ int saveenv(void)
 	}
 
 	res = (char *)&env_new.data;
-	len = hexport('\0', &res, ENV_SIZE);
+	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
 	if (len < 0) {
 		error("Cannot export environment: errno = %d\n", errno);
 		goto done;
@@ -292,7 +289,7 @@ int saveenv(void)
 		goto done;
 
 	res = (char *)&env_new.data;
-	len = hexport('\0', &res, ENV_SIZE);
+	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
 	if (len < 0) {
 		error("Cannot export environment: errno = %d\n", errno);
 		goto done;

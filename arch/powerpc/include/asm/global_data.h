@@ -34,7 +34,7 @@
  * global variables during system initialization (until we have set
  * up the memory controller so that we can use RAM).
  *
- * Keep it *SMALL* and remember to set CONFIG_SYS_GBL_DATA_SIZE > sizeof(gd_t)
+ * Keep it *SMALL* and remember to set GENERATED_GBL_DATA_SIZE > sizeof(gd_t)
  */
 
 typedef	struct	global_data {
@@ -171,6 +171,9 @@ typedef	struct	global_data {
 #endif
 #if defined(CONFIG_LWMON) || defined(CONFIG_LWMON5)
 	unsigned long kbd_status;
+#endif
+#ifdef CONFIG_SYS_FPGA_COUNT
+	unsigned fpga_state[CONFIG_SYS_FPGA_COUNT];
 #endif
 #if defined(CONFIG_WD_MAX_RATE)
 	unsigned long long wdt_last;	/* trace watch-dog triggering rate */

@@ -32,6 +32,11 @@
 #define CONFIG_UC101		1	/* UC101 board		*/
 #define CONFIG_HOSTNAME		uc101
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFF00000
+#endif
+#define CONFIG_SYS_LDSCRIPT	"arch/powerpc/cpu/mpc5xxx/u-boot-customlayout.lds"
+
 #include "manroland/common.h"
 #include "manroland/mpc5200-common.h"
 

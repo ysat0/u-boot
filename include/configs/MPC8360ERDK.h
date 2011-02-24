@@ -26,18 +26,20 @@
 #define CONFIG_MPC8360		1 /* MPC8360 CPU specific */
 #define CONFIG_MPC8360ERDK	1 /* MPC8360ERDK board specific */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFF800000
+
 /*
  * System Clock Setup
  */
 #ifdef CONFIG_CLKIN_33MHZ
 #define CONFIG_83XX_CLKIN		33333333
 #define CONFIG_SYS_CLK_FREQ		33333333
-#define PCI_33M				1
+#define CONFIG_PCI_33M				1
 #define HRCWL_CSB_TO_CLKIN_MPC8360ERDK	HRCWL_CSB_TO_CLKIN_10X1
 #else
 #define CONFIG_83XX_CLKIN		66000000
 #define CONFIG_SYS_CLK_FREQ		66000000
-#define PCI_66M				1
+#define CONFIG_PCI_66M				1
 #define HRCWL_CSB_TO_CLKIN_MPC8360ERDK	HRCWL_CSB_TO_CLKIN_5X1
 #endif /* CONFIG_CLKIN_33MHZ */
 
@@ -153,7 +155,7 @@
 /*
  * The reserved memory
  */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE /* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE /* start of monitor */
 #define CONFIG_SYS_FLASH_BASE		0xFF800000 /* FLASH base address */
 
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
@@ -170,9 +172,8 @@
  */
 #define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xE6000000 /* Initial RAM address */
-#define CONFIG_SYS_INIT_RAM_END	0x1000 /* End of used area in RAM */
-#define CONFIG_SYS_GBL_DATA_SIZE	0x100 /* num bytes initial data */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_SIZE	0x1000 /* Size of used area in RAM */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 
 /*
  * Local Bus Configuration & Clock Setup
@@ -483,14 +484,6 @@
 #define CONFIG_SYS_DBAT7L	CONFIG_SYS_IBAT7L
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
 #endif /* CONFIG_PCI */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01 /* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02 /* Software reboot */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed of kgdb serial port */
