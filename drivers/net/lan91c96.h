@@ -146,6 +146,27 @@ typedef unsigned long int		dword;
 					};  \
 				})
 
+#elif defined(CONFIG_EDOSK2674)
+/* 8bit bus */
+#define SMC_inb(edev, r) (*(volatile byte *)((edev)->iobase+(r)))
+#define SMC_outb(edev, d, r) (*(volatile byte *)((edev)->iobase+(r)) = d)
+#define SMC_inw(edev, r) (*(volatile byte *)((edev)->iobase+(r)) | *(volatile byte *)((edev)->iobase+(r)+1) << 8)
+#define SMC_outw(edev, d, r) ({ *(volatile byte *)((edev)->iobase+(r)) = (d) & 0xff; \
+				*(volatile byte *)((edev)->iobase+(r)+1) = (d) >> 8; })
+#define SMC_insw(edev, r, b, l) ({ int __i; \
+			char *__b = (char *)b;	\
+			for (__i = 0; __i < l; __i++) { \
+				*__b++ = SMC_inb(edev, r);	\
+				*__b++ = SMC_inb(edev, r+1);	\
+			}					\
+		})
+#define SMC_outsw(edev, r, b, l) ({ int __i; \
+			char *__b = (char *)b;	\
+			for (__i = 0; __i < l; __i++) { \
+				SMC_outb(edev, *__b, r); __b++;	\
+				SMC_outb(edev, *__b, r+1); __b++;	\
+			}					\
+		})
 #else /* if not CONFIG_PXA250 */
 
 /*
