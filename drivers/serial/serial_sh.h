@@ -296,7 +296,7 @@ struct uart_port {
 #endif
 
 #define SCxSR_TEND(port)\
-		(((port)->type == PORT_SCI) ? SCI_TEND	: SCIF_TEND)
+		(((port)->type == PORT_SCI) ? SCI_TDRE	: SCIF_TEND)
 #define SCxSR_ERRORS(port)\
 		(((port)->type == PORT_SCI) ? SCI_ERRORS : SCIF_ERRORS)
 #define SCxSR_RDxF(port)\

@@ -180,7 +180,7 @@ void serial_raw_putc(const char c)
 	}
 
 	sci_out(&sh_sci, SCxTDR, c);
-	sci_out(&sh_sci, SCxSR, sci_in(&sh_sci, SCxSR) & ~(SCxSR_TEND(&sh_sci) | SCxSR_TDxE(&sh_sci)) );
+	sci_out(&sh_sci, SCxSR, sci_in(&sh_sci, SCxSR) & ~SCxSR_TEND(&sh_sci));
 }
 
 void serial_putc(const char c)
