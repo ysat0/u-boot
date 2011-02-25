@@ -52,6 +52,7 @@
 /* MEMORY */
 #define EDOSK2674_SDRAM_BASE	0x400000
 
+#define CONFIG_SYS_TEXT_BASE	0x400000
 #define CONFIG_SYS_LONGHELP		/* undef to save memory	*/
 #define CONFIG_SYS_PROMPT	"=> "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256	/* Buffer size for input from the Console */
@@ -63,8 +64,9 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 38400 }
 
 /* SCI */
-#define CONFIG_SCI_SERIAL	1
-#define CONFIG_SCI_BASE		0xffff88	/* SCI2 */	
+#define CONFIG_SCI		1
+#define CONFIG_SCIF_CONSOLE	1
+#define CONFIG_CONS_SCIF2	1
 
 /* TIMER */
 #define CONFIG_TIMER_BASE	0xffffb0	/* CH0-1 */
@@ -86,6 +88,7 @@
 #define CONFIG_ENV_IS_NOWHERE
 
 /* Board Clock */
-#define CONFIG_SYS_HZ			33333333
+#define CONFIG_SYS_CLK_FREQ		33333333
+#define CONFIG_SYS_HZ			CONFIG_SYS_CLK_FREQ
 
 #endif	/* __EDOSK2674_H */

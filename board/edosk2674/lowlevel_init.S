@@ -25,6 +25,7 @@
 	.align	2
 
 _lowlevel_init:
+#if CONFIG_SYS_TEXT_BASE == 0
 	mov.l	#init_table,er4
 	mov.w	#0xffff,e5
 1:	mov.w	@er4+,r5
@@ -43,6 +44,7 @@ _lowlevel_init:
 	mov.b	r1l,@0x400040
 	mov.w	#0x84b4,r0
 	mov.w	r0,@0xfed0:16
+#endif
 	rts
 
 	.align	2

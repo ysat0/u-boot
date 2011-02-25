@@ -24,12 +24,21 @@
 OUTPUT_ARCH(h8300s)
 ENTRY(_start)
 
+#if CONFIG_SYS_TEXT_BASE == 0
 MEMORY
 {
        from : ORIGIN = 0x000000, LENGTH = 4M
        sdram : ORIGIN = 0x400000, LENGTH = 8M
        iram : ORIGIN = 0xff4000, LENGTH = 32K
 }
+#else
+MEMORY
+{
+       from : ORIGIN = 0x400000, LENGTH = 128K
+       sdram : ORIGIN = 0x420000, LENGTH = 8M
+       iram : ORIGIN = 0xff4000, LENGTH = 32K
+}
+#endif
 
 SECTIONS
 {
