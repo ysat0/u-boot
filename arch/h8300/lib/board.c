@@ -51,6 +51,8 @@ extern int watchdog_disable(void);
 # define INIT_FUNC_IDE_INIT
 #endif /* CONFIG_CMD_IDE */
 
+gd_t *gd;
+
 typedef int (init_fnc_t) (void);
 
 static init_fnc_t * const init_sequence[] =
@@ -72,17 +74,13 @@ static init_fnc_t * const init_sequence[] =
 };
 
 
-DECLARE_GLOBAL_DATA_PTR;
-
 void h8300_generic_init(gd_t *_gd)
 {
 	bd_t *bd;
 	init_fnc_t * const *init_fnc_ptr;
 	gd = _gd;
 
-	memset((void *)gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
-
-	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
+	memset(gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
 
 	gd->bd = (bd_t *)(gd + 1);	/* At end of global data */
 	gd->baudrate = CONFIG_BAUDRATE;
@@ -98,7 +96,7 @@ void h8300_generic_init(gd_t *_gd)
 #endif
 	bd->bi_baudrate	= CONFIG_BAUDRATE;
 
-	mem_malloc_init((unsigned long)_gd + CONFIG_SYS_GBL_DATA_SIZE,
+	mem_malloc_init((unsigned long)gd + CONFIG_SYS_GBL_DATA_SIZE,
 			CONFIG_SYS_MALLOC_LEN);
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
 		WATCHDOG_RESET();
