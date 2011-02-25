@@ -41,7 +41,7 @@
 #undef CONFIG_CMD_NFS
 #undef CONFIG_CMD_SDRAM
 #undef CONFIG_CMD_CACHE
-#undef CONFIG_CMD_NET
+#define CONFIG_CMD_DHCP
 
 #define CONFIG_BAUDRATE		38400
 #define CONFIG_BOOTARGS		"console=ttySC0,115200"
@@ -90,5 +90,10 @@
 /* Board Clock */
 #define CONFIG_SYS_CLK_FREQ		33333333
 #define CONFIG_SYS_HZ			CONFIG_SYS_CLK_FREQ
+
+/* Ether */
+#define CONFIG_LAN91C96		1
+#define CONFIG_LAN91C96_BASE	0xf80000
+#define CONFIG_NET_MULTI	1
 
 #endif	/* __EDOSK2674_H */
