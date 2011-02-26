@@ -31,15 +31,12 @@
 #define CONFIG_CPU_H8S2678	1
 #define CONFIG_EDOSK2674	1
 
-#define CONFIG_SYS_NO_FLASH	1
-
 #include <config_cmd_default.h>
 #undef CONFIG_CMD_BDI
 #undef CONFIG_CMD_FPGA
 #undef CONFIG_CMD_IMI
 #undef CONFIG_CMD_IMLS
 #undef CONFIG_CMD_NFS
-#undef CONFIG_CMD_SDRAM
 #undef CONFIG_CMD_CACHE
 #define CONFIG_CMD_DHCP
 
@@ -50,8 +47,10 @@
 #undef	CONFIG_SHOW_BOOT_PROGRESS
 
 /* MEMORY */
+#define EDOSK2674_FLASH_BASE	0x000000
 #define EDOSK2674_SDRAM_BASE	0x400000
 
+#define CONFIG_SYS_MONITOR_BASE	EDOSK2674_FLASH_BASE
 #define CONFIG_SYS_TEXT_BASE	0x400000
 #define CONFIG_SYS_LONGHELP		/* undef to save memory	*/
 #define CONFIG_SYS_PROMPT	"=> "	/* Monitor Command Prompt */
@@ -61,7 +60,7 @@
 /* Buffer size for Boot Arguments passed to kernel */
 #define CONFIG_SYS_BARGSIZE	512
 /* List of legal baudrate settings for this board */
-#define CONFIG_SYS_BAUDRATE_TABLE	{ 38400 }
+#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400 }
 
 /* SCI */
 #define CONFIG_SCI		1
@@ -71,6 +70,7 @@
 /* TIMER */
 #define CONFIG_TIMER_BASE	0xffffb0	/* CH0-1 */
 
+/* SDRAM */
 #define CONFIG_SYS_MEMTEST_START	EDOSK2674_SDRAM_BASE
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + (2 * 1024 * 1024))
 
@@ -84,8 +84,9 @@
 #define CONFIG_SYS_MALLOC_LEN		(256 * 1024)
 #define CONFIG_SYS_GBL_DATA_SIZE	256
 
-#define CONFIG_ENV_SIZE			1024
-#define CONFIG_ENV_IS_NOWHERE
+#define CONFIG_ENV_SIZE			(128 * 1024)
+#define CONFIG_ENV_IS_IN_FLASH		1
+#define CONFIG_ENV_ADDR			0x3e0000
 
 /* Board Clock */
 #define CONFIG_SYS_CLK_FREQ		33333333
@@ -95,5 +96,13 @@
 #define CONFIG_LAN91C96		1
 #define CONFIG_LAN91C96_BASE	0xf80000
 #define CONFIG_NET_MULTI	1
+
+/* Flash */
+#define CONFIG_SYS_MAX_FLASH_BANKS	1
+#define CONFIG_SYS_MAX_FLASH_SECT	32
+#define CONFIG_SYS_FLASH_BASE		EDOSK2674_FLASH_BASE
+#define CONFIG_SYS_FLASH_CFI		1
+#define CONFIG_FLASH_CFI_DRIVER		1
+#define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
 
 #endif	/* __EDOSK2674_H */

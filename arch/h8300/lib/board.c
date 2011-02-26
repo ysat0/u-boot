@@ -34,6 +34,11 @@ extern int timer_init(void);
 
 const char version_string[] = U_BOOT_VERSION" ("U_BOOT_DATE" - "U_BOOT_TIME")";
 
+#ifndef CONFIG_SYS_NO_FLASH
+extern int __bss_start;
+unsigned long monitor_flash_len = &__bss_start;
+#endif
+
 #if defined(CONFIG_WATCHDOG)
 extern int watchdog_init(void);
 extern int watchdog_disable(void);
@@ -103,7 +108,7 @@ void h8300_generic_init(gd_t *_gd)
 		if ((*init_fnc_ptr) () != 0)
 			hang();
 	}
-
+	bd->bi_flashsize = flash_init();
 	env_relocate();
 	stdio_init();
 	console_init_r();
