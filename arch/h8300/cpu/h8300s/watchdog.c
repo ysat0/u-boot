@@ -19,6 +19,7 @@
 
 #include <common.h>
 #include <asm/processor.h>
+#include <asm/io.h>
 
 int watchdog_init(void)
 {
@@ -27,6 +28,9 @@ int watchdog_init(void)
 
 void reset_cpu(unsigned long ignored)
 {
+	__raw_writew(0x5a80, 0xffffbc);
+	__raw_writew(0x5a40, 0xffffbe);
+	__raw_writew(0xa578, 0xffffbc);
 	while (1)
 		;
 }
