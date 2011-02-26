@@ -31,6 +31,8 @@ int checkboard(void)
 
 int board_init(void)
 {
+	/* timer and SCI enable */
+	__raw_writeb(__raw_readb(0xffff41) & 0xf0, 0xffff41);
 	return 0;
 }
 

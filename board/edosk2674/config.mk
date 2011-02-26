@@ -22,4 +22,4 @@
 # NOTE: Must match value used in u-boot.lds (in this directory).
 #
 
-TEXT_BASE = 0x000000
+TEXT_BASE = 0xBC0000
