@@ -24,6 +24,10 @@
 	.text
 	.align	2
 
+/*
+This function call to before relocate
+So not refer to absolute address
+*/
 _lowlevel_init:
 	bsr	1f
 1:	mov.l	@sp+,er4
@@ -76,31 +80,5 @@ init_table:
 	.word	0xfe1c,0x0055
 	.word	0xfe1d,0x0055
 	.word	0
-
-puthex:
-	mov.l	#0xff4008,er1
-	mov.b	#8,r2h
-1:	mov.b	r0l,r2l
-	and.b	#0x0f,r2l
-	add.b	#'0',r2l
-	cmp	#'9',r2l
-	ble	2f
-	add	#7,r2l
-2:	subs	#1,er1
-	mov.b	r2l,@er1
-	shlr.l	#2,er0
-	shlr.l	#2,er0
-	dec.b	r2h
-	bne	1b
-	mov.l	#0xff4000,er1
-	mov.b	#8,r2h
-3:	btst	#7,@0x8c:8
-	beq	3b
-	mov.b	@er1+,r0l
-	mov.b	r0l,@0x8b:8
-	bclr	#7,@0x8c:8
-	dec.b	r2h
-	bne	3b
-	rts
 
 	.end

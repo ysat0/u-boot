@@ -98,8 +98,13 @@ void h8300_generic_init(gd_t *_gd)
 	gd->cpu_clk = CONFIG_SYS_CLK_FREQ;
 
 	bd = gd->bd;
+#if defined(CONFIG_SYS_SDRAM_BASE)
+	bd->bi_memstart	= CONFIG_SYS_SDRAM_BASE;
+	bd->bi_memsize = CONFIG_SYS_SDRAM_SIZE;
+#else
 	bd->bi_memstart	= CONFIG_SYS_DRAM_BASE;
 	bd->bi_memsize = CONFIG_SYS_DRAM_SIZE;
+#endif
 #if defined(CONFIG_SYS_SRAM_BASE) && defined(CONFIG_SYS_SRAM_SIZE)
 	bd->bi_sramstart = CONFIG_SYS_SRAM_BASE;
 	bd->bi_sramsize	= CONFIG_SYS_SRAM_SIZE;
