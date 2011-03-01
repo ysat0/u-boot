@@ -24,6 +24,7 @@
 OUTPUT_ARCH(h8300h)
 ENTRY(_start)
 
+#if 0
 MEMORY
 {
 	vector : ORIGIN = 0x000000, LENGTH = 4K
@@ -88,6 +89,76 @@ SECTIONS
 		*(.bss)
 		. = ALIGN(4);
 	} > iram
+	PROVIDE (_bss_end = .);
+
+	PROVIDE (__end = .);
+	.iram :
+	{
+	}
+	PROVIDE (__init_stack = 0xfffe20);
+	PROVIDE (__ram_vec =    0xfffe20);
+}
+#endif
+MEMORY
+{
+	dram : ORIGIN = 0x400000, LENGTH = 4M
+	iram : ORIGIN = 0xffc720, LENGTH = 14K
+}
+
+SECTIONS
+{
+
+	.vector :
+	{
+		*(.vector)
+	} > dram
+	.config :
+	{
+		*(.config)
+	} > dram		
+	PROVIDE (__start = .);
+	PROVIDE (__ftext = .);
+	.text :
+	{
+		arch/h8300/cpu/h8300h/start.o		(.text)
+		. = ALIGN(4);
+		*(.text)
+		. = ALIGN(4);
+	} > dram
+	PROVIDE (__ecode = .);
+	.rodata :
+	{
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
+		. = ALIGN(4);
+	} > dram
+	PROVIDE (__etext = .);
+
+	PROVIDE (___u_boot_cmd_start = .);
+	.u_boot_cmd :
+	{
+		*(.u_boot_cmd)
+		. = ALIGN(4);
+	} > dram
+	PROVIDE (___u_boot_cmd_end = .);
+
+	PROVIDE (__fdata = .);
+	.data :
+	{
+		PROVIDE (__ram_data = .);
+		*(.text2)
+		*(.data)
+		. = ALIGN(4);
+	} >dram
+	PROVIDE (__sizeof_data = SIZEOF(.data));
+	PROVIDE (__edata = .);
+
+	PROVIDE (_bss_start = .);
+	PROVIDE (___bss_start = .);
+	.bss :
+	{
+		*(.bss)
+		. = ALIGN(4);
+	} > dram
 	PROVIDE (_bss_end = .);
 
 	PROVIDE (__end = .);

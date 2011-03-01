@@ -56,6 +56,6 @@ void led_set_state(unsigned short value)
 #ifdef CONFIG_CMD_NET
 int board_eth_init(bd_t *bis)
 {
-	return rtl8019_initialize(bis, CONFIG_RTL8019_BASE);
+	return rtl8019_initialize(bis, CONFIG_DRIVER_RTL8019_BASE);
 }
 #endif

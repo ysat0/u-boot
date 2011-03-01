@@ -20,7 +20,7 @@
 
 #include $(TOPDIR)/config.mk
 
-LIB	= lib$(BOARD).a
+LIB	= lib$(BOARD).o
 
 OBJS	:= kanebebe.o
 SOBJS	:= lowlevel_init.o

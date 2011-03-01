@@ -29,7 +29,7 @@
 #define CONFIG_H8300		1
 #define CONFIG_H8300H		1
 #define CONFIG_CPU_H83069	1
-#define CONFIG_KANEBEBE	1
+#define CONFIG_KANEBEBE		1
 
 #include <config_cmd_default.h>
 #undef CONFIG_CMD_BDI
@@ -62,8 +62,9 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 38400 }
 
 /* SCI */
-#define CONFIG_SCI_SERIAL	1
-#define CONFIG_SCI_BASE		0xffffb8	/* SCI1 */	
+#define CONFIG_SCI		1
+#define CONFIG_SCIF_CONSOLE	1
+#define CONFIG_CONS_SCIF1	1
 
 /* TIMER */
 #define CONFIG_TIMER_BASE	0xffff80	/* CH0-1 */
@@ -81,7 +82,7 @@
 
 #define CONFIG_SYS_LOAD_ADDR		0x400000
 
-#define CONFIG_SYS_MALLOC_LEN		4096
+#define CONFIG_SYS_MALLOC_LEN		8192
 #define CONFIG_SYS_GBL_DATA_SIZE	64
 
 #define CONFIG_ENV_SIZE			1024
@@ -96,8 +97,9 @@
 
 /* Board Clock */
 #define CONFIG_SYS_HZ			25000000
+#define CONFIG_SYS_CLK_FREQ		CONFIG_SYS_HZ
 
-#define CONFIG_DRIVER_RTL8019
-#define CONFIG_RTL8019_BASE		0x200000
+#define CONFIG_DRIVER_RTL8019		1
+#define CONFIG_DRIVER_RTL8019_BASE	0x200000
 
 #endif
