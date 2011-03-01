@@ -85,60 +85,11 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
 	return rc;
 }
 
-static int write_unaligned (uchar * src, ulong addr, ulong size)
-{
-	uchar *buf;
-	unsigned char drcra;
-	unsigned char ccr;
-	int rc;
-
-	buf = malloc(128);
-	if (buf == NULL)
-		return ERR_PROG_ERROR;
-
-	memset(buf, 0xff, 128);
-	memcpy(buf + (addr & 0x7f), src, size);
-
-	DPFR = 0xff;
-	FKEY = 0xa5;
-	FTDAR = 0x03;
-	rc = _3069_load_progs(CONFIG_SYS_HZ / 1000, WRITE);
-	if (rc == 0) {
-		FKEY = 0x5a;
-		/* diable interrput */
-		__asm__ volatile("stc ccr,%w0\n\torc #0x80,ccr" : "=r"(ccr));
-		/* disable refresh */
-		drcra = DRCRA;
-		DRCRA = 0;
-		rc = _3069_write_block(src, addr);
-		DRCRA = drcra;
-		__asm__ volatile("ldc %w0,ccr" :: "r"(ccr));
-	} else {
-		rc = ERR_PROG_ERROR;
-	}
-	free(buf);
-	return rc;
-}
-
-
 int write_buff (flash_info_t * info, uchar * src, ulong addr, ulong cnt)
 {
 	int rc;
 	unsigned char drcra;
 	unsigned char ccr;
-
-	/* head unaligned */
-	if (addr & 0x7f) {
-		int len = 128 - (addr & 0x7f);
-		if (cnt < len)
-			len = cnt;
-		rc = write_unaligned(src, addr, len);
-		if (rc != 0)
-			return rc;
-		cnt -= len;
-		src += len;
-		addr += len;
-	}
 
 	DPFR = 0xff;
 	FKEY = 0xa5;
@@ -165,12 +116,6 @@ int write_buff (flash_info_t * info, uchar * src, ulong addr, ulong cnt)
 	} else {
 		rc = ERR_PROG_ERROR;
 	}
-	if (rc != 0)
-		return rc;
-
-	/* tail unaligned */
-	if (cnt > 0)
-		rc = write_unaligned(src, addr, cnt);
 
 	return rc;
 }
@@ -187,4 +132,10 @@ void flash_print_info(flash_info_t *info)
 		printf("%06lX ", info->start[i]);
 	}
 	printf("\n");
+}
+
+unsigned long flash_init(void)
+{
+	/* nothing do */
+	return 0;
 }

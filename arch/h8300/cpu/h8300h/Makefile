@@ -25,11 +25,13 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(CPU).a
+LIB	= $(obj)lib$(CPU).o
 SOBJS-y = start.o
 COBJS-y = cpu.o interrupts.o watchdog.o 
+ifeq ($(CONFIG_SYS_NO_FLASH),)
 SOBJS-$(CONFIG_CPU_H83069) += 3069flash_low.o
 COBJS-$(CONFIG_CPU_H83069) += 3069flash.o
+endif
 
 SOBJS	= $(SOBJS-y)
 COBJS	= $(COBJS-y)

@@ -84,11 +84,6 @@ void h8300_generic_init(gd_t *_gd)
 	bd_t *bd;
 	init_fnc_t * const *init_fnc_ptr;
 	gd = _gd;
-#if 0
-	while ((*(volatile unsigned char *)0xffff8c & 0x80) == 0);
-	*(volatile unsigned char *)0xffff8b = 'C';
-	*(volatile unsigned char *)0xffff8c &= 0x7f;
-#endif
 	memset(gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
 
 	gd->bd = (bd_t *)(gd + 1);	/* At end of global data */
@@ -118,7 +113,9 @@ void h8300_generic_init(gd_t *_gd)
 		if ((*init_fnc_ptr) () != 0)
 			hang();
 	}
+#if !defined(CONFIG_SYS_NO_FLASH)
 	bd->bi_flashsize = flash_init();
+#endif
 	env_relocate();
 	stdio_init();
 	console_init_r();
