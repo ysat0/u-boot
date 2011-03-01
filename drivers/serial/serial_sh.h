@@ -14,7 +14,7 @@ struct uart_port {
 #define PORT_SCIFA	83
 #define PORT_SCIFB	93
 
-#if defined(CONFIG_CPU_H83007) || defined(CONFIG_CPU_H83068)
+#if defined(CONFIG_CPU_H83007) || defined(CONFIG_CPU_H83068) || defined(CONFIG_CPU_H83069)
 #include <asm/regs306x.h>
 #endif
 #if defined(CONFIG_CPU_H8S2678)
@@ -126,9 +126,12 @@ struct uart_port {
 # define SCLSR2\
 		((port->mapbase)+SCIF_LSR2_OFFS) /* 16 bit SCIF */
 # define SCSCR_INIT(port)  0x38		/* TIE=0,RIE=0, TE=1,RE=1,REIE=1 */
-#elif defined(CONFIG_CPU_H83007) || defined(CONFIG_CPU_H83068)
+#elif defined(CONFIG_CPU_H83007) || defined(CONFIG_CPU_H83068) || defined(CONFIG_CPU_H83069)
 # define SCSCR_INIT(port)          0x30 /* TIE=0,RIE=0,TE=1,RE=1 */
 # define H8300_SCI_DR(ch) (*(volatile char *)(P1DR + h8300_sci_pins[ch].port))
+# define SCIF0_BASE 0xffffb0 
+# define SCIF1_BASE 0xffffb8 
+# define SCIF2_BASE 0xffffc0 
 #elif defined(CONFIG_CPU_H8S2678)
 # define SCSCR_INIT(port)          0x30 /* TIE=0,RIE=0,TE=1,RE=1 */
 # define H8300_SCI_DR(ch) (*(volatile char *)(P1DR + h8300_sci_pins[ch].port))
