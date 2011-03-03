@@ -123,8 +123,10 @@ int hcreate_r(size_t nel, struct hsearch_data *htab)
 
 	/* allocate memory and zero out */
 	htab->table = (_ENTRY *) calloc(htab->size + 1, sizeof(_ENTRY));
-	if (htab->table == NULL)
+	if (htab->table == NULL) {
+		__set_errno(ENOMEM);
 		return 0;
+	}
 
 	/* everything went alright */
 	return 1;
