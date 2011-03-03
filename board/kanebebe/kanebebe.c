@@ -31,6 +31,8 @@ int checkboard(void)
 
 int board_init(void)
 {
+	__raw_writeb(0xff, 0xfee009);
+	__raw_writeb(0xc0, 0xffffd9);
 	return 0;
 }
 
@@ -47,10 +49,10 @@ int dram_init(void)
 void led_set_state(unsigned short value)
 {
 	unsigned char padr;
-	padr = *(unsigned char *)0xffffd9;
+	padr = __raw_readb(0xffffd9);
 	padr &= 0x3f;
 	padr |= (value & 0x03) << 6;
-	*(unsigned char *)0xffffd9 = padr;
+	__raw_writeb(padr, 0xffffd9);
 }
 
 #ifdef CONFIG_CMD_NET
