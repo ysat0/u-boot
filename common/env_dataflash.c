@@ -95,8 +95,6 @@ int env_init(void)
 	if (gd->env_valid)
 		return 0;
 
-	AT91F_DataflashInit();	/* prepare for DATAFLASH read/write */
-
 	/* read old CRC */
 	read_dataflash(CONFIG_ENV_ADDR + offsetof(env_t, crc),
 		sizeof(ulong), (char *)&crc);
