@@ -23,7 +23,7 @@
 #include <dataflash.h>
 #include <asm/io.h>
 
-extern void h8300_f;ash_setup(void);
+extern void h8300_flash_setup(void);
 extern int h83069_flash_write(int freq, unsigned int addr, unsigned int size);
 extern char h83069_flash_wbuf[];
 
@@ -57,16 +57,18 @@ int read_dataflash (unsigned long addr, unsigned long size, char *result)
 int write_dataflash (unsigned long addr_dest, unsigned long addr_src,
 			unsigned long size)
 {
-	if (size > (AREA_END - AREA_START + 1) || !addr_dataflash(addr_dest))
-		return ERR_INVAL;
-
-	if ((__raw_readb(0xfee0b0) & 0x80) == 0)
-		return ERR_PROTECTED;
-	memset(h83069_flash_wbuf, 0xff, (AREA_END - AREA_START + 1));
+	if (size > (AREA_END - AREA_START + 1) || !addr_dataflash(addr_dest)) {
+		dataflash_perror(ERR_INVAL);
+		return 1;
+	}
+	if ((__raw_readb(0xfee0b0) & 0x80) == 0) {
+		dataflash_perror(ERR_PROTECTED);
+		return 1;
+	}
 	memcpy(h83069_flash_wbuf, (char *)addr_src, size);
 	puts("Force restart after writing\n");
 	h8300_flash_setup();
-	return h83069_flash_write(CONFIG_SYS_HZ/1000, addr_dest, size);
+	return h83069_flash_write(CONFIG_SYS_HZ/10000, addr_dest, size);
 }
 
 void dataflash_perror (int err)
