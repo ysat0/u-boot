@@ -27,18 +27,15 @@ extern void h8300_flash_setup(void);
 extern int h83069_flash_write(int freq, unsigned int addr, unsigned int size);
 extern char h83069_flash_wbuf[];
 
-#define AREA_START (0x1000)
-#define AREA_END   (0x1fff)
-
 void dataflash_print_info (void)
 {
 	printf("H8/3069 Internal Flash\n");
-	printf("0x%06x - 0x%06x\n", AREA_START, AREA_END);
+	printf("0x%06x - 0x%06x\n", DATAFLASH_START, DATAFLASH_END);
 }
 
 int addr_dataflash (unsigned long addr)
 {
-	return (addr >= AREA_START) && (addr <= AREA_END);
+	return (addr >= DATAFLASH_START) && (addr <= DATAFLASH_END);
 }
 
 int dataflash_real_protect (int flag, unsigned long start_addr,
@@ -57,7 +54,7 @@ int read_dataflash (unsigned long addr, unsigned long size, char *result)
 int write_dataflash (unsigned long addr_dest, unsigned long addr_src,
 			unsigned long size)
 {
-	if (size > (AREA_END - AREA_START + 1) || !addr_dataflash(addr_dest)) {
+	if (size > (DATAFLASH_END - DATAFLASH_START + 1) || !addr_dataflash(addr_dest)) {
 		dataflash_perror(ERR_INVAL);
 		return 1;
 	}
