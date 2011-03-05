@@ -40,7 +40,9 @@
 #include <usb.h>
 #include "sl811.h"
 
+#if defined(CONFIG_KUP4X)
 #include "../../../board/kup/common/kup.h"
+#endif
 
 #ifdef __PPC__
 # define EIEIO		__asm__ volatile ("eieio")
@@ -48,8 +50,8 @@
 # define EIEIO		/* nothing */
 #endif
 
-#define	 SL811_ADR (0x50000000)
-#define	 SL811_DAT (0x50000001)
+#define	 SL811_ADR (CONFIG_USB_SL811HS_ADDRESS)
+#define	 SL811_DAT (CONFIG_USB_SL811HS_DATA)
 
 #define mdelay(n) ({unsigned long msec=(n); while (msec--) udelay(1000);})
 
@@ -108,6 +110,7 @@ static void inline sl811_write_buf(__u8 offset, __u8 *buf, __u8 size)
 	}
 }
 
+#if defined(CONFIG_KUP4X)
 int usb_init_kup4x (void)
 {
 	volatile immap_t *immap = (immap_t *) CONFIG_SYS_IMMR;
@@ -138,6 +141,7 @@ int usb_init_kup4x (void)
 	printf ("SL811 ready\n");
 	return (0);
 }
+#endif
 
 /*
  * This function resets SL811HS controller and detects the speed of
