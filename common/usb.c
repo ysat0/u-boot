@@ -49,6 +49,7 @@
 #include <asm/processor.h>
 #include <linux/ctype.h>
 #include <asm/byteorder.h>
+#include <asm/unaligned.h>
 
 #include <usb.h>
 #ifdef CONFIG_4xx
@@ -281,22 +282,22 @@ usb_set_maxpacket_ep(struct usb_device *dev, struct usb_endpoint_descriptor *ep)
 	if ((ep->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
 						USB_ENDPOINT_XFER_CONTROL) {
 		/* Control => bidirectional */
-		dev->epmaxpacketout[b] = ep->wMaxPacketSize;
-		dev->epmaxpacketin[b] = ep->wMaxPacketSize;
+		dev->epmaxpacketout[b] = __get_unaligned_le(&(ep->wMaxPacketSize));
+		dev->epmaxpacketin[b] = __get_unaligned_le(&(ep->wMaxPacketSize));
 		USB_PRINTF("##Control EP epmaxpacketout/in[%d] = %d\n",
 			   b, dev->epmaxpacketin[b]);
 	} else {
 		if ((ep->bEndpointAddress & 0x80) == 0) {
 			/* OUT Endpoint */
-			if (ep->wMaxPacketSize > dev->epmaxpacketout[b]) {
-				dev->epmaxpacketout[b] = ep->wMaxPacketSize;
+			if (__get_unaligned_le(&(ep->wMaxPacketSize)) > dev->epmaxpacketout[b]) {
+				dev->epmaxpacketout[b] = __get_unaligned_le(&(ep->wMaxPacketSize));
 				USB_PRINTF("##EP epmaxpacketout[%d] = %d\n",
 					   b, dev->epmaxpacketout[b]);
 			}
 		} else {
 			/* IN Endpoint */
-			if (ep->wMaxPacketSize > dev->epmaxpacketin[b]) {
-				dev->epmaxpacketin[b] = ep->wMaxPacketSize;
+			if (__get_unaligned_le(&(ep->wMaxPacketSize)) > dev->epmaxpacketin[b]) {
+				dev->epmaxpacketin[b] = __get_unaligned_le(&(ep->wMaxPacketSize));
 				USB_PRINTF("##EP epmaxpacketin[%d] = %d\n",
 					   b, dev->epmaxpacketin[b]);
 			}
@@ -342,14 +343,13 @@ int usb_parse_config(struct usb_device *dev, unsigned char *buffer, int cfgno)
 		return -1;
 	}
 	memcpy(&dev->config, buffer, buffer[0]);
-	le16_to_cpus(&(dev->config.desc.wTotalLength));
 	dev->config.no_of_if = 0;
 
 	index = dev->config.desc.bLength;
 	/* Ok the first entry must be a configuration entry,
 	 * now process the others */
 	head = (struct usb_descriptor_header *) &buffer[index];
-	while (index + 1 < dev->config.desc.wTotalLength) {
+	while (index + 1 < __get_unaligned_le(&(dev->config.desc.wTotalLength))) {
 		switch (head->bDescriptorType) {
 		case USB_DT_INTERFACE:
 			if (((struct usb_interface_descriptor *) \
@@ -374,8 +374,6 @@ int usb_parse_config(struct usb_device *dev, unsigned char *buffer, int cfgno)
 			dev->config.if_desc[ifno].no_of_ep++;
 			memcpy(&dev->config.if_desc[ifno].ep_desc[epno],
 				&buffer[index], buffer[index]);
-			le16_to_cpus(&(dev->config.if_desc[ifno].ep_desc[epno].\
-							       wMaxPacketSize));
 			USB_PRINTF("if %d, ep %d\n", ifno, epno);
 			break;
 		default:
@@ -465,7 +463,7 @@ int usb_get_configuration_no(struct usb_device *dev,
 				"(expected %i, got %i)\n", 9, result);
 		return -1;
 	}
-	tmp = le16_to_cpu(config->wTotalLength);
+	tmp = __get_unaligned_le(&(config->wTotalLength));
 
 	if (tmp > USB_BUFSIZ) {
 		USB_PRINTF("usb_get_configuration_no: failed to get " \
