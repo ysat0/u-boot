@@ -29,7 +29,7 @@ MEMORY
 	vector : ORIGIN = 0x000000, LENGTH = 4K
 	config : ORIGIN = 0x001000, LENGTH = 28K
 	irom : ORIGIN = 0x008000, LENGTH = 480K
-	dram : ORIGIN = 0x7E0000, LENGTH = 128K
+	dram : ORIGIN = 0x7C0000, LENGTH = 256K
 	/* 0xffbf20 - 0xffc720 using flash writer */
 	iram : ORIGIN = 0xffcf20, LENGTH = 12K
 }

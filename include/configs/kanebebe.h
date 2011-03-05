@@ -31,19 +31,24 @@
 #define CONFIG_CPU_H83069	1
 #define CONFIG_KANEBEBE		1
 
+#define CONFIG_SYS_LDSCRIPT "board/kanebebe/u-boot.lds"
+/*#define CONFIG_SYS_LDSCRIPT "board/kanebebe/u-boot.lds.ram"*/
+
 #include <config_cmd_default.h>
-#undef CONFIG_CMD_BDI
 #undef CONFIG_CMD_FPGA
 #undef CONFIG_CMD_IMI
 #undef CONFIG_CMD_IMLS
 #undef CONFIG_CMD_NFS
 #undef CONFIG_CMD_SDRAM
 #undef CONFIG_CMD_CACHE
+#define CONFIG_CMD_FAT
+#define CONFIG_CMD_EXT2
+#define CONFIG_CMD_USB			1
 
 #define CONFIG_NET_MULTI
 
 #define CONFIG_BAUDRATE		38400
-#define CONFIG_BOOTARGS		"console=ttySC0,115200"
+#define CONFIG_BOOTARGS		"console=ttySC1,38400"
 
 #undef CONFIG_VERSION_VARIABLE
 #undef	CONFIG_SHOW_BOOT_PROGRESS
@@ -100,5 +105,11 @@
 
 #define CONFIG_DRIVER_RTL8019		1
 #define CONFIG_DRIVER_RTL8019_BASE	0x200000
+
+#define CONFIG_USB_SL811HS		1
+#define CONFIG_USB_SL811HS_ADDRESS	0x800000
+#define CONFIG_USB_SL811HS_DATA		0x800002
+#define CONFIG_USB_STORAGE		1
+#define CONFIG_DOS_PARTITION		1
 
 #endif
