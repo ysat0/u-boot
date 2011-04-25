@@ -180,11 +180,13 @@ typedef void (interrupt_handler_t)(void *);
  * General Purpose Utilities
  */
 #define min(X, Y)				\
-	({ typeof (X) __x = (X), __y = (Y);	\
+	({ typeof (X) __x = (X);		\
+		typeof (Y) __y = (Y);		\
 		(__x < __y) ? __x : __y; })
 
 #define max(X, Y)				\
-	({ typeof (X) __x = (X), __y = (Y);	\
+	({ typeof (X) __x = (X);		\
+		typeof (Y) __y = (Y);		\
 		(__x > __y) ? __x : __y; })
 
 #define MIN(x, y)  min(x, y)
@@ -270,9 +272,9 @@ int	setenv	     (char *, char *);
 # include <asm/setup.h>
 # include <asm/u-boot-arm.h>	/* ARM version to be fixed! */
 #endif /* CONFIG_ARM */
-#ifdef CONFIG_I386		/* x86 version to be fixed! */
-# include <asm/u-boot-i386.h>
-#endif /* CONFIG_I386 */
+#ifdef CONFIG_X86		/* x86 version to be fixed! */
+# include <asm/u-boot-x86.h>
+#endif /* CONFIG_X86 */
 
 #ifdef CONFIG_AUTO_COMPLETE
 int env_complete(char *var, int maxv, char *cmdv[], int maxsz, char *buf);
@@ -538,6 +540,10 @@ ulong	get_ddr_freq  (ulong);
 #if defined(CONFIG_MPC86xx)
 typedef MPC86xx_SYS_INFO sys_info_t;
 void   get_sys_info  ( sys_info_t * );
+static inline ulong get_ddr_freq(ulong dummy)
+{
+	return get_bus_freq(dummy);
+}
 #endif
 
 #if defined(CONFIG_4xx) || defined(CONFIG_IOP480)
@@ -648,7 +654,7 @@ int	sprintf(char * buf, const char *fmt, ...)
 int	vsprintf(char *buf, const char *fmt, va_list args);
 
 /* lib/strmhz.c */
-char *	strmhz(char *buf, long hz);
+char *	strmhz(char *buf, unsigned long hz);
 
 /* lib/crc32.c */
 #include <u-boot/crc.h>

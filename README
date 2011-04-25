@@ -164,7 +164,7 @@ Directory Hierarchy:
   /blackfin		Files generic to Analog Devices Blackfin architecture
     /cpu		CPU specific files
     /lib		Architecture specific library files
-  /i386			Files generic to i386 architecture
+  /x86			Files generic to x86 architecture
     /cpu		CPU specific files
     /lib		Architecture specific library files
   /m68k			Files generic to m68k architecture
@@ -625,6 +625,7 @@ The following options need to be configured:
 		CONFIG_CMD_BOOTD	  bootd
 		CONFIG_CMD_CACHE	* icache, dcache
 		CONFIG_CMD_CONSOLE	  coninfo
+		CONFIG_CMD_CRC32	* crc32
 		CONFIG_CMD_DATE		* support for RTC, date/time...
 		CONFIG_CMD_DHCP		* DHCP support
 		CONFIG_CMD_DIAG		* Diagnostics
@@ -637,22 +638,26 @@ The following options need to be configured:
 		CONFIG_CMD_EDITENV	  edit env variable
 		CONFIG_CMD_EEPROM	* EEPROM read/write support
 		CONFIG_CMD_ELF		* bootelf, bootvx
+		CONFIG_CMD_EXPORTENV	* export the environment
 		CONFIG_CMD_SAVEENV	  saveenv
 		CONFIG_CMD_FDC		* Floppy Disk Support
 		CONFIG_CMD_FAT		* FAT partition support
 		CONFIG_CMD_FDOS		* Dos diskette Support
 		CONFIG_CMD_FLASH	  flinfo, erase, protect
 		CONFIG_CMD_FPGA		  FPGA device initialization support
+		CONFIG_CMD_GO		* the 'go' command (exec code)
 		CONFIG_CMD_HWFLOW	* RTS/CTS hw flow control
 		CONFIG_CMD_I2C		* I2C serial bus support
 		CONFIG_CMD_IDE		* IDE harddisk support
 		CONFIG_CMD_IMI		  iminfo
 		CONFIG_CMD_IMLS		  List all found images
 		CONFIG_CMD_IMMAP	* IMMR dump support
+		CONFIG_CMD_IMPORTENV	* import an environment
 		CONFIG_CMD_IRQ		* irqinfo
 		CONFIG_CMD_ITEST	  Integer/string test of 2 values
 		CONFIG_CMD_JFFS2	* JFFS2 Support
 		CONFIG_CMD_KGDB		* kgdb
+		CONFIG_CMD_LDRINFO	  ldrinfo (display Blackfin loader)
 		CONFIG_CMD_LOADB	  loadb
 		CONFIG_CMD_LOADS	  loads
 		CONFIG_CMD_MD5SUM	  print md5 message digest
@@ -1073,6 +1078,28 @@ The following options need to be configured:
 		Enable Epson SED13806 driver. This driver supports 8bpp
 		and 16bpp modes defined by CONFIG_VIDEO_SED13806_8BPP
 		or CONFIG_VIDEO_SED13806_16BPP
+
+		CONFIG_FSL_DIU_FB
+		Enable the Freescale DIU video driver.  Reference boards for
+		SOCs that have a DIU should define this macro to enable DIU
+		support, and should also define these other macros:
+
+			CONFIG_SYS_DIU_ADDR
+			CONFIG_VIDEO
+			CONFIG_CMD_BMP
+			CONFIG_CFB_CONSOLE
+			CONFIG_VIDEO_SW_CURSOR
+			CONFIG_VGA_AS_SINGLE_DEVICE
+			CONFIG_VIDEO_LOGO
+			CONFIG_VIDEO_BMP_LOGO
+
+		The DIU driver will look for the 'monitor' environment variable,
+		and if defined, enable the DIU as a console during boot.  This
+		variable should be set to one of these values:
+
+			'0'	Output video to the DVI connector
+			'1'	Output video to the LVDS connector
+			'2'	Output video to the Dual-Link LVDS connector
 
 - Keyboard Support:
 		CONFIG_KEYBOARD
@@ -1973,6 +2000,14 @@ The following options need to be configured:
 		the system's boot progress on some display (for
 		example, some LED's) on your board. At the moment,
 		the following checkpoints are implemented:
+
+- Standalone program support:
+		CONFIG_STANDALONE_LOAD_ADDR
+
+		This option allows to define board specific values
+		for the address where standalone program gets loaded,
+		thus overwriting the architecutre dependent default
+		settings.
 
 Legacy uImage format:
 
