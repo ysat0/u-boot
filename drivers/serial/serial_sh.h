@@ -210,7 +210,7 @@ struct uart_port {
 # define SCSPTR4 0x00088260		/* 8 bit SCI */
 # define SCSPTR5 0x00088268		/* 8 bit SCI */
 # define SCSPTR6 0x00088270		/* 8 bit SCI */
-# define SCSCR_INIT(port)	0x38	/* TIE=0,RIE=0,TE=1,RE=1,REIE=1 */
+# define SCSCR_INIT(port)	0x30	/* TIE=0,RIE=0,TE=1,RE=1,MPIE=0 */
 #else
 # error CPU subtype not defined
 #endif
@@ -521,10 +521,12 @@ SCIF_FNS(SCFER,  0x10, 16)
 SCIF_FNS(SCFCR,  0x18, 16)
 SCIF_FNS(SCFDR,  0x1c, 16)
 SCIF_FNS(SCLSR,  0x24, 16)
-#elif defined(CONFIG_CPU_RX610)
+#elif defined(CONFIG_CPU_RX610) || defined(CONFIG_CPU_RX62X)
 SCIx_FNS(SCSMR,  0x00,  8, 0x00,  8, 0x00,  8, 0x00, 16, 0x00,  8)
 SCIx_FNS(SCBRR,  0x02,  8, 0x04,  8, 0x02,  8, 0x04,  8, 0x01,  8)
+SCIx_FNS(SCSCR,  0x04,  8, 0x08,  8, 0x04,  8, 0x08, 16, 0x02,  8)
 SCIx_FNS(SCxTDR, 0x06,  8, 0x0c,  8, 0x06,  8, 0x0C,  8, 0x03,  8)
+SCIx_FNS(SCxSR,  0x08,  8, 0x10,  8, 0x08, 16, 0x10, 16, 0x04,  8)
 SCIx_FNS(SCxRDR, 0x0a,  8, 0x14,  8, 0x0A,  8, 0x14,  8, 0x05,  8)
 SCIF_FNS(SCFCR,                      0x0c,  8, 0x18, 16)
 SCIF_FNS(SCLSR,				0,  0, 0x28, 16)

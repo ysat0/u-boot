@@ -23,28 +23,57 @@
 	.section	".vector","ax"
 	.global	_start
 vector	=	1
-	.rept	31
-	.long	__ram_vec + (vector * 4)
-vector	=	vector + 1
-	.endr
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	__ram_vec + (20 * 4)	/* 20 privillege exception */
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	__ram_vec + (23 * 4)	/* 23 illigal instruction */
+
+	.long	0xffffffff
+	.long	__ram_vec + (25 * 4)	/* 25: floating point exception */
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	0xffffffff
+	.long	__ram_vec + (30 * 4)	/* 30: nmi */
 	.long	_start
 
 	.text
 	.align	2
 _start:
-	mov.l	#bss_end, r0
+	mov.l	#__stack, r0
 	bsr	lowlevel_init
 
-	mov.l	#_etext,r1
-	mov.l	#_fdata ,r2
-	mov.l	#_edata - _fdata,r3
-	/*smovf*/
+	mov.l	#_etext,r2
+	mov.l	#_fdata ,r1
+	mov.l	#__u_boot_cmd_end - _fdata,r3
+	smovf
 	mov.l	#bss_start,r1
 	mov.l	#bss_end,r3
 	sub	r1,r3
 	mov.l	#0,r2
 	sstr.b
-	mov.l	#0x1000, r0
 	mov.l	#bss_end,r13		/* global data */
 	bsr	rx_generic_init
 	

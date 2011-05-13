@@ -1,9 +1,7 @@
 #
-# (C) Copyright 2000-2002
-# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+# Copyright (C) 2011 Yoshinori Sato
 #
-# See file CREDITS for list of people who contributed to this
-# project.
+# u-boot/board/rxsim/Makefile
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -19,6 +17,32 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307 USA
-#
 
-CONFIG_STANDALONE_LOAD_ADDR = 0x00000000 $(LDEMUL) -L $(USE_PRIVATE_LIBGCC)
+include $(TOPDIR)/config.mk
+
+LIB	= lib$(BOARD).o
+
+OBJS	:= tkdn-rx62n.o
+SOBJS	:= lowlevel_init.o
+
+LIB	:= $(addprefix $(obj),$(LIB))
+OBJS	:= $(addprefix $(obj),$(OBJS))
+SOBJS	:= $(addprefix $(obj),$(SOBJS))
+
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
+
+clean:
+	rm -f $(SOBJS) $(OBJS)
+
+distclean:	clean
+	rm -f $(LIB) core *.bak .depend
+
+#########################################################################
+
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################

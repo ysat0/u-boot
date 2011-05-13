@@ -89,13 +89,13 @@ void rx_generic_init(void)
 	gd->cpu_clk = CONFIG_SYS_HZ;
 
 	bd = gd->bd;
-#if defined(CONFIG_SYS_SRAM_BASE) && defined(CONFIG_SYS_SRAM_SIZE)
+#if defined(CONFIG_SYS_DRAM_BASE) && defined(CONFIG_SYS_DRAM_SIZE)
 	bd->bi_memstart	= CONFIG_SYS_DRAM_BASE;
 	bd->bi_memsize = CONFIG_SYS_DRAM_SIZE;
 #endif
 #if defined(CONFIG_SYS_SRAM_BASE) && defined(CONFIG_SYS_SRAM_SIZE)
-	bd->bi_sramstart = CONFIG_SYS_SRAM_BASE;
-	bd->bi_sramsize	= CONFIG_SYS_SRAM_SIZE;
+	bd->bi_memstart = CONFIG_SYS_SRAM_BASE;
+	bd->bi_memsize	= CONFIG_SYS_SRAM_SIZE;
 #endif
 	bd->bi_baudrate	= CONFIG_BAUDRATE;
 
