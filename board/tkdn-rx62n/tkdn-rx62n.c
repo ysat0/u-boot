@@ -36,8 +36,28 @@ int board_init(void)
 	return 0;
 }
 
-int dram_init(void)
+int sdram_init(void)
 {
+	*(volatile unsigned char *)0x00083c00 = 0x00;
+	*(volatile unsigned char *)0x00083c10 = 0x00;
+	*(volatile unsigned char *)0x00083c16 = 0x00;
+	*(volatile unsigned short *)0x00083c24 = 0x0588;
+	*(volatile unsigned char *)0x00083c20 = 0x01;
+	while(*(volatile unsigned char *)0x00083c50 & 0x08);
+
+	*(volatile unsigned char *)0x00083c00 = 0x10;
+	*(volatile unsigned short *)0x00083c48 = 0x0080;
+	while(*(volatile unsigned char *)0x00083c50 & 0x01);
+	
+	*(volatile unsigned long *)0x00083c44 = 0x00020202;
+	*(volatile unsigned char *)0x00083c40 = 0x00;
+
+	*(volatile unsigned short *)0x00083c14 = 0x32e0;
+	*(volatile unsigned char *)0x00083c02 = 0x01;
+	*(volatile unsigned char *)0x00083c16 = 0x01;
+	*(volatile unsigned char *)0x00083c10 = 0x00;
+
+	*(volatile unsigned char *)0x00083c00 = 0x11;
 	return 0;
 }
 

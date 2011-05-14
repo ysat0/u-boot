@@ -29,7 +29,7 @@
 
 extern int cpu_init(void);
 extern int board_init(void);
-extern int dram_init(void);
+extern int sdram_init(void);
 extern int timer_init(void);
 
 const char version_string[] = U_BOOT_VERSION" ("U_BOOT_DATE" - "U_BOOT_TIME")";
@@ -43,13 +43,6 @@ extern int watchdog_disable(void);
 # define INIT_FUNC_WATCHDOG_INIT
 # define WATCHDOG_DISABLE
 #endif /* CONFIG_WATCHDOG */
-
-#if defined(CONFIG_CMD_IDE)
-# include <ide.h>
-# define INIT_FUNC_IDE_INIT	ide_init,
-#else
-# define INIT_FUNC_IDE_INIT
-#endif /* CONFIG_CMD_IDE */
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -67,7 +60,7 @@ static init_fnc_t * const init_sequence[] =
 	display_options,
 	checkcpu,
 	checkboard,		/* Check support board */
-	dram_init,
+	sdram_init,
 	timer_init,
 	interrupt_init,
 	NULL			/* Terminate this list */
@@ -89,11 +82,10 @@ void rx_generic_init(void)
 	gd->cpu_clk = CONFIG_SYS_HZ;
 
 	bd = gd->bd;
-#if defined(CONFIG_SYS_DRAM_BASE) && defined(CONFIG_SYS_DRAM_SIZE)
-	bd->bi_memstart	= CONFIG_SYS_DRAM_BASE;
-	bd->bi_memsize = CONFIG_SYS_DRAM_SIZE;
-#endif
-#if defined(CONFIG_SYS_SRAM_BASE) && defined(CONFIG_SYS_SRAM_SIZE)
+#if defined(CONFIG_SYS_SDRAM_BASE) && defined(CONFIG_SYS_SDRAM_SIZE)
+	bd->bi_memstart	= CONFIG_SYS_SDRAM_BASE;
+	bd->bi_memsize = CONFIG_SYS_SDRAM_SIZE;
+#elif defined(CONFIG_SYS_SRAM_BASE) && defined(CONFIG_SYS_SRAM_SIZE)
 	bd->bi_memstart = CONFIG_SYS_SRAM_BASE;
 	bd->bi_memsize	= CONFIG_SYS_SRAM_SIZE;
 #endif

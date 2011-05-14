@@ -28,13 +28,45 @@
 	.align	2
 
 lowlevel_init:
-	mov.l	#0x00080020,r1
-	mov.l	#0x00010100,[r1]
-	mov.l	#0x00080010,r1
-	mov.l	#0x4fffffbf,[r1]
-	mov.l	#0x00080014,r1
-	mov.l	#0x7fffffff,[r1]
-	mov.l	#0x0008c062,r1
-	bset	#1,[r1].b
+	mov.l	#3f,r1
+	mov.l	#0x00080000,r2
+1:	
+	mov.l	[r1+],r3
+	tst	r3,r3
+	bn	2f
+	mov.l	[r1+],r4
+	shlr	#16,r3,r5
+	and	#0xffff,r3
+	bra	r5
+	mov.b	r4,[r3,r2]
+	bra	1b
+	mov.w	r4,[r3,r2]
+	bra	1b
+	mov.l	r4,[r3,r2]
+	bra	1b
+2:
 	rts
+
+3:
+#define BYTE 0
+#define	WORD 1
+#define LONG 2
+#define REGINIT(offset, size, val) .long ((2 + size * 5) << 16)|(offset >> size),val
+	/* ICLK:96MHz, BCLK:48MHz, PCLK:48MHz */
+	/* SDCLK and BCLK enable */
+	REGINIT(0x0020,LONG,0x00010100)
+	/* External Bus enable */
+	REGINIT(0x0006,WORD,0x5a03)
+	REGINIT(0xC104,BYTE,0xff)
+	REGINIT(0xC105,BYTE,0x30)
+	/* SDCLK enable */
+	REGINIT(0xC106,BYTE,0xd0)
+	/* TMR0 enable */
+	REGINIT(0x0010,LONG,0x4fffffbf)
+	/* SCI0 enable */
+	REGINIT(0x0014,LONG,0x7fffffff)
+	/* P21 (RxD0) input */
+	REGINIT(0xc062,BYTE,0x02)
+	.long	0xffffffff
+	
 	.align 2
