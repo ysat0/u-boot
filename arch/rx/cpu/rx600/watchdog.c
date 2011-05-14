@@ -25,7 +25,6 @@
 #define WDT_ENABLE	(1 << 5)
 #define WDT_CKS131072	(7)
 
-#if defined(CONFIG_WATCHDOG)
 static inline unsigned char tcsr_read(void)
 {
 	return inb(WDT_BASE);
@@ -41,6 +40,13 @@ static inline void tcsr_write(unsigned char value)
 	outw((unsigned short)value | 0xA500, WDT_BASE);
 }
 
+static inline void rstcsr_write(unsigned char value)
+{
+	outw((unsigned short)value | 0x5A00, WDT_BASE + 2);
+}
+
+
+#if defined(CONFIG_WATCHDOG)
 void watchdog_reset(void)
 {
 	tcnt_write(0);
@@ -48,6 +54,7 @@ void watchdog_reset(void)
 
 int watchdog_init(void)
 {
+	rstcsr_write(0x5f);
 	/* Set overflow time*/
 	tcnt_write(0);
 	/* Power on reset */
@@ -65,8 +72,8 @@ int watchdog_disable(void)
 
 void reset_cpu(unsigned long ignored)
 {
-	__asm__ volatile("clrpsw i\n\t"
-			 "mov.l #0xfffffc,r1\n\t"
-			 "jmp r1"
-			 :::"r1");
+	rstcsr_write(0x5f);
+	tcnt_write(0xff);
+	tcsr_write(WDT_WD|WDT_ENABLE);
+	for(;;);
 }
