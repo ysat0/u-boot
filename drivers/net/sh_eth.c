@@ -313,6 +313,9 @@ static int sh_eth_tx_desc_init(struct sh_eth_dev *eth)
 	struct sh_eth_info *port_info = &eth->port_info[port];
 	struct tx_desc_s *cur_tx_desc;
 
+	if (port_info->tx_desc_malloc)
+		/* Already allocated. re-using it */
+		return 0;
 	/*
 	 * Allocate tx descriptors. They must be TX_DESC_SIZE bytes aligned
 	 */
@@ -365,6 +368,9 @@ static int sh_eth_rx_desc_init(struct sh_eth_dev *eth)
 	u32 tmp_addr;
 	u8 *rx_buf;
 
+	if (port_info->rx_desc_malloc)
+		/* Already allocated. re-using it */
+		return 0;
 	/*
 	 * Allocate rx descriptors. They must be RX_DESC_SIZE bytes aligned
 	 */
@@ -534,6 +540,7 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 {
 	int port = eth->port, ret = 0;
 	u32 val,  phy_status;
+	u32 ecmr = 0;
 	struct sh_eth_info *port_info = &eth->port_info[port];
 	struct eth_device *dev = port_info->dev;
 
@@ -566,7 +573,7 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 	outl(val, MALR(port));
 
 	outl(RFLR_RFL_MIN, RFLR(port));
-#ifndef CONFIG_CPU_SH7757
+#if !defined(CONFIG_CPU_SH7757) && !defined(CONFIG_CPU_RX62N)
 	outl(0, PIPR(port));
 #endif
 	outl(APR_AP, APR(port));
@@ -604,15 +611,24 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 		outl(0, RTRATE(port));
 	}
 #endif
-
+#if defined(CONFIG_CPU_RX62N)
+	if (phy_status & (PHY_S_100X_F|PHY_S_100X_H)) {
+		printf("100Base/");
+		ecmr = ECMR_RTM;
+	} else {
+		printf("10Base/");
+	}
+#endif
+	ecmr |= ECMR_CHG_DM|ECMR_RE|ECMR_TE;
 	/* Check if full duplex mode is supported by the phy */
 	if (phy_status & (PHY_S_100X_F|PHY_S_10T_F)) {
 		printf("Full\n");
-		outl((ECMR_CHG_DM|ECMR_RE|ECMR_TE|ECMR_DM), ECMR(port));
+		ecmr |= ECMR_DM;
 	} else {
 		printf("Half\n");
 		outl((ECMR_CHG_DM|ECMR_RE|ECMR_TE),  ECMR(port));
 	}
+	outl(ecmr, ECMR(port));
 
 	return ret;
 

@@ -25,6 +25,7 @@
 
 #define SHETHER_NAME "sh_eth"
 
+#if defined(__sh__)
 /* Malloc returns addresses in the P1 area (cacheable). However we need to
    use area P2 (non-cacheable) */
 #define ADDR_TO_P2(addr)	((((int)(addr) & ~0xe0000000) | 0xa0000000))
@@ -34,6 +35,10 @@
 #define ADDR_TO_PHY(addr)	((((int)(addr) & ~0xe0000000) | 0x40000000))
 #else
 #define ADDR_TO_PHY(addr)	((int)(addr) & ~0xe0000000)
+#endif
+#else
+#define ADDR_TO_P2(addr)	(addr)
+#define ADDR_TO_PHY(addr)	(addr)
 #endif
 
 /* Number of supported ports */
@@ -161,6 +166,31 @@ struct sh_eth_dev {
 #define MAHR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x01c0)
 #define MALR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x01c8)
 #define RTRATE(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x01fc)
+#elif defined(CONFIG_CPU_RX62N)
+#define BASE_IO_ADDR	0x000c0000
+#define TDLAR(port)		(BASE_IO_ADDR + 0x0018)
+#define RDLAR(port)		(BASE_IO_ADDR + 0x0020)
+
+#define EDMR(port)		(BASE_IO_ADDR + 0x0000)
+#define EDTRR(port)		(BASE_IO_ADDR + 0x0008)
+#define EDRRR(port)		(BASE_IO_ADDR + 0x0010)
+#define EESR(port)		(BASE_IO_ADDR + 0x0028)
+#define EESIPR(port)		(BASE_IO_ADDR + 0x0030)
+#define TRSCER(port)		(BASE_IO_ADDR + 0x0038)
+#define TFTR(port)		(BASE_IO_ADDR + 0x0048)
+#define FDR(port)		(BASE_IO_ADDR + 0x0050)
+#define RMCR(port)		(BASE_IO_ADDR + 0x0058)
+#define FCFTR(port)		(BASE_IO_ADDR + 0x0070)
+#define RPADIR(port)		(BASE_IO_ADDR + 0x0078)
+#define ECMR(port)		(BASE_IO_ADDR + 0x0100)
+#define RFLR(port)		(BASE_IO_ADDR + 0x0108)
+#define ECSIPR(port)		(BASE_IO_ADDR + 0x0118)
+#define PIR(port)		(BASE_IO_ADDR + 0x0120)
+#define APR(port)		(BASE_IO_ADDR + 0x0154)
+#define MPR(port)		(BASE_IO_ADDR + 0x0158)
+#define TPAUSER(port)		(BASE_IO_ADDR + 0x0164)
+#define MAHR(port)		(BASE_IO_ADDR + 0x01c0)
+#define MALR(port)		(BASE_IO_ADDR + 0x01c8)
 #endif
 
 /*
@@ -182,7 +212,7 @@ enum DMAC_M_BIT {
 	EDMR_SRST	= 0x03,
 	EMDR_DESC_R	= 0x30, /* Descriptor reserve size */
 	EDMR_EL		= 0x40, /* Litte endian */
-#elif defined CONFIG_CPU_SH7757
+#elif defined(CONFIG_CPU_SH7757) || defined(CONFIG_CPU_RX62N)
 	EDMR_SRST	= 0x01,
 	EMDR_DESC_R	= 0x30, /* Descriptor reserve size */
 	EDMR_EL		= 0x40, /* Litte endian */
@@ -324,7 +354,7 @@ enum FCFTR_BIT {
 
 /* Transfer descriptor bit */
 enum TD_STS_BIT {
-#if defined(CONFIG_CPU_SH7763) || defined(CONFIG_CPU_SH7757)
+#if defined(CONFIG_CPU_SH7763) || defined(CONFIG_CPU_SH7757) || defined(CONFIG_CPU_RX62N)
 	TD_TACT = 0x80000000,
 #else
 	TD_TACT = 0x7fffffff,
@@ -343,12 +373,19 @@ enum FELIC_MODE_BIT {
 #ifdef CONFIG_CPU_SH7763
 	ECMR_TRCCM=0x04000000, ECMR_RCSC= 0x00800000, ECMR_DPAD= 0x00200000,
 	ECMR_RZPF = 0x00100000,
-#endif
+#elif defined(CONFIG_CPU_RX62N)
+	ECMR_ZPF = 0x00080000, ECMR_PFR = 0x00040000, ECMR_RXF = 0x00020000,
+	ECMR_TXF = 0x00010000, ECMR_MCT = 0x00002000, ECMR_PRCEF = 0x00001000,
+	ECMR_PMDE = 0x00000200, ECMR_RE = 0x00000040, ECMR_TE = 0x00000020,
+	ECMR_ILB = 0x00000008, ECMR_RTM = 0x00000004, ECMR_DM = 0x00000002,
+	ECMR_PRM = 0x00000001,
+#else
 	ECMR_ZPF = 0x00080000, ECMR_PFR = 0x00040000, ECMR_RXF = 0x00020000,
 	ECMR_TXF = 0x00010000, ECMR_MCT = 0x00002000, ECMR_PRCEF = 0x00001000,
 	ECMR_PMDE = 0x00000200, ECMR_RE = 0x00000040, ECMR_TE = 0x00000020,
 	ECMR_ILB = 0x00000008, ECMR_ELB = 0x00000004, ECMR_DM = 0x00000002,
 	ECMR_PRM = 0x00000001,
+#endif
 };
 
 #ifdef CONFIG_CPU_SH7763

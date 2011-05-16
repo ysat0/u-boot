@@ -79,3 +79,17 @@ int dcache_status(void)
 {
 	return 0;
 }
+
+int cpu_eth_init(bd_t *bis)
+{
+#if defined(CONFIG_SH_ETHER)
+#if defined(CONFIG_RX62N_RMII)
+	outb(0x82, 0x8c10e);
+	outb(inb(0x8c065) | 0x10, 0x8c065);
+	outb(inb(0x8c067) | 0xf2, 0x8c067);
+	outb(inb(0x8c068) | 0x08, 0x8c068);
+#endif
+	sh_eth_initialize(bis);
+#endif
+	return 0;
+}
