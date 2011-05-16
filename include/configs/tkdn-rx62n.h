@@ -43,11 +43,8 @@
 #define CONFIG_VERSION_VARIABLE
 #undef  CONFIG_SHOW_BOOT_PROGRESS
 
-#define CONFIG_TKDN_RX620_RAM
-
 /* system */
-/*#define CONFIG_SYS_TEXT_BASE	0xfff80000*/
-#define CONFIG_SYS_TEXT_BASE	0x08000000
+#define CONFIG_SYS_TEXT_BASE	0xfff80000
 #define CONFIG_SYS_LONGHELP		/* undef to save memory	*/
 #define CONFIG_SYS_PROMPT	"=> "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256	/* Buffer size for input from the Console */
@@ -67,7 +64,7 @@
 /* memory */
 #define CONFIG_SYS_SRAM_BASE		0x00008000
 #define CONFIG_SYS_SRAM_SIZE		0x00010000
-#define CONFIG_SYS_SDRAM_BASE		0x08020000
+#define CONFIG_SYS_SDRAM_BASE		0x08000000
 #define CONFIG_SYS_SDRAM_SIZE		(15 * 1024 * 1024)
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
 #define CONFIG_SYS_MEMTEST_END		CONFIG_SYS_SDRAM_SIZE
