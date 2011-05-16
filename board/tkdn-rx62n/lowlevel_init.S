@@ -28,6 +28,7 @@
 	.align	2
 
 lowlevel_init:
+#if !defined(CONFIG_TKDN_RX620_RAM)
 	mov.l	#3f,r1
 	mov.l	#0x00080000,r2
 1:	
@@ -45,6 +46,7 @@ lowlevel_init:
 	mov.l	r4,[r3,r2]
 	bra	1b
 2:
+#endif
 	rts
 
 3:
@@ -62,7 +64,7 @@ lowlevel_init:
 	/* SDCLK enable */
 	REGINIT(0xC106,BYTE,0xd0)
 	/* TMR0 enable */
-	REGINIT(0x0010,LONG,0x4fffffbf)
+	REGINIT(0x0010,LONG,0x4fffffdf)
 	/* SCI0 enable */
 	REGINIT(0x0014,LONG,0x7fffffff)
 	/* P21 (RxD0) input */

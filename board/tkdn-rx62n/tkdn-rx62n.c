@@ -33,11 +33,15 @@ int checkboard(void)
 
 int board_init(void)
 {
+#if defined(CONFIG_SH_ETHER)
+	*(volatile unsigned long *)0x00080014 &= ~0x00008000;
+#endif
 	return 0;
 }
 
 int sdram_init(void)
 {
+#if !defined(CONFIG_TKDN_RX620_RAM)
 	*(volatile unsigned char *)0x00083c00 = 0x00;
 	*(volatile unsigned char *)0x00083c10 = 0x00;
 	*(volatile unsigned char *)0x00083c16 = 0x00;
@@ -58,6 +62,7 @@ int sdram_init(void)
 	*(volatile unsigned char *)0x00083c10 = 0x00;
 
 	*(volatile unsigned char *)0x00083c00 = 0x11;
+#endif
 	return 0;
 }
 

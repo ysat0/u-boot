@@ -20,6 +20,7 @@
 #include <config.h>
 #include <version.h>
 
+#if !defined(CONFIG_TKDN_RX620_RAM)
 	.section	".vector","ax"
 	.global	_start
 vector	=	1
@@ -58,17 +59,19 @@ vector	=	1
 	.long	0xffffffff
 	.long	__ram_vec + (30 * 4)	/* 30: nmi */
 	.long	_start
-
+#endif
 	.text
 	.align	2
 _start:
 	mov.l	#__stack, r0
 	bsr	lowlevel_init
 
+#if !defined(CONFIG_TKDN_RX620_RAM)
 	mov.l	#_etext,r2
 	mov.l	#_fdata ,r1
 	mov.l	#__u_boot_cmd_end - _fdata,r3
 	smovf
+#endif
 	mov.l	#bss_start,r1
 	mov.l	#bss_end,r3
 	sub	r1,r3

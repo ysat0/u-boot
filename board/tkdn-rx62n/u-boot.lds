@@ -20,14 +20,18 @@
  * MA 02111-1307 USA
  */
 
+#include <config.h>
 OUTPUT_FORMAT("elf32-rx-linux")
 OUTPUT_ARCH(rx)
 ENTRY(_start)
 
 SECTIONS
 {
+#if !defined(CONFIG_TKDN_RX620_RAM)
 	. = 0xfff80000;
-
+#else
+	. = 0x08000000;
+#endif
 	PROVIDE (_ftext = .);
 	PROVIDE (_fcode = .);
 	PROVIDE (_start = .);
@@ -46,6 +50,7 @@ SECTIONS
 	}
 	PROVIDE (_etext = .);
 
+#if !defined(CONFIG_TKDN_RX620_RAM)
 	. = 0xffffff80;
 	.vector :
 	{
@@ -55,6 +60,7 @@ SECTIONS
 	PROVIDE (__ram_vec = 0x00000000);
 
 	. = 0x00001000;
+#endif
 	PROVIDE (_fdata = .);
 	.data : AT(_etext)
 	{
