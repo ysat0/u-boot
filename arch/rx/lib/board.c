@@ -53,6 +53,7 @@ static init_fnc_t * const init_sequence[] =
 	cpu_init,		/* basic cpu dependent setup */
 	board_init,		/* basic board dependent setup */
 	interrupt_init,	/* set up exceptions */
+	timer_init,
 	env_init,		/* event init */
 	serial_init,	/* SCI init */
 	INIT_FUNC_WATCHDOG_INIT	/* watchdog init */
@@ -61,7 +62,6 @@ static init_fnc_t * const init_sequence[] =
 	checkcpu,
 	checkboard,		/* Check support board */
 	sdram_init,
-	timer_init,
 	interrupt_init,
 	NULL			/* Terminate this list */
 };
