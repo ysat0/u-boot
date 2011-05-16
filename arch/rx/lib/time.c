@@ -33,14 +33,18 @@
 #define TCSR1 (CONFIG_SYS_TIMER_BASE + 3)
 #define TCNT0 (CONFIG_SYS_TIMER_BASE + 8)
 #define TCNT1 (CONFIG_SYS_TIMER_BASE + 9)
+#define TCCR0 (CONFIG_SYS_TIMER_BASE + 10)
+#define TCCR1 (CONFIG_SYS_TIMER_BASE + 11)
+
+#define TMR8TICK (CONFIG_SYS_CLK_FREQ/8/100000)
 
 static unsigned long long tick;
 static unsigned short last;
 
 int timer_init(void)
 {
-	outb(0x04, TCR0);	/* 16bit free running */
-	outb(0x01, TCR1);	/* clk / 8 */
+	outb(0x0a, TCCR1);	/* pclk / 8 */
+	outb(0x18, TCCR0);	/* 16bit free running */
 	return 0;
 }
 
@@ -57,7 +61,7 @@ unsigned long long get_ticks(void)
 
 ulong get_timer(ulong base)
 {
-	return get_ticks() / (CONFIG_SYS_HZ / 1000) - base;
+	return get_ticks() / (CONFIG_SYS_HZ * TMR8TICK) -  base;
 }
 
 void set_timer(ulong t)
@@ -68,19 +72,19 @@ void set_timer(ulong t)
 void reset_timer(void)
 {
 	last = 0;
-	outb(0x00, TCR1);
+	outb(0x00, TCCR1);
 	outw(0, TCNT0);
-	outb(0x01, TCR1);
+	outb(0x0a, TCCR1);
 }
 
 void __udelay(unsigned long usec)
 {
-	unsigned long long end = get_ticks() + (usec * (CONFIG_SYS_HZ / 8000000));
+	unsigned long long end = get_ticks() + (usec * TMR8TICK);
 
 	while (get_ticks() < end);
 }
 
 unsigned long get_tbclk(void)
 {
-	return CONFIG_SYS_HZ / 8;
+	return CONFIG_SYS_HZ;
 }
