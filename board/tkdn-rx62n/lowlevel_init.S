@@ -47,6 +47,10 @@ lowlevel_init:
 	bra	1b
 2:
 #endif
+	/* dataflash read enable */
+	mov.l	#0x7fc440,r1
+	mov.w	#0x2dff,[r1]
+	mov.w	#0xd2ff,2[r1]
 	rts
 
 3:
