@@ -347,6 +347,7 @@ int eth_init(bd_t *bis)
 {
 	int eth_number;
 	struct eth_device *old_current, *dev;
+	char *s;
 
 	if (!eth_current) {
 		puts ("No ethernet found.\n");
@@ -371,6 +372,9 @@ int eth_init(bd_t *bis)
 		debug("Trying %s\n", eth_current->name);
 
 		if (eth_current->init(eth_current,bis) >= 0) {
+			if (s = getenv("linkupdelay")) {
+				udelay(simple_strtoul(s, NULL, 10) * 100000);
+			}
 			eth_current->state = ETH_STATE_ACTIVE;
 
 			return 0;
