@@ -28,17 +28,22 @@ LIB	:= $(obj)libmtd.o
 COBJS-$(CONFIG_MTD_DEVICE) += mtdcore.o
 COBJS-$(CONFIG_MTD_PARTITIONS) += mtdpart.o
 COBJS-$(CONFIG_MTD_CONCAT) += mtdconcat.o
-COBJS-$(CONFIG_HAS_DATAFLASH) += at45.o
 COBJS-$(CONFIG_FLASH_CFI_DRIVER) += cfi_flash.o
 COBJS-$(CONFIG_FLASH_CFI_MTD) += cfi_mtd.o
-COBJS-$(CONFIG_HAS_DATAFLASH) += dataflash.o
+ifneq ($(CONFIG_HAS_DATAFLASH),)
+COBJS-$(CONFIG_AT91) += at45.o dataflash.o
+COBJS-$(CONFIG_H8300H) += h8dataflash.o
+SOBJS-$(CONFIG_H8300H) += 3069flash_low.o
+COBJS-$(CONFIG_RX600) += rxdataflash.o
+endif
 COBJS-$(CONFIG_FLASH_CFI_LEGACY) += jedec_flash.o
 COBJS-$(CONFIG_MW_EEPROM) += mw_eeprom.o
 COBJS-$(CONFIG_SPEARSMI) += spr_smi.o
 
 COBJS	:= $(COBJS-y)
-SRCS	:= $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS))
+SOBJS	:= $(SOBJS-y)
+SRCS	:= $(COBJS:.o=.c) $(SOBJS:.o=.S)
+OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
 
 all:	$(LIB)
 
