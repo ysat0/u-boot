@@ -21,3 +21,4 @@
 #
 #
 USE_PRIVATE_LIBGCC = $(shell dirname `$(CC) $(CFLAGS) -print-libgcc-file-name`)
+PLATFORM_RELFLAGS += -ffixed-r13
