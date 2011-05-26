@@ -622,6 +622,7 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                     }
                 }
                 else {
+#if 0
 		    unsigned short *sout;
 		    unsigned long loops;
 
@@ -663,6 +664,20 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
 		    }
 		    if (len & 1)
 			PUP(out) = PUP(from);
+#else
+                    from = out - dist;          /* copy direct from output */
+                    do {                        /* minimum length is three */
+                        PUP(out) = PUP(from);
+                        PUP(out) = PUP(from);
+                        PUP(out) = PUP(from);
+                        len -= 3;
+                    } while (len > 2);
+                    if (len) {
+                        PUP(out) = PUP(from);
+                        if (len > 1)
+                            PUP(out) = PUP(from);
+                    }
+#endif
                 }
             }
             else if ((op & 64) == 0) {          /* 2nd level distance code */
