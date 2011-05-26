@@ -27,30 +27,24 @@
 #include <asm/io.h>
 #include <asm/processor.h>
 
-#define TCR0  (CONFIG_SYS_TIMER_BASE + 0)
-#define TCR1  (CONFIG_SYS_TIMER_BASE + 1)
-#define TCSR0 (CONFIG_SYS_TIMER_BASE + 2)
-#define TCSR1 (CONFIG_SYS_TIMER_BASE + 3)
-#define TCNT0 (CONFIG_SYS_TIMER_BASE + 8)
-#define TCNT1 (CONFIG_SYS_TIMER_BASE + 9)
-#define TCCR0 (CONFIG_SYS_TIMER_BASE + 10)
-#define TCCR1 (CONFIG_SYS_TIMER_BASE + 11)
-
-#define TMR8TICK (CONFIG_SYS_CLK_FREQ/8/100000)
+#define TICK ((CONFIG_SYS_CLK_FREQ/32)/1000000)
 
 static unsigned long long tick;
 static unsigned short last;
 
 int timer_init(void)
 {
-	outb(0x0a, TCCR1);	/* pclk / 8 */
-	outb(0x18, TCCR0);	/* 16bit free running */
+	outw(0xffff, 0x00088006);
+	outw(0x0000, 0x00088004);
+	outw(0x0001, 0x00088002);
+	outw(0x0001, 0x00088000);
+
 	return 0;
 }
 
 unsigned long long get_ticks(void)
 {
-	unsigned short now = inw(TCNT0);
+	unsigned short now = inw(0x00088004);
 	if (now < last)
 		tick += (0x10000 - last) + now;
 	else
@@ -61,25 +55,23 @@ unsigned long long get_ticks(void)
 
 ulong get_timer(ulong base)
 {
-	return get_ticks() / (CONFIG_SYS_HZ * TMR8TICK) -  base;
+	return get_ticks() / ((CONFIG_SYS_CLK_FREQ/32)/CONFIG_SYS_HZ) -  base;
 }
 
 void set_timer(ulong t)
 {
-	outw((u16) t, TCNT0);
+	outw((u16) t * ((CONFIG_SYS_CLK_FREQ/32)/CONFIG_SYS_HZ), 0x00088004);
 }
 
 void reset_timer(void)
 {
 	last = 0;
-	outb(0x00, TCCR1);
-	outw(0, TCNT0);
-	outb(0x0a, TCCR1);
+	outw(0x0000, 0x00088004);
 }
 
 void __udelay(unsigned long usec)
 {
-	unsigned long long end = get_ticks() + (usec * TMR8TICK);
+	unsigned long long end = get_ticks() + usec;
 
 	while (get_ticks() < end);
 }
