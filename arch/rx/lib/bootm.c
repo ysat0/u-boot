@@ -2,8 +2,7 @@
  * (C) Copyright 2003
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * (c) Copyright 2008 Nobuhiro Iwamatsu <iwamatsu.nobuhiro@renesas.com>
- * (c) Copyright 2008 Renesas Solutions Corp.
+ * (c) Copyright 2011 Yoshinori Sato <ysato@users.sourceforge.jp>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -49,19 +48,16 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 	void (*kernel) (void) = (void (*)(void))images->ep;
 	/* empty_zero_page */
 	unsigned char *param
-		= (unsigned char *)image_get_load(images->legacy_hdr_os);
-	/* Linux kernel command line */
-	char *cmdline = (char *)param + 0x100;
+		= (unsigned char *)image_get_load(images->legacy_hdr_os) - 0x1000;
 	/* PAGE_SIZE */
-	unsigned long size = images->ep - (unsigned long)param;
 	char *bootargs = getenv("bootargs");
 
 	if ((flag != 0) && (flag != BOOTM_STATE_OS_GO))
 		return 1;
 
 	/* Setup parameters */
-	memset(param, 0, size);	/* Clear zero page */
-	strcpy(cmdline, bootargs);
+	memset(param, 0, 0x1000);	/* Clear zero page */
+	strcpy(param, bootargs);
 
 	kernel();
 	/* does not return */
