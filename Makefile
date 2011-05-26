@@ -22,9 +22,9 @@
 #
 
 VERSION = 2011
-PATCHLEVEL = 03
+PATCHLEVEL = 06
 SUBLEVEL =
-EXTRAVERSION =
+EXTRAVERSION = -rc1
 ifneq "$(SUBLEVEL)" ""
 U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 else
@@ -183,6 +183,7 @@ OBJS := $(addprefix $(obj),$(OBJS))
 LIBS  = lib/libgeneric.o
 LIBS += lib/lzma/liblzma.o
 LIBS += lib/lzo/liblzo.o
+LIBS += lib/zlib/libz.o
 LIBS += $(shell if [ -f board/$(VENDOR)/common/Makefile ]; then echo \
 	"board/$(VENDOR)/common/lib$(VENDOR).o"; fi)
 LIBS += $(CPUDIR)/lib$(CPU).o
@@ -352,7 +353,7 @@ $(obj)u-boot.img:	$(obj)u-boot.bin
 		-d $< $@
 
 $(obj)u-boot.imx:       $(obj)u-boot.bin
-		$(obj)tools/mkimage -n $(IMX_CONFIG) -T imximage \
+		$(obj)tools/mkimage -n  $(CONFIG_IMX_CONFIG) -T imximage \
 		-e $(CONFIG_SYS_TEXT_BASE) -d $< $@
 
 $(obj)u-boot.kwb:       $(obj)u-boot.bin
@@ -753,16 +754,6 @@ M5485HFE_config :	unconfig
 #========================================================================
 
 #########################################################################
-## Atmel AT91RM9200 Systems
-#########################################################################
-
-CPUAT91_RAM_config \
-CPUAT91_config	:	unconfig
-	@mkdir -p $(obj)include
-	@echo "#define CONFIG_$(@:_config=) 1"	>$(obj)include/config.h
-	@$(MKCONFIG) -n $@ -a cpuat91 arm arm920t cpuat91 eukrea at91
-
-#########################################################################
 ## ARM926EJ-S Systems
 #########################################################################
 
@@ -932,15 +923,6 @@ cp922_config		\
 cp922_XA10_config	\
 cp1026_config: unconfig
 	@board/armltd/integrator/split_by_variant.sh cp $@
-
-nhk8815_config \
-nhk8815_onenand_config:	unconfig
-	@mkdir -p $(obj)include
-	@ > $(obj)include/config.h
-	@if [ "$(findstring _onenand, $@)" ] ; then \
-		echo "#define CONFIG_BOOT_ONENAND" >> $(obj)include/config.h; \
-	fi
-	@$(MKCONFIG) -n $@ -a nhk8815 arm arm926ejs nhk8815 st nomadik
 
 xtract_omap1610xxx = $(subst _cs0boot,,$(subst _cs3boot,,$(subst _cs_autoboot,,$(subst _config,,$1))))
 
@@ -1119,7 +1101,7 @@ clean:
 	       $(obj)examples/standalone/interrupt			  \
 	       $(obj)examples/standalone/mem_to_mem_idma2intr		  \
 	       $(obj)examples/standalone/sched				  \
-	       $(obj)examples/standalone/smc91111_eeprom		  \
+	       $(obj)examples/standalone/smc911{11,x}_eeprom		  \
 	       $(obj)examples/standalone/test_burst			  \
 	       $(obj)examples/standalone/timer
 	@rm -f $(obj)examples/api/demo{,.bin}

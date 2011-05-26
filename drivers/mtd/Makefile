@@ -36,6 +36,7 @@ COBJS-$(CONFIG_H8300H) += h8dataflash.o
 SOBJS-$(CONFIG_H8300H) += 3069flash_low.o
 COBJS-$(CONFIG_RX600) += rxdataflash.o
 endif
+COBJS-$(CONFIG_FTSMC020) += ftsmc020.o
 COBJS-$(CONFIG_FLASH_CFI_LEGACY) += jedec_flash.o
 COBJS-$(CONFIG_MW_EEPROM) += mw_eeprom.o
 COBJS-$(CONFIG_SPEARSMI) += spr_smi.o

@@ -170,6 +170,8 @@
 #define PIXIS_LBMAP_SWITCH	7
 #define PIXIS_LBMAP_MASK	0xF0
 #define PIXIS_LBMAP_ALTBANK	0x20
+#define PIXIS_ELBC_SPI_MASK	0xc0
+#define PIXIS_SPI		0x80
 
 #define CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0xffd00000 /* Initial L1 address */
@@ -202,6 +204,8 @@
 #define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 
 /* Video */
+#define CONFIG_FSL_DIU_FB
+
 #ifdef CONFIG_FSL_DIU_FB
 #define CONFIG_SYS_DIU_ADDR	(CONFIG_SYS_CCSRBAR + 0x10000)
 #define CONFIG_VIDEO
@@ -219,7 +223,7 @@
 #undef CONFIG_SYS_FLASH_EMPTY_INFO
 #endif
 
-#ifndef CONFIG_DIU
+#ifndef CONFIG_FSL_DIU_FB
 #define CONFIG_ATI
 #endif
 
@@ -265,6 +269,19 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR	0x57
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
 #define CONFIG_SYS_EEPROM_BUS_NUM	1
+
+/*
+ * eSPI - Enhanced SPI
+ */
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_SPANSION
+
+#define CONFIG_HARD_SPI
+#define CONFIG_FSL_ESPI
+
+#define CONFIG_CMD_SF
+#define CONFIG_SF_DEFAULT_SPEED		10000000
+#define CONFIG_SF_DEFAULT_MODE		0
 
 /*
  * General PCI
@@ -460,11 +477,11 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 16 MB of memory, since this is
+ * have to be in the first 64 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ	(16 << 20)	/* Initial Memory map for Linux*/
-#define CONFIG_SYS_BOOTM_LEN	(16 << 20)	/* Increase max gunzip size */
+#define CONFIG_SYS_BOOTMAPSZ	(64 << 20)	/* Initial Memory map for Linux*/
+#define CONFIG_SYS_BOOTM_LEN	(64 << 20)	/* Increase max gunzip size */
 
 #ifdef CONFIG_CMD_KGDB
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */
@@ -507,9 +524,7 @@
 	"diuregs=md e002c000 1d\0"			 		\
 	"dium=mw e002c01c\0" 						\
 	"diuerr=md e002c014 1\0" 					\
-	"othbootargs=diufb=15M video=fslfb:1280x1024-32@60,monitor=0 tty0\0" \
-	"hwconfig=esdhc;audclk:12\0"					\
-	"monitor=0-DVI\0"
+	"hwconfig=esdhc;audclk:12\0"
 
 #define CONFIG_HDBOOT					\
 	"setenv bootargs root=/dev/$bdev rw "		\

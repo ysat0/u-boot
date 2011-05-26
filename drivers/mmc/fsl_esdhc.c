@@ -99,6 +99,10 @@ uint esdhc_xfertyp(struct mmc_cmd *cmd, struct mmc_data *data)
 	else if (cmd->resp_type & MMC_RSP_PRESENT)
 		xfertyp |= XFERTYP_RSPTYP_48;
 
+#ifdef CONFIG_MX53
+	if (cmd->cmdidx == MMC_CMD_STOP_TRANSMISSION)
+		xfertyp |= XFERTYP_CMDTYP_ABORT;
+#endif
 	return XFERTYP_CMD(cmd->cmdidx) | xfertyp;
 }
 
@@ -521,6 +525,7 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	mmc->f_min = 400000;
 	mmc->f_max = MIN(gd->sdhc_clk, 52000000);
 
+	mmc->b_max = 0;
 	mmc_register(mmc);
 
 	return 0;

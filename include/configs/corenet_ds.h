@@ -68,17 +68,34 @@
 
 #define CONFIG_ENV_OVERWRITE
 
-#if defined(CONFIG_RAMBOOT_PBL)
-	#define CONFIG_SYS_NO_FLASH	/* Store ENV in memory only */
-#endif
-
 #ifdef CONFIG_SYS_NO_FLASH
 #define CONFIG_ENV_IS_NOWHERE
 #else
-#define CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_FLASH_CFI_DRIVER
 #define CONFIG_SYS_FLASH_CFI
+#endif
+
+#if defined(CONFIG_SPIFLASH)
+#define CONFIG_SYS_EXTRA_ENV_RELOC
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#define CONFIG_ENV_SPI_BUS              0
+#define CONFIG_ENV_SPI_CS               0
+#define CONFIG_ENV_SPI_MAX_HZ           10000000
+#define CONFIG_ENV_SPI_MODE             0
+#define CONFIG_ENV_SIZE                 0x2000          /* 8KB */
+#define CONFIG_ENV_OFFSET               0x100000        /* 1MB */
+#define CONFIG_ENV_SECT_SIZE            0x10000
+#elif defined(CONFIG_SDCARD)
+#define CONFIG_SYS_EXTRA_ENV_RELOC
+#define CONFIG_ENV_IS_IN_MMC
+#define CONFIG_SYS_MMC_ENV_DEV          0
+#define CONFIG_ENV_SIZE			0x2000
+#define CONFIG_ENV_OFFSET		(512 * 1097)
+#else
+#define CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE - CONFIG_ENV_SECT_SIZE)
+#define CONFIG_ENV_SIZE		0x2000
+#define CONFIG_ENV_SECT_SIZE	0x20000 /* 128K (one sector) */
 #endif
 
 #define CONFIG_SYS_CLK_FREQ	get_board_sys_clk() /* sysclk for MPC85xx */
@@ -162,6 +179,7 @@
 #define CONFIG_SYS_SPD_BUS_NUM	1
 #define SPD_EEPROM_ADDRESS1	0x51
 #define SPD_EEPROM_ADDRESS2	0x52
+#define SPD_EEPROM_ADDRESS	SPD_EEPROM_ADDRESS1	/* for p3041/p5010 */
 #define CONFIG_SYS_SDRAM_SIZE	4096	/* for fixed parameter use */
 
 /*
@@ -216,6 +234,43 @@
 
 #if defined(CONFIG_RAMBOOT_PBL)
 #define CONFIG_SYS_RAMBOOT
+#endif
+
+/* Nand Flash */
+#if defined(CONFIG_P3041DS) || defined(CONFIG_P5020DS)
+#define CONFIG_NAND_FSL_ELBC
+#ifdef CONFIG_NAND_FSL_ELBC
+#define CONFIG_SYS_NAND_BASE		0xffa00000
+#ifdef CONFIG_PHYS_64BIT
+#define CONFIG_SYS_NAND_BASE_PHYS	0xfffa00000ull
+#else
+#define CONFIG_SYS_NAND_BASE_PHYS	CONFIG_SYS_NAND_BASE
+#endif
+
+#define CONFIG_SYS_NAND_BASE_LIST     {CONFIG_SYS_NAND_BASE}
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_MTD_NAND_VERIFY_WRITE
+#define CONFIG_CMD_NAND
+#define CONFIG_SYS_NAND_BLOCK_SIZE    (128 * 1024)
+
+/* NAND flash config */
+#define CONFIG_SYS_NAND_BR_PRELIM  (BR_PHYS_ADDR(CONFIG_SYS_NAND_BASE_PHYS) \
+			       | (2<<BR_DECC_SHIFT)    /* Use HW ECC */ \
+			       | BR_PS_8	       /* Port Size = 8 bit */ \
+			       | BR_MS_FCM	       /* MSEL = FCM */ \
+			       | BR_V)		       /* valid */
+#define CONFIG_SYS_NAND_OR_PRELIM  (0xFFFC0000	      /* length 256K */ \
+			       | OR_FCM_PGS	       /* Large Page*/ \
+			       | OR_FCM_CSCT \
+			       | OR_FCM_CST \
+			       | OR_FCM_CHT \
+			       | OR_FCM_SCY_1 \
+			       | OR_FCM_TRLX \
+			       | OR_FCM_EHTR)
+
+#define CONFIG_SYS_BR2_PRELIM	CONFIG_SYS_NAND_BR_PRELIM /* NAND Base Address */
+#define CONFIG_SYS_OR2_PRELIM	CONFIG_SYS_NAND_OR_PRELIM /* NAND Options */
+#endif /* CONFIG_NAND_FSL_ELBC */
 #endif
 
 #define CONFIG_SYS_FLASH_EMPTY_INFO
@@ -313,6 +368,16 @@
 #define CONFIG_SYS_SRIO2_MEM_SIZE	0x10000000	/* 256M */
 
 /*
+ * eSPI - Enhanced SPI
+ */
+#define CONFIG_FSL_ESPI
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_SPANSION
+#define CONFIG_CMD_SF
+#define CONFIG_SF_DEFAULT_SPEED         10000000
+#define CONFIG_SF_DEFAULT_MODE          0
+
+/*
  * General PCI
  * Memory space is mapped 1-1, but I/O space must start from 0.
  */
@@ -356,7 +421,7 @@
 #define CONFIG_SYS_PCIE2_IO_SIZE	0x00010000	/* 64k */
 
 /* controller 3, Slot 1, tgtid 1, Base address 202000 */
-#define CONFIG_SYS_PCIE3_MEM_VIRT	0xe0000000
+#define CONFIG_SYS_PCIE3_MEM_VIRT	0xc0000000
 #ifdef CONFIG_PHYS_64BIT
 #define CONFIG_SYS_PCIE3_MEM_BUS	0xe0000000
 #define CONFIG_SYS_PCIE3_MEM_PHYS	0xc40000000ull
@@ -465,9 +530,6 @@
 /*
  * Environment
  */
-#define CONFIG_ENV_SIZE		0x2000
-#define CONFIG_ENV_SECT_SIZE	0x20000 /* 128K (one sector) */
-
 #define CONFIG_LOADS_ECHO		/* echo on for serial download */
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	/* allow baudrate change */
 
@@ -476,14 +538,15 @@
  */
 #include <config_cmd_default.h>
 
+#define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ELF
 #define CONFIG_CMD_ERRATA
+#define CONFIG_CMD_GREPENV
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_SETEXPR
-#define CONFIG_CMD_DHCP
 
 #ifdef CONFIG_PCI
 #define CONFIG_CMD_PCI
@@ -533,11 +596,11 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 16 MB of memory, since this is
+ * have to be in the first 64 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ	(16 << 20)	/* Initial Memory map for Linux*/
-#define CONFIG_SYS_BOOTM_LEN	(16 << 20)	/* Increase max gunzip size */
+#define CONFIG_SYS_BOOTMAPSZ	(64 << 20)	/* Initial Memory map for Linux*/
+#define CONFIG_SYS_BOOTM_LEN	(64 << 20)	/* Increase max gunzip size */
 
 #ifdef CONFIG_CMD_KGDB
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */
