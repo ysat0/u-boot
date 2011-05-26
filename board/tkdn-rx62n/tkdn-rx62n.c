@@ -33,6 +33,11 @@ int checkboard(void)
 
 int board_init(void)
 {
+	*(volatile unsigned long *)0x00080010 &= ~0x00008000;
+	*(volatile unsigned long *)0x00080014 &= ~0xc0000000;
+	*(volatile unsigned char *)0x0008c062 |= 0x02;
+	*(volatile unsigned char *)0x0008c10f |= 0x02;
+	*(volatile unsigned char *)0x0008c06b |= 0x04;
 #if defined(CONFIG_SH_ETHER)
 	*(volatile unsigned long *)0x00080014 &= ~0x00008000;
 #endif
@@ -64,9 +69,4 @@ int sdram_init(void)
 	*(volatile unsigned char *)0x00083c00 = 0x11;
 #endif
 	return 0;
-}
-
-void led_set_state(unsigned short value)
-{
-
 }

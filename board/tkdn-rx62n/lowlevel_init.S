@@ -67,12 +67,6 @@ lowlevel_init:
 	REGINIT(0xC105,BYTE,0x30)
 	/* SDCLK enable */
 	REGINIT(0xC106,BYTE,0xd0)
-	/* TMR0 enable */
-	REGINIT(0x0010,LONG,0x4fffffdf)
-	/* SCI0 enable */
-	REGINIT(0x0014,LONG,0x7fffffff)
-	/* P21 (RxD0) input */
-	REGINIT(0xc062,BYTE,0x02)
 	.long	0xffffffff
 	
 	.align 2
