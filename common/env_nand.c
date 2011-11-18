@@ -193,16 +193,14 @@ int saveenv(void)
 	int	ret = 0;
 	nand_erase_options_t nand_erase_options;
 
+	memset(&nand_erase_options, 0, sizeof(nand_erase_options));
 	nand_erase_options.length = CONFIG_ENV_RANGE;
-	nand_erase_options.quiet = 0;
-	nand_erase_options.jffs2 = 0;
-	nand_erase_options.scrub = 0;
 
 	if (CONFIG_ENV_RANGE < CONFIG_ENV_SIZE)
 		return 1;
 
 	res = (char *)&env_new.data;
-	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
+	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE, 0, NULL);
 	if (len < 0) {
 		error("Cannot export environment: errno = %d\n", errno);
 		return 1;
@@ -249,17 +247,15 @@ int saveenv(void)
 	char	*res;
 	nand_erase_options_t nand_erase_options;
 
+	memset(&nand_erase_options, 0, sizeof(nand_erase_options));
 	nand_erase_options.length = CONFIG_ENV_RANGE;
-	nand_erase_options.quiet = 0;
-	nand_erase_options.jffs2 = 0;
-	nand_erase_options.scrub = 0;
 	nand_erase_options.offset = CONFIG_ENV_OFFSET;
 
 	if (CONFIG_ENV_RANGE < CONFIG_ENV_SIZE)
 		return 1;
 
 	res = (char *)&env_new.data;
-	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
+	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE, 0, NULL);
 	if (len < 0) {
 		error("Cannot export environment: errno = %d\n", errno);
 		return 1;

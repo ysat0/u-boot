@@ -38,6 +38,7 @@
 #include <asm/arch/systimer.h>
 #include <asm/arch/sysctrl.h>
 #include <asm/arch/wdt.h>
+#include "../drivers/mmc/arm_pl180_mmci.h"
 
 static ulong timestamp;
 static ulong lastdec;
@@ -196,11 +197,6 @@ void reset_timer_masked(void)
 {
 	lastdec = readl(&systimer_base->timer0value) / 1000;
 	timestamp = 0;
-}
-
-void reset_timer(void)
-{
-	reset_timer_masked();
 }
 
 ulong get_timer_masked(void)

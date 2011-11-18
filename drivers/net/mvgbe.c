@@ -32,9 +32,12 @@
 #include <net.h>
 #include <malloc.h>
 #include <miiphy.h>
+#include <asm/io.h>
 #include <asm/errno.h>
 #include <asm/types.h>
+#include <asm/system.h>
 #include <asm/byteorder.h>
+#include <asm/arch/cpu.h>
 
 #if defined(CONFIG_KIRKWOOD)
 #include <asm/arch/kirkwood.h>

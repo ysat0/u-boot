@@ -36,14 +36,14 @@
  */
 #define CONFIG_PXA250		1	/* This is an PXA250 CPU    */
 #define CONFIG_CERF250		1	/* on Cerf PXA Board	    */
-#define BOARD_LATE_INIT		1
+#define CONFIG_BOARD_LATE_INIT
 #define CONFIG_BAUDRATE		38400
 #define	CONFIG_SYS_TEXT_BASE	0x0
 
 #undef	CONFIG_USE_IRQ			/* we don't need IRQ/FIQ stuff */
 
 /* we will never enable dcache, because we have to setup MMU first */
-#define CONFIG_SYS_NO_DCACHE
+#define CONFIG_SYS_DCACHE_OFF
 
 /*
  * Size of malloc() pool
@@ -53,7 +53,6 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_NET_MULTI
 #define CONFIG_SMC91111
 #define CONFIG_SMC91111_BASE 0x04000300
 #define CONFIG_SMC_USE_32_BIT

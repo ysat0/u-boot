@@ -5,7 +5,7 @@
  * Graeme Russ, <graeme.russ@gmail.com>
  *
  * (C) Copyright 2002,2003
- * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
+ * Daniel EngstrÃ¶m, Omicron Ceti AB, <daniel@omicron.se>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -50,7 +50,7 @@ board_init16_ret:
 
 	/* Turn of cache (this might require a 486-class CPU) */
 	movl	%cr0, %eax
-	orl	$(X86_CR0_NW & X86_CR0_CD), %eax
+	orl	$(X86_CR0_NW | X86_CR0_CD), %eax
 	movl	%eax, %cr0
 	wbinvd
 

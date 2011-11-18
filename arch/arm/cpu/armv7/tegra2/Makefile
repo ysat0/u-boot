@@ -28,7 +28,7 @@ include $(TOPDIR)/config.mk
 LIB	=  $(obj)lib$(SOC).o
 
 SOBJS	:= lowlevel_init.o
-COBJS	:= ap20.o board.o sys_info.o timer.o
+COBJS	:= ap20.o board.o clock.o pinmux.o sys_info.o timer.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
@@ -36,7 +36,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
 all:	 $(obj).depend $(LIB)
 
 $(LIB):	$(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 #########################################################################
 

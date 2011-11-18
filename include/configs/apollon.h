@@ -86,7 +86,6 @@
 /*
  * SMC91c96 Etherent
  */
-#define CONFIG_NET_MULTI
 #define	CONFIG_LAN91C96
 #define	CONFIG_LAN91C96_BASE	(APOLLON_CS1_BASE+0x300)
 #define	CONFIG_LAN91C96_EXT_PHY
@@ -265,5 +264,9 @@
 					"32m(fs),"			\
 					"-(ubifs)"
 #endif
+
+#define PHYS_SRAM			0x4020F800
+#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
+#define CONFIG_SYS_INIT_SP_ADDR 	PHYS_SRAM
 
 #endif /* __CONFIG_H */

@@ -3,7 +3,7 @@
  * Graeme Russ, <graeme.russ@gmail.com>
  *
  * (C) Copyright 2002
- * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
+ * Daniel EngstrÃ¶m, Omicron Ceti AB, <daniel@omicron.se>
  *
  * (C) Copyright 2002
  * Wolfgang Denk, DENX Software Engineering, <wd@denx.de>
@@ -35,7 +35,6 @@
 #include <watchdog.h>
 #include <command.h>
 #include <stdio_dev.h>
-#include <timestamp.h>
 #include <version.h>
 #include <malloc.h>
 #include <net.h>
@@ -66,9 +65,6 @@ extern ulong __rel_dyn_end;
 extern ulong __bss_start;
 extern ulong __bss_end;
 
-const char version_string[] =
-	U_BOOT_VERSION" (" U_BOOT_DATE " - " U_BOOT_TIME ")";
-
 /************************************************************************
  * Init Utilities							*
  ************************************************************************
@@ -78,14 +74,8 @@ const char version_string[] =
  */
 static int init_baudrate (void)
 {
-	char tmp[64];	/* long enough for environment variables */
-	int i = getenv_f("baudrate", tmp, 64);
-
-	gd->baudrate = (i != 0)
-			? (int) simple_strtoul (tmp, NULL, 10)
-			: CONFIG_BAUDRATE;
-
-	return (0);
+	gd->baudrate = getenv_ulong("baudrate", 10, CONFIG_BAUDRATE);
+	return 0;
 }
 
 static int display_banner (void)
@@ -363,12 +353,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	udelay(20);
 
-	set_timer (0);
-
 	/* Initialize from environment */
-	if ((s = getenv ("loadaddr")) != NULL) {
-		load_addr = simple_strtoul (s, NULL, 16);
-	}
+	load_addr = getenv_ulong("loadaddr", 16, load_addr);
 #if defined(CONFIG_CMD_NET)
 	if ((s = getenv ("bootfile")) != NULL) {
 		copy_filename (BootFile, s, sizeof (BootFile));
@@ -399,10 +385,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	bb_miiphy_init();
 #endif
 #if defined(CONFIG_CMD_NET)
-#if defined(CONFIG_NET_MULTI)
 	WATCHDOG_RESET();
 	puts("Net:   ");
-#endif
 	eth_initialize(gd->bd);
 #endif
 

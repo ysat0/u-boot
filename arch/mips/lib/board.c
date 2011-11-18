@@ -25,7 +25,6 @@
 #include <command.h>
 #include <malloc.h>
 #include <stdio_dev.h>
-#include <timestamp.h>
 #include <version.h>
 #include <net.h>
 #include <environment.h>
@@ -49,9 +48,6 @@ extern ulong uboot_end_data;
 extern ulong uboot_end;
 
 ulong monitor_flash_len;
-
-const char version_string[] =
-	U_BOOT_VERSION" (" U_BOOT_DATE " - " U_BOOT_TIME ")";
 
 static char *failed = "*** failed ***\n";
 
@@ -105,14 +101,8 @@ static void display_flash_config(ulong size)
 
 static int init_baudrate (void)
 {
-	char tmp[64];	/* long enough for environment variables */
-	int i = getenv_f("baudrate", tmp, sizeof (tmp));
-
-	gd->baudrate = (i > 0)
-			? (int) simple_strtoul (tmp, NULL, 10)
-			: CONFIG_BAUDRATE;
-
-	return (0);
+	gd->baudrate = getenv_ulong("baudrate", 10, CONFIG_BAUDRATE);
+	return 0;
 }
 
 
@@ -352,9 +342,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
 	/* Initialize from environment */
-	if ((s = getenv ("loadaddr")) != NULL) {
-		load_addr = simple_strtoul (s, NULL, 16);
-	}
+	load_addr = getenv_ulong("loadaddr", 16, load_addr);
 #if defined(CONFIG_CMD_NET)
 	if ((s = getenv ("bootfile")) != NULL) {
 		copy_filename (BootFile, s, sizeof (BootFile));
@@ -376,9 +364,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	bb_miiphy_init();
 #endif
 #if defined(CONFIG_CMD_NET)
-#if defined(CONFIG_NET_MULTI)
 	puts ("Net:   ");
-#endif
 	eth_initialize(gd->bd);
 #endif
 

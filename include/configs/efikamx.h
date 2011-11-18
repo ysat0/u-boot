@@ -31,6 +31,10 @@
  */
 /* An i.MX51 CPU */
 #define CONFIG_MX51
+
+#define	machine_is_efikamx()	(CONFIG_MACH_TYPE == MACH_TYPE_MX51_EFIKAMX)
+#define	machine_is_efikasb()	(CONFIG_MACH_TYPE == MACH_TYPE_MX51_EFIKASB)
+
 #include <asm/arch/imx-regs.h>
 
 #define CONFIG_SYS_MX5_HCLK		24000000
@@ -38,7 +42,7 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
-#define CONFIG_L2_OFF
+#define CONFIG_SYS_TEXT_BASE		0x97800000
 
 /*
  * Bootloader Components Configuration
@@ -47,6 +51,7 @@
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_FAT
+#define CONFIG_CMD_EXT2
 #define CONFIG_CMD_IDE
 #undef CONFIG_CMD_IMLS
 
@@ -74,7 +79,7 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
 
 #define CONFIG_BOARD_EARLY_INIT_F
-#define BOARD_LATE_INIT
+#define CONFIG_BOARD_LATE_INIT
 
 /*
  * Hardware drivers
@@ -119,12 +124,15 @@
 #endif
 
 /* SPI PMIC */
-#define CONFIG_FSL_PMIC
+#define CONFIG_PMIC
+#define CONFIG_PMIC_SPI
+#define CONFIG_PMIC_FSL
 #define CONFIG_FSL_PMIC_BUS		0
 #define CONFIG_FSL_PMIC_CS		(0 | 120 << 8)
 #define CONFIG_FSL_PMIC_CLK		25000000
 #define CONFIG_FSL_PMIC_MODE		(SPI_MODE_0 | SPI_CS_HIGH)
-#define CONFIG_RTC_MC13783
+#define CONFIG_FSL_PMIC_BITLEN	32
+#define CONFIG_RTC_MC13XXX
 #endif
 
 /*
@@ -229,6 +237,6 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 #define CONFIG_SYS_DDR_CLKSEL		0
-#define CONFIG_SYS_CLKTL_CBCDR		0x59E35100
+#define CONFIG_SYS_CLKTL_CBCDR		0x59E35145
 
 #endif

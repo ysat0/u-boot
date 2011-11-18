@@ -79,6 +79,8 @@ SPI_FLASH|MG_DISK|NVRAM|MMC} or CONFIG_ENV_IS_NOWHERE
 #define	MAX_ENV_SIZE	(1 << 20)	/* 1 MiB */
 
 ulong load_addr = CONFIG_SYS_LOAD_ADDR;	/* Default Load Address */
+ulong save_addr;			/* Default Save Address */
+ulong save_size;			/* Default Save Size (in bytes) */
 
 /*
  * Table with supported baudrates (defined in config_xyz.h)
@@ -123,7 +125,7 @@ static int env_print(char *name)
 	}
 
 	/* print whole list */
-	len = hexport_r(&env_htab, '\n', &res, 0);
+	len = hexport_r(&env_htab, '\n', &res, 0, 0, NULL);
 
 	if (len > 0) {
 		puts(res);
@@ -367,13 +369,44 @@ int _do_env_set (int flag, int argc, char * const argv[])
 	return 0;
 }
 
-int setenv(char *varname, char *varvalue)
+int setenv(const char *varname, const char *varvalue)
 {
-	char * const argv[4] = { "setenv", varname, varvalue, NULL };
+	const char * const argv[4] = { "setenv", varname, varvalue, NULL };
+
 	if ((varvalue == NULL) || (varvalue[0] == '\0'))
-		return _do_env_set(0, 2, argv);
+		return _do_env_set(0, 2, (char * const *)argv);
 	else
-		return _do_env_set(0, 3, argv);
+		return _do_env_set(0, 3, (char * const *)argv);
+}
+
+/**
+ * Set an environment variable to an integer value
+ *
+ * @param varname	Environmet variable to set
+ * @param value		Value to set it to
+ * @return 0 if ok, 1 on error
+ */
+int setenv_ulong(const char *varname, ulong value)
+{
+	/* TODO: this should be unsigned */
+	char *str = simple_itoa(value);
+
+	return setenv(varname, str);
+}
+
+/**
+ * Set an environment variable to an address in hex
+ *
+ * @param varname	Environmet variable to set
+ * @param addr		Value to set it to
+ * @return 0 if ok, 1 on error
+ */
+int setenv_addr(const char *varname, const void *addr)
+{
+	char str[17];
+
+	sprintf(str, "%x", (uintptr_t)addr);
+	return setenv(varname, str);
 }
 
 int do_env_set(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -459,7 +492,6 @@ int do_env_edit(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char buffer[CONFIG_SYS_CBSIZE];
 	char *init_val;
-	int len;
 
 	if (argc < 2)
 		return cmd_usage(cmdtp);
@@ -467,7 +499,7 @@ int do_env_edit(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	/* Set read buffer to initial value or empty sting */
 	init_val = getenv(argv[1]);
 	if (init_val)
-		len = sprintf(buffer, "%s", init_val);
+		sprintf(buffer, "%s", init_val);
 	else
 		buffer[0] = '\0';
 
@@ -482,7 +514,7 @@ int do_env_edit(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  * return address of storage for that variable,
  * or NULL if not found
  */
-char *getenv(char *name)
+char *getenv(const char *name)
 {
 	if (gd->flags & GD_FLG_ENV_READY) {	/* after import into hashtable */
 		ENTRY e, *ep;
@@ -507,7 +539,7 @@ char *getenv(char *name)
 /*
  * Look up variable from environment for restricted C runtime env.
  */
-int getenv_f(char *name, char *buf, unsigned len)
+int getenv_f(const char *name, char *buf, unsigned len)
 {
 	int i, nxt;
 
@@ -538,6 +570,26 @@ int getenv_f(char *name, char *buf, unsigned len)
 		return n;
 	}
 	return -1;
+}
+
+/**
+ * Decode the integer value of an environment variable and return it.
+ *
+ * @param name		Name of environemnt variable
+ * @param base		Number base to use (normally 10, or 16 for hex)
+ * @param default_val	Default value to return if the variable is not
+ *			found
+ * @return the decoded value, or default_val if not found
+ */
+ulong getenv_ulong(const char *name, int base, ulong default_val)
+{
+	/*
+	 * We can use getenv() here, even before relocation, since the
+	 * environment variable value is an integer and thus short.
+	 */
+	const char *str = getenv(name);
+
+	return str ? simple_strtoul(str, NULL, base) : default_val;
 }
 
 #if defined(CONFIG_CMD_SAVEENV) && !defined(CONFIG_ENV_IS_NOWHERE)
@@ -595,7 +647,7 @@ static int do_env_delete(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 
 #ifdef CONFIG_CMD_EXPORTENV
 /*
- * env export [-t | -b | -c] addr [size]
+ * env export [-t | -b | -c] [-s size] addr [var ...]
  *	-t:	export as text format; if size is given, data will be
  *		padded with '\0' bytes; if not, one terminating '\0'
  *		will be added (which is included in the "filesize"
@@ -605,8 +657,12 @@ static int do_env_delete(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
  *		'\0', list end marked by double "\0\0")
  *	-c:	export as checksum protected environment format as
  *		used for example by "saveenv" command
+ *	-s size:
+ *		size of output buffer
  *	addr:	memory address where environment gets stored
- *	size:	size of output buffer
+ *	var...	List of variable names that get included into the
+ *		export. Without arguments, the whole environment gets
+ *		exported.
  *
  * With "-c" and size is NOT given, then the export command will
  * format the data as currently used for the persistent storage,
@@ -639,7 +695,7 @@ static int do_env_export(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 {
 	char	buf[32];
 	char	*addr, *cmd, *res;
-	size_t	size;
+	size_t	size = 0;
 	ssize_t	len;
 	env_t	*envp;
 	char	sep = '\n';
@@ -663,6 +719,11 @@ static int do_env_export(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 				sep = '\0';
 				chk = 1;
 				break;
+			case 's':		/* size given */
+				if (--argc <= 0)
+					return cmd_usage(cmdtp);
+				size = simple_strtoul(*++argv, NULL, 16);
+				goto NXTARG;
 			case 't':		/* text format */
 				if (fmt++)
 					goto sep_err;
@@ -672,6 +733,7 @@ static int do_env_export(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 				return cmd_usage(cmdtp);
 			}
 		}
+NXTARG:		;
 	}
 
 	if (argc < 1)
@@ -679,15 +741,14 @@ static int do_env_export(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 
 	addr = (char *)simple_strtoul(argv[0], NULL, 16);
 
-	if (argc == 2) {
-		size = simple_strtoul(argv[1], NULL, 16);
+	if (size)
 		memset(addr, '\0', size);
-	} else {
-		size = 0;
-	}
+
+	argc--;
+	argv++;
 
 	if (sep) {		/* export as text file */
-		len = hexport_r(&env_htab, sep, &addr, size);
+		len = hexport_r(&env_htab, sep, &addr, size, argc, argv);
 		if (len < 0) {
 			error("Cannot export environment: errno = %d\n",
 				errno);
@@ -706,7 +767,7 @@ static int do_env_export(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 	else			/* export as raw binary data */
 		res = addr;
 
-	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
+	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE, argc, argv);
 	if (len < 0) {
 		error("Cannot export environment: errno = %d\n",
 			errno);
@@ -913,7 +974,7 @@ U_BOOT_CMD(
 #if defined(CONFIG_CMD_EDITENV)
 	"env edit name - edit environment variable\n"
 #endif
-	"env export [-t | -b | -c] addr [size] - export environment\n"
+	"env export [-t | -b | -c] [-s size] addr [var ...] - export environment\n"
 #if defined(CONFIG_CMD_GREPENV)
 	"env grep string [...] - search environment\n"
 #endif

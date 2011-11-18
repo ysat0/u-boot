@@ -3,7 +3,7 @@
  * Graeme Russ, <graeme.russ@gmail.com>
  *
  * (C) Copyright 2002
- * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
+ * Daniel EngstrÃ¶m, Omicron Ceti AB, <daniel@omicron.se>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -28,8 +28,8 @@
 #include <pci.h>
 #include <asm/io.h>
 #include <asm/pci.h>
-#include <asm/ic/pci.h>
-#include <asm/ic/sc520.h>
+#include <asm/arch/pci.h>
+#include <asm/arch/sc520.h>
 
 static struct {
 	u8 priority;

@@ -25,6 +25,7 @@
 #include <common.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
+#include <pmic.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -38,6 +39,9 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE_GONI;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
+#if defined(CONFIG_PMIC)
+	pmic_init();
+#endif
 	return 0;
 }
 
@@ -73,7 +77,7 @@ int board_mmc_init(bd_t *bis)
 	int i;
 
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
-	gpio_direction_output(&s5pc110_gpio->j2, 7, 1);
+	s5p_gpio_direction_output(&s5pc110_gpio->j2, 7, 1);
 
 	/*
 	 * MMC0 GPIO
@@ -86,11 +90,11 @@ int board_mmc_init(bd_t *bis)
 		if (i == 2)
 			continue;
 		/* GPG0[0:6] special function 2 */
-		gpio_cfg_pin(&s5pc110_gpio->g0, i, 0x2);
+		s5p_gpio_cfg_pin(&s5pc110_gpio->g0, i, 0x2);
 		/* GPG0[0:6] pull disable */
-		gpio_set_pull(&s5pc110_gpio->g0, i, GPIO_PULL_NONE);
+		s5p_gpio_set_pull(&s5pc110_gpio->g0, i, GPIO_PULL_NONE);
 		/* GPG0[0:6] drv 4x */
-		gpio_set_drv(&s5pc110_gpio->g0, i, GPIO_DRV_4X);
+		s5p_gpio_set_drv(&s5pc110_gpio->g0, i, GPIO_DRV_4X);
 	}
 
 	return s5p_mmc_init(0, 4);

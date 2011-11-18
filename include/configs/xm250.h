@@ -38,7 +38,7 @@
 #define	CONFIG_SYS_TEXT_BASE	0x0
 
 /* we will never enable dcache, because we have to setup MMU first */
-#define CONFIG_SYS_NO_DCACHE
+#define CONFIG_SYS_DCACHE_OFF
 
 /*
  * Size of malloc() pool; this lives below the uppermost 128 KiB which are
@@ -50,7 +50,6 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_NET_MULTI
 #define CONFIG_SMC91111
 #define CONFIG_SMC91111_BASE		0x04000300
 #undef	CONFIG_SMC91111_EXT_PHY
@@ -139,7 +138,6 @@
 #define CONFIG_CMDLINE_TAG	 1	 /* send commandline to Kernel		*/
 #define CONFIG_SETUP_MEMORY_TAGS 1	 /* send memory definition to kernel	*/
 #define	CONFIG_INITRD_TAG	 1	 /* do not send initrd params		*/
-#undef	CONFIG_VFD			 /* do not send framebuffer setup	*/
 
 /*
  * Stack sizes

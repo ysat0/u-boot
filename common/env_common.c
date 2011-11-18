@@ -47,7 +47,7 @@ static uchar env_get_char_init (int index);
 #define XMK_STR(x)	#x
 #define MK_STR(x)	XMK_STR(x)
 
-uchar default_environment[] = {
+const uchar default_environment[] = {
 #ifdef	CONFIG_BOOTARGS
 	"bootargs="	CONFIG_BOOTARGS			"\0"
 #endif
@@ -100,7 +100,7 @@ uchar default_environment[] = {
 	"preboot="	CONFIG_PREBOOT			"\0"
 #endif
 #ifdef	CONFIG_ROOTPATH
-	"rootpath="	MK_STR(CONFIG_ROOTPATH)		"\0"
+	"rootpath="	CONFIG_ROOTPATH			"\0"
 #endif
 #ifdef	CONFIG_GATEWAYIP
 	"gatewayip="	MK_STR(CONFIG_GATEWAYIP)	"\0"
@@ -112,7 +112,7 @@ uchar default_environment[] = {
 	"hostname="	MK_STR(CONFIG_HOSTNAME)		"\0"
 #endif
 #ifdef	CONFIG_BOOTFILE
-	"bootfile="	MK_STR(CONFIG_BOOTFILE)		"\0"
+	"bootfile="	CONFIG_BOOTFILE			"\0"
 #endif
 #ifdef	CONFIG_LOADADDR
 	"loadaddr="	MK_STR(CONFIG_LOADADDR)		"\0"
@@ -162,7 +162,7 @@ uchar env_get_char (int index)
 	return (c);
 }
 
-uchar *env_get_addr (int index)
+const uchar *env_get_addr (int index)
 {
 	if (gd->env_valid)
 		return (uchar *)(gd->env_addr + index);

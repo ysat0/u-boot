@@ -71,7 +71,7 @@ compute_ranksize(const ddr3_spd_eeprom_t *spd)
 	bsize = 1ULL << (nbit_sdram_cap_bsize - 3
 		    + nbit_primary_bus_width - nbit_sdram_width);
 
-	debug("DDR: DDR III rank density = 0x%16lx\n", bsize);
+	debug("DDR: DDR III rank density = 0x%16llx\n", bsize);
 
 	return bsize;
 }
@@ -114,7 +114,8 @@ ddr_compute_dimm_parameters(const ddr3_spd_eeprom_t *spd,
 	 * and copying the part name in ASCII from the SPD onto it
 	 */
 	memset(pdimm->mpart, 0, sizeof(pdimm->mpart));
-	memcpy(pdimm->mpart, spd->mpart, sizeof(pdimm->mpart) - 1);
+	if ((spd->info_size_crc & 0xF) > 1)
+		memcpy(pdimm->mpart, spd->mpart, sizeof(pdimm->mpart) - 1);
 
 	/* DIMM organization parameters */
 	pdimm->n_ranks = ((spd->organization >> 3) & 0x7) + 1;

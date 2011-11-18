@@ -3,7 +3,7 @@
  * Graeme Russ, <graeme.russ@gmail.com>
  *
  * (C) Copyright 2002
- * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
+ * Daniel EngstrÃ¶m, Omicron Ceti AB, <daniel@omicron.se>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -27,7 +27,7 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/interrupt.h>
-#include <asm/ic/sc520.h>
+#include <asm/arch/sc520.h>
 
 void sc520_timer_isr(void)
 {

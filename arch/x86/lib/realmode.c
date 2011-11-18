@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2002
- * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
+ * Daniel EngstrÃ¶m, Omicron Ceti AB, <daniel@omicron.se>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -41,7 +41,7 @@ int realmode_setup(void)
 	if (realmode_size > (REALMODE_MAILBOX - (char *)REALMODE_BASE)) {
 		printf("realmode switch too large (%ld bytes, max is %d)\n",
 		       realmode_size,
-		       (REALMODE_MAILBOX - (char *)REALMODE_BASE));
+		       (int)(REALMODE_MAILBOX - (char *)REALMODE_BASE));
 		return -1;
 	}
 

@@ -31,6 +31,7 @@
 #include <asm/processor.h>
 #include <ioports.h>
 #include <sata.h>
+#include <fm_eth.h>
 #include <asm/io.h>
 #include <asm/cache.h>
 #include <asm/mmu.h>
@@ -222,6 +223,12 @@ static void corenet_tb_init(void)
 void cpu_init_f (void)
 {
 	extern void m8560_cpm_reset (void);
+#ifdef CONFIG_SYS_DCSRBAR_PHYS
+	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+#endif
+#if defined(CONFIG_SECURE_BOOT)
+	struct law_entry law;
+#endif
 #ifdef CONFIG_MPC8548
 	ccsr_local_ecm_t *ecm = (void *)(CONFIG_SYS_MPC85xx_ECM_ADDR);
 	uint svr = get_svr();
@@ -238,6 +245,13 @@ void cpu_init_f (void)
 
 	disable_tlb(14);
 	disable_tlb(15);
+
+#if defined(CONFIG_SECURE_BOOT)
+	/* Disable the LAW created for NOR flash by the PBI commands */
+	law = find_law(CONFIG_SYS_PBI_FLASH_BASE);
+	if (law.index != -1)
+		disable_law(law.index);
+#endif
 
 #ifdef CONFIG_CPM2
 	config_8560_ioports((ccsr_cpm_t *)CONFIG_SYS_MPC85xx_CPM_ADDR);
@@ -262,6 +276,13 @@ void cpu_init_f (void)
 
 	/* Invalidate the CPC before DDR gets enabled */
 	invalidate_cpc();
+
+ #ifdef CONFIG_SYS_DCSRBAR_PHYS
+	/* set DCSRCR so that DCSR space is 1G */
+	setbits_be32(&gur->dcsrcr, FSL_CORENET_DCSR_SZ_1G);
+	in_be32(&gur->dcsrcr);
+#endif
+
 }
 
 /* Implement a dummy function for those platforms w/o SERDES */
@@ -296,7 +317,6 @@ int cpu_init_r(void)
 	volatile ccsr_l2cache_t *l2cache = (void *)CONFIG_SYS_MPC85xx_L2_ADDR;
 	volatile uint cache_ctl;
 	uint svr, ver;
-	uint l2srbar;
 	u32 l2siz_field;
 
 	svr = get_svr();
@@ -364,8 +384,8 @@ int cpu_init_r(void)
 
 	if (l2cache->l2ctl & MPC85xx_L2CTL_L2E) {
 		puts("already enabled");
-		l2srbar = l2cache->l2srbar0;
 #if defined(CONFIG_SYS_INIT_L2_ADDR) && defined(CONFIG_SYS_FLASH_BASE)
+		u32 l2srbar = l2cache->l2srbar0;
 		if (l2cache->l2ctl & MPC85xx_L2CTL_L2SRAM_ENTIRE
 				&& l2srbar >= CONFIG_SYS_FLASH_BASE) {
 			l2srbar = CONFIG_SYS_INIT_L2_ADDR;
@@ -381,6 +401,12 @@ int cpu_init_r(void)
 		puts("enabled\n");
 	}
 #elif defined(CONFIG_BACKSIDE_L2_CACHE)
+	if ((SVR_SOC_VER(get_svr()) == SVR_P2040) ||
+	    (SVR_SOC_VER(get_svr()) == SVR_P2040_E)) {
+		puts("N/A\n");
+		goto skip_l2;
+	}
+
 	u32 l2cfg0 = mfspr(SPRN_L2CFG0);
 
 	/* invalidate the L2 cache */
@@ -401,6 +427,8 @@ int cpu_init_r(void)
 			;
 		printf("%d KB enabled\n", (l2cfg0 & 0x3fff) * 64);
 	}
+
+skip_l2:
 #else
 	puts("disabled\n");
 #endif
@@ -434,6 +462,9 @@ int cpu_init_r(void)
 	clrsetbits_be32(&lbc->lcrr, LCRR_CLKDIV, CONFIG_SYS_LBC_LCRR);
 	__raw_readl(&lbc->lcrr);
 	isync();
+#ifdef CONFIG_SYS_FSL_ERRATUM_NMG_LBC103
+	udelay(100);
+#endif
 #endif
 
 #ifdef CONFIG_SYS_FSL_USB1_PHY_ENABLE
@@ -451,6 +482,10 @@ int cpu_init_r(void)
 		out_be32(&usb_phy2->usb_enable_override,
 				CONFIG_SYS_FSL_USB_ENABLE_OVERRIDE);
 	}
+#endif
+
+#ifdef CONFIG_FMAN_ENET
+	fman_enet_init();
 #endif
 
 	return 0;

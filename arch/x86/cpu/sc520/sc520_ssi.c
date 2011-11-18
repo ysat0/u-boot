@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2002
- * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
+ * Daniel EngstrÃ¶m, Omicron Ceti AB, <daniel@omicron.se>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -23,8 +23,8 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/ic/ssi.h>
-#include <asm/ic/sc520.h>
+#include <asm/arch/ssi.h>
+#include <asm/arch/sc520.h>
 
 int ssi_set_interface(int freq, int lsb_first, int inv_clock, int inv_phase)
 {

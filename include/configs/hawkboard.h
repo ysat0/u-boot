@@ -83,7 +83,6 @@
 /*
  * Network & Ethernet Configuration
  */
-#define CONFIG_EMAC_MDIO_PHY_NUM	0x7
 #if !defined(CONFIG_NAND_SPL)
 #define CONFIG_DRIVER_TI_EMAC
 #endif
@@ -93,7 +92,6 @@
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT		10
-#define CONFIG_NET_MULTI
 
 /*
  * Nand Flash

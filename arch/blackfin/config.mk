@@ -44,7 +44,7 @@ PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
 PLATFORM_RELFLAGS += -mcpu=$(CONFIG_BFIN_CPU)
 
 ifneq ($(CONFIG_BFIN_BOOT_MODE),BFIN_BOOT_BYPASS)
-ALL += $(obj)u-boot.ldr
+ALL-y += $(obj)u-boot.ldr
 endif
 ifeq ($(CONFIG_ENV_IS_EMBEDDED_IN_LDR),y)
 CREATE_LDR_ENV = $(obj)tools/envcrc --binary > $(obj)env-ldr.o
@@ -75,10 +75,6 @@ LDR_FLAGS += $(LDR_FLAGS-y)
 
 # Set some default LDR flags based on boot mode.
 LDR_FLAGS += $(LDR_FLAGS-$(CONFIG_BFIN_BOOT_MODE))
-
-ifeq ($(wildcard $(TOPDIR)/board/$(BOARD)/u-boot.lds*),)
-LDSCRIPT = $(obj)arch/$(ARCH)/lib/u-boot.lds.S
-endif
 
 ifneq ($(CONFIG_SYS_TEXT_BASE),)
 $(error do not set CONFIG_SYS_TEXT_BASE for Blackfin boards)

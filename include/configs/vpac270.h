@@ -51,7 +51,6 @@
 #define	CONFIG_BOOTDELAY		2	/* Autoboot delay */
 #define	CONFIG_CMDLINE_TAG
 #define	CONFIG_SETUP_MEMORY_TAGS
-#define	CONFIG_SYS_TEXT_BASE		0x0
 #define	CONFIG_LZMA			/* LZMA compression support */
 
 /*
@@ -91,7 +90,6 @@
 #define	CONFIG_CMD_PING
 #define	CONFIG_CMD_DHCP
 
-#define	CONFIG_NET_MULTI		1
 #define	CONFIG_DRIVER_DM9000		1
 #define	CONFIG_DM9000_BASE		0x08000300	/* CS2 */
 #define	DM9000_IO			(CONFIG_DM9000_BASE)
@@ -109,7 +107,8 @@
  */
 #ifdef	CONFIG_CMD_MMC
 #define	CONFIG_MMC
-#define	CONFIG_PXA_MMC
+#define	CONFIG_GENERIC_MMC
+#define	CONFIG_PXA_MMC_GENERIC
 #define	CONFIG_SYS_MMC_BASE		0xF0000000
 #define	CONFIG_CMD_FAT
 #define	CONFIG_CMD_EXT2

@@ -45,13 +45,13 @@
 #define	CONFIG_SYS_TEXT_BASE	0x0
 
 
-#define BOARD_LATE_INIT		1
+#define CONFIG_BOARD_LATE_INIT
 
 
 #undef CONFIG_USE_IRQ			/* we don't need IRQ/FIQ stuff */
 
 /* we will never enable dcache, because we have to setup MMU first */
-#define CONFIG_SYS_NO_DCACHE
+#define CONFIG_SYS_DCACHE_OFF
 
 /*
  * select serial console configuration
@@ -199,7 +199,6 @@
 /*
  * SMSC91C111 Network Card
  */
-#define CONFIG_NET_MULTI
 #define CONFIG_SMC91111		1
 #define CONFIG_SMC91111_BASE		0x10000300  /* chip select 3         */
 #define CONFIG_SMC_USE_32_BIT		1          /* 32 bit bus  */

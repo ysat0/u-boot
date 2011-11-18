@@ -84,10 +84,6 @@
 #define EMAC_MDIO_CLOCK_FREQ		2000000		/* 2.0 MHz */
 #endif
 
-/* PHY mask - set only those phy number bits where phy is/can be connected */
-#define EMAC_MDIO_PHY_NUM           CONFIG_EMAC_MDIO_PHY_NUM
-#define EMAC_MDIO_PHY_MASK          (1 << EMAC_MDIO_PHY_NUM)
-
 /* Ethernet Min/Max packet size */
 #define EMAC_MIN_ETHERNET_PKT_SIZE	60
 #define EMAC_MAX_ETHERNET_PKT_SIZE	1518
@@ -376,6 +372,12 @@ typedef struct
 	int	(*get_link_speed)(int phy_addr);
 	int	(*auto_negotiate)(int phy_addr);
 } phy_t;
+
+#define PHY_KSZ8873	(0x00221450)
+int ksz8873_is_phy_connected(int phy_addr);
+int ksz8873_get_link_speed(int phy_addr);
+int ksz8873_init_phy(int phy_addr);
+int ksz8873_auto_negotiate(int phy_addr);
 
 #define PHY_LXT972	(0x001378e2)
 int lxt972_is_phy_connected(int phy_addr);

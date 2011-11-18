@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2002
- * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
+ * Daniel EngstrÃ¶m, Omicron Ceti AB, <daniel@omicron.se>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -35,7 +35,6 @@
 #include <asm/realmode.h>
 #include <asm/byteorder.h>
 #include <asm/bootparam.h>
-#include <asm/ic/sc520.h>
 
 /*
  * Memory lay-out:

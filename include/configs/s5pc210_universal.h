@@ -30,7 +30,6 @@
  * High Level Configuration Options
  * (easy to change)
  */
-#define CONFIG_ARMV7		1	/* This is an ARM V7 CPU core */
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5P		1	/* which is in a S5P Family */
 #define CONFIG_S5PC210		1	/* which is in a S5PC210 */
@@ -43,7 +42,7 @@
 #define CONFIG_DISPLAY_BOARDINFO
 
 /* Keep L2 Cache Disabled */
-#define CONFIG_L2_OFF			1
+#define CONFIG_SYS_L2CACHE_OFF		1
 
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 #define CONFIG_SYS_TEXT_BASE		0x44800000
@@ -243,5 +242,24 @@
 #define CONFIG_DOS_PARTITION		1
 
 #define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_LOAD_ADDR - GENERATED_GBL_DATA_SIZE)
+
+#define CONFIG_SYS_CACHELINE_SIZE       32
+
+#include <asm/arch/gpio.h>
+/*
+ * I2C Settings
+ */
+#define CONFIG_SOFT_I2C_GPIO_SCL s5pc210_gpio_part1_get_nr(b, 7)
+#define CONFIG_SOFT_I2C_GPIO_SDA s5pc210_gpio_part1_get_nr(b, 6)
+
+#define CONFIG_SOFT_I2C
+#define CONFIG_SOFT_I2C_READ_REPEATED_START
+#define CONFIG_SYS_I2C_SPEED	50000
+#define CONFIG_I2C_MULTI_BUS
+#define CONFIG_SYS_MAX_I2C_BUS	7
+
+#define CONFIG_PMIC
+#define CONFIG_PMIC_I2C
+#define CONFIG_PMIC_MAX8998
 
 #endif	/* __CONFIG_H */

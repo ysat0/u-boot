@@ -32,10 +32,17 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <asm/mach-types.h>
+#ifdef MACH_TYPE_OMAP3_CPS
+#error "MACH_TYPE_OMAP3_CPS has been defined properly, please remove this."
+#else
+#define MACH_TYPE_OMAP3_CPS 2751
+#endif
+#define CONFIG_MACH_TYPE MACH_TYPE_OMAP3_CPS
+
 /*
  * High Level Configuration Options
  */
-#define CONFIG_ARMV7		/* This is an ARM V7 CPU core */
 #define CONFIG_OMAP		/* in a TI OMAP core */
 #define CONFIG_OMAP34XX		/* which is a 34XX */
 #define CONFIG_OMAP3430		/* which is in a 3430 */
@@ -98,8 +105,9 @@
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{4800, 9600, 19200, 38400, 57600,\
 					115200}
-#define CONFIG_MMC
-#define CONFIG_OMAP3_MMC
+#define CONFIG_GENERIC_MMC		1
+#define CONFIG_MMC			1
+#define CONFIG_OMAP_HSMMC		1
 #define CONFIG_DOS_PARTITION
 
 /* DDR - I use Micron DDR */
@@ -165,7 +173,6 @@
  * SMSC9220 Ethernet
  */
 
-#define CONFIG_NET_MULTI
 #define CONFIG_SMC911X
 #define CONFIG_SMC911X_32_BIT
 #define CONFIG_SMC911X_BASE     0x2C000000

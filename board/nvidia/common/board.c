@@ -28,9 +28,14 @@
 #include <asm/arch/sys_proto.h>
 
 #include <asm/arch/clk_rst.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/uart.h>
 #include "board.h"
+
+#ifdef CONFIG_TEGRA2_MMC
+#include <mmc.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -38,32 +43,27 @@ const struct tegra2_sysinfo sysinfo = {
 	CONFIG_TEGRA2_BOARD_STRING
 };
 
-#ifdef CONFIG_BOARD_EARLY_INIT_F
-int board_early_init_f(void)
-{
-	/* Initialize periph clocks */
-	clock_init();
-
-	/* Initialize periph pinmuxes */
-	pinmux_init();
-
-	/* Initialize periph GPIOs */
-	gpio_init();
-
-	/* Init UART, scratch regs, and start CPU */
-	tegra2_start();
-	return 0;
-}
-#endif	/* EARLY_INIT */
-
 /*
  * Routine: timer_init
  * Description: init the timestamp and lastinc value
  */
 int timer_init(void)
 {
-	reset_timer();
 	return 0;
+}
+
+static void enable_uart(enum periph_id pid)
+{
+	/* Assert UART reset and enable clock */
+	reset_set_enable(pid, 1);
+	clock_enable(pid);
+	clock_ll_set_source(pid, 0);	/* UARTx_CLK_SRC = 00, PLLP_OUT0 */
+
+	/* wait for 2us */
+	udelay(2);
+
+	/* De-assert reset to UART */
+	reset_set_enable(pid, 0);
 }
 
 /*
@@ -72,71 +72,11 @@ int timer_init(void)
  */
 static void clock_init_uart(void)
 {
-	struct clk_rst_ctlr *clkrst = (struct clk_rst_ctlr *)NV_PA_CLK_RST_BASE;
-	u32 reg;
-
-	reg = readl(&clkrst->crc_pllp_base);
-	if (!(reg & PLL_BASE_OVRRIDE)) {
-		/* Override pllp setup for 216MHz operation. */
-		reg = (PLL_BYPASS | PLL_BASE_OVRRIDE | PLL_DIVP);
-		reg |= (((NVRM_PLLP_FIXED_FREQ_KHZ/500) << 8) | PLL_DIVM);
-		writel(reg, &clkrst->crc_pllp_base);
-
-		reg |= PLL_ENABLE;
-		writel(reg, &clkrst->crc_pllp_base);
-
-		reg &= ~PLL_BYPASS;
-		writel(reg, &clkrst->crc_pllp_base);
-	}
-
-	/* Now do the UART reset/clock enable */
 #if defined(CONFIG_TEGRA2_ENABLE_UARTA)
-	/* Assert Reset to UART */
-	reg = readl(&clkrst->crc_rst_dev_l);
-	reg |= SWR_UARTA_RST;		/* SWR_UARTA_RST = 1 */
-	writel(reg, &clkrst->crc_rst_dev_l);
-
-	/* Enable clk to UART */
-	reg = readl(&clkrst->crc_clk_out_enb_l);
-	reg |= CLK_ENB_UARTA;		/* CLK_ENB_UARTA = 1 */
-	writel(reg, &clkrst->crc_clk_out_enb_l);
-
-	/* Enable pllp_out0 to UART */
-	reg = readl(&clkrst->crc_clk_src_uarta);
-	reg &= 0x3FFFFFFF;	/* UARTA_CLK_SRC = 00, PLLP_OUT0 */
-	writel(reg, &clkrst->crc_clk_src_uarta);
-
-	/* wait for 2us */
-	udelay(2);
-
-	/* De-assert reset to UART */
-	reg = readl(&clkrst->crc_rst_dev_l);
-	reg &= ~SWR_UARTA_RST;		/* SWR_UARTA_RST = 0 */
-	writel(reg, &clkrst->crc_rst_dev_l);
+	enable_uart(PERIPH_ID_UART1);
 #endif	/* CONFIG_TEGRA2_ENABLE_UARTA */
 #if defined(CONFIG_TEGRA2_ENABLE_UARTD)
-	/* Assert Reset to UART */
-	reg = readl(&clkrst->crc_rst_dev_u);
-	reg |= SWR_UARTD_RST;		/* SWR_UARTD_RST = 1 */
-	writel(reg, &clkrst->crc_rst_dev_u);
-
-	/* Enable clk to UART */
-	reg = readl(&clkrst->crc_clk_out_enb_u);
-	reg |= CLK_ENB_UARTD;		/* CLK_ENB_UARTD = 1 */
-	writel(reg, &clkrst->crc_clk_out_enb_u);
-
-	/* Enable pllp_out0 to UART */
-	reg = readl(&clkrst->crc_clk_src_uartd);
-	reg &= 0x3FFFFFFF;	/* UARTD_CLK_SRC = 00, PLLP_OUT0 */
-	writel(reg, &clkrst->crc_clk_src_uartd);
-
-	/* wait for 2us */
-	udelay(2);
-
-	/* De-assert reset to UART */
-	reg = readl(&clkrst->crc_rst_dev_u);
-	reg &= ~SWR_UARTD_RST;		/* SWR_UARTD_RST = 0 */
-	writel(reg, &clkrst->crc_rst_dev_u);
+	enable_uart(PERIPH_ID_UART4);
 #endif	/* CONFIG_TEGRA2_ENABLE_UARTD */
 }
 
@@ -146,56 +86,46 @@ static void clock_init_uart(void)
  */
 static void pin_mux_uart(void)
 {
-	struct pmux_tri_ctlr *pmt = (struct pmux_tri_ctlr *)NV_PA_APB_MISC_BASE;
-	u32 reg;
-
 #if defined(CONFIG_TEGRA2_ENABLE_UARTA)
-	reg = readl(&pmt->pmt_ctl_c);
-	reg &= 0xFFF0FFFF;	/* IRRX_/IRTX_SEL [19:16] = 00 UARTA */
-	writel(reg, &pmt->pmt_ctl_c);
+	pinmux_set_func(PINGRP_IRRX, PMUX_FUNC_UARTA);
+	pinmux_set_func(PINGRP_IRTX, PMUX_FUNC_UARTA);
 
-	reg = readl(&pmt->pmt_tri_a);
-	reg &= ~Z_IRRX;		/* Z_IRRX = normal (0) */
-	reg &= ~Z_IRTX;		/* Z_IRTX = normal (0) */
-	writel(reg, &pmt->pmt_tri_a);
+	pinmux_tristate_disable(PINGRP_IRRX);
+	pinmux_tristate_disable(PINGRP_IRTX);
 #endif	/* CONFIG_TEGRA2_ENABLE_UARTA */
 #if defined(CONFIG_TEGRA2_ENABLE_UARTD)
-	reg = readl(&pmt->pmt_ctl_b);
-	reg &= 0xFFFFFFF3;	/* GMC_SEL [3:2] = 00, UARTD */
-	writel(reg, &pmt->pmt_ctl_b);
+	pinmux_set_func(PINGRP_GMC, PMUX_FUNC_UARTD);
 
-	reg = readl(&pmt->pmt_tri_a);
-	reg &= ~Z_GMC;		/* Z_GMC = normal (0) */
-	writel(reg, &pmt->pmt_tri_a);
+	pinmux_tristate_disable(PINGRP_GMC);
 #endif	/* CONFIG_TEGRA2_ENABLE_UARTD */
 }
 
+#ifdef CONFIG_TEGRA2_MMC
 /*
- * Routine: clock_init
- * Description: Do individual peripheral clock reset/enables
+ * Routine: pin_mux_mmc
+ * Description: setup the pin muxes/tristate values for the SDMMC(s)
  */
-void clock_init(void)
+static void pin_mux_mmc(void)
 {
-	clock_init_uart();
-}
+	/* SDMMC4: config 3, x8 on 2nd set of pins */
+	pinmux_set_func(PINGRP_ATB, PMUX_FUNC_SDIO4);
+	pinmux_set_func(PINGRP_GMA, PMUX_FUNC_SDIO4);
+	pinmux_set_func(PINGRP_GME, PMUX_FUNC_SDIO4);
 
-/*
- * Routine: pinmux_init
- * Description: Do individual peripheral pinmux configs
- */
-void pinmux_init(void)
-{
-	pin_mux_uart();
-}
+	pinmux_tristate_disable(PINGRP_ATB);
+	pinmux_tristate_disable(PINGRP_GMA);
+	pinmux_tristate_disable(PINGRP_GME);
 
-/*
- * Routine: gpio_init
- * Description: Do individual peripheral GPIO configs
- */
-void gpio_init(void)
-{
-	gpio_config_uart();
+	/* SDMMC3: SDIO3_CLK, SDIO3_CMD, SDIO3_DAT[3:0] */
+	pinmux_set_func(PINGRP_SDB, PMUX_FUNC_SDIO3);
+	pinmux_set_func(PINGRP_SDC, PMUX_FUNC_SDIO3);
+	pinmux_set_func(PINGRP_SDD, PMUX_FUNC_SDIO3);
+
+	pinmux_tristate_disable(PINGRP_SDC);
+	pinmux_tristate_disable(PINGRP_SDD);
+	pinmux_tristate_disable(PINGRP_SDB);
 }
+#endif
 
 /*
  * Routine: board_init
@@ -203,10 +133,53 @@ void gpio_init(void)
  */
 int board_init(void)
 {
+	clock_init();
+	clock_verify();
+
 	/* boot param addr */
 	gd->bd->bi_boot_params = (NV_PA_SDRAM_BASE + 0x100);
-	/* board id for Linux */
-	gd->bd->bi_arch_number = CONFIG_MACH_TYPE;
 
 	return 0;
 }
+
+#ifdef CONFIG_TEGRA2_MMC
+/* this is a weak define that we are overriding */
+int board_mmc_init(bd_t *bd)
+{
+	debug("board_mmc_init called\n");
+	/* Enable muxes, etc. for SDMMC controllers */
+	pin_mux_mmc();
+	gpio_config_mmc();
+
+	debug("board_mmc_init: init eMMC\n");
+	/* init dev 0, eMMC chip, with 4-bit bus */
+	tegra2_mmc_init(0, 4);
+
+	debug("board_mmc_init: init SD slot\n");
+	/* init dev 1, SD slot, with 4-bit bus */
+	tegra2_mmc_init(1, 4);
+
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_BOARD_EARLY_INIT_F
+int board_early_init_f(void)
+{
+	/* Initialize essential common plls */
+	clock_early_init();
+
+	/* Initialize UART clocks */
+	clock_init_uart();
+
+	/* Initialize periph pinmuxes */
+	pin_mux_uart();
+
+	/* Initialize periph GPIOs */
+	gpio_config_uart();
+
+	/* Init UART, scratch regs, and start CPU */
+	tegra2_start();
+	return 0;
+}
+#endif	/* EARLY_INIT */

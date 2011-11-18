@@ -3,7 +3,7 @@
  * Graeme Russ, <graeme.russ@gmail.com>
  *
  * (C) Copyright 2002
- * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
+ * Daniel EngstrÃ¶m, Omicron Ceti AB, <daniel@omicron.se>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -27,7 +27,7 @@
 #include <common.h>
 #include <pci.h>
 #include <asm/pci.h>
-#include <asm/ic/pci.h>
+#include <asm/arch/pci.h>
 
 static void pci_enet_fixup_irq(struct pci_controller *hose, pci_dev_t dev)
 {

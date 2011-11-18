@@ -57,12 +57,14 @@
 /* ** FONT DATA								*/
 /************************************************************************/
 #include <video_font.h>		/* Get font data, width and height	*/
+#include <video_font_data.h>
 
 /************************************************************************/
 /* ** LOGO DATA								*/
 /************************************************************************/
 #ifdef CONFIG_LCD_LOGO
 # include <bmp_logo.h>		/* Get logo data, width and height	*/
+# include <bmp_logo_data.h>
 # if (CONSOLE_COLOR_WHITE >= BMP_LOGO_OFFSET) && (LCD_BPP != LCD_COLOR16)
 #  error Default Color Map overlaps with Logo Color Map
 # endif
@@ -78,7 +80,6 @@ static inline void lcd_putc_xy (ushort x, ushort y, uchar  c);
 
 static int lcd_init (void *lcdbase);
 
-static int lcd_clear (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]);
 static void *lcd_logo (void);
 
 static int lcd_getbgcolor (void);
@@ -211,10 +212,13 @@ void lcd_printf(const char *fmt, ...)
 static void lcd_drawchars (ushort x, ushort y, uchar *str, int count)
 {
 	uchar *dest;
-	ushort off, row;
+	ushort row;
+
+#if LCD_BPP == LCD_MONOCHROME
+	ushort off  = x * (1 << LCD_BPP) % 8;
+#endif
 
 	dest = (uchar *)(lcd_base + y * lcd_line_length + x * (1 << LCD_BPP) / 8);
-	off  = x * (1 << LCD_BPP) % 8;
 
 	for (row=0;  row < VIDEO_FONT_HEIGHT;  ++row, dest += lcd_line_length)  {
 		uchar *s = str;
@@ -350,7 +354,14 @@ int drv_lcd_init (void)
 }
 
 /*----------------------------------------------------------------------*/
-static int lcd_clear (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static
+int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	lcd_clear();
+	return 0;
+}
+
+void lcd_clear(void)
 {
 #if LCD_BPP == LCD_MONOCHROME
 	/* Setting the palette */
@@ -391,12 +402,10 @@ static int lcd_clear (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]
 
 	console_col = 0;
 	console_row = 0;
-
-	return (0);
 }
 
 U_BOOT_CMD(
-	cls,	1,	1,	lcd_clear,
+	cls,	1,	1,	do_lcd_clear,
 	"clear screen",
 	""
 );
@@ -410,7 +419,7 @@ static int lcd_init (void *lcdbase)
 
 	lcd_ctrl_init (lcdbase);
 	lcd_is_enabled = 1;
-	lcd_clear (NULL, 1, 1, NULL);	/* dummy args */
+	lcd_clear();
 	lcd_enable ();
 
 	/* Initialize the console */
@@ -614,7 +623,6 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	unsigned long width, height, byte_width;
 	unsigned long pwidth = panel_info.vl_col;
 	unsigned colors, bpix, bmp_bpix;
-	unsigned long compression;
 #if defined CONFIG_PXA250 || defined CONFIG_PXA27X || defined CONFIG_CPU_MONAHANS
 	struct pxafb_info *fbi = &panel_info.pxa;
 #elif defined(CONFIG_MPC823)
@@ -632,7 +640,6 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	height = le32_to_cpu (bmp->header.height);
 	bmp_bpix = le16_to_cpu(bmp->header.bit_count);
 	colors = 1 << bmp_bpix;
-	compression = le32_to_cpu (bmp->header.compression);
 
 	bpix = NBITS(panel_info.vl_bpix);
 
