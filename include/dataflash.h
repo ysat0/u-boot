@@ -84,3 +84,5 @@ extern int read_dataflash (unsigned long addr, unsigned long size, char *result)
 extern int write_dataflash (unsigned long addr, unsigned long dest, unsigned long size);
 extern void dataflash_print_info (void);
 extern void dataflash_perror (int err);
+
+#endif
