@@ -702,13 +702,6 @@ static inline int scbrr_calc(struct uart_port port, int bps, int clk)
 		return ((clk*2)+16*bps)/(16*bps)-1;
 }
 #define SCBRR_VALUE(bps, clk) scbrr_calc(sh_sci, bps, clk)
-<<<<<<< HEAD
-=======
-#elif defined(__H8300H__) || defined(__H8300S__)
-#define SCBRR_VALUE(bps, clk) (((clk*1000/32)/bps)-1)
-#elif defined(CONFIG_CPU_SH7264)
-#define SCBRR_VALUE(bps, clk) ((clk+16*bps)/(32*bps))
->>>>>>> master
 #else /* Generic SH */
 #define SCBRR_VALUE(bps, clk) ((clk+16*bps)/(32*bps)-1)
 #endif
