@@ -38,4 +38,6 @@ typedef struct bd_info {
 	unsigned long	bi_boot_params; /* where this board expects params */
 } bd_t;
 
+#define IH_ARCH_DEFAULT IH_ARCH_RX
+
 #endif

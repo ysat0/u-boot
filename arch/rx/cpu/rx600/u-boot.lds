@@ -38,7 +38,7 @@ SECTIONS
 
 	.text :
 	{
-		arch/rx/cpu/rx600/start.o		(.text)
+		KEEP(arch/rx/cpu/rx600/start.o (.text))
 		*(.text)
 		. = ALIGN(4);
 	} = 0xff

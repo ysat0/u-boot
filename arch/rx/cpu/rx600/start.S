@@ -23,7 +23,6 @@
 #if !defined(CONFIG_TKDN_RX620_RAM)
 	.section	".vector","ax"
 	.global	_start
-vector	=	1
 	.long	0xffffffff
 	.long	0xffffffff
 	.long	0xffffffff

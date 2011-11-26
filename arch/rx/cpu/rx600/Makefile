@@ -26,20 +26,15 @@
 include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(CPU).o
-SOBJS-y = start.o
-COBJS-y = cpu.o interrupts.o watchdog.o 
-SOBJS-$(CONFIG_CPU_H83069) += 3069flash_low.o
-COBJS-$(CONFIG_CPU_H83069) += 3069flash.o
-
-SOBJS	= $(SOBJS-y)
-COBJS	= $(COBJS-y)
+SOBJS = start.o
+COBJS = cpu.o interrupts.o watchdog.o 
 
 SRCS    := $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS    := $(addprefix $(obj),$(COBJS))
 SOBJS   := $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(OBJS) $(SOBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 clean:
 	rm -f $(SOBJS) $(OBJS)
