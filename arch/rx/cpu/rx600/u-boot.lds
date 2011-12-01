@@ -27,7 +27,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-#if !defined(CONFIG_TKDN_RX620_RAM)
+#if !defined(CONFIG_RX600_DEBUG_SDRAM)
 	. = 0xfff80000;
 #else
 	. = 0x08000000;
@@ -50,7 +50,7 @@ SECTIONS
 	}
 	PROVIDE (_etext = .);
 
-#if !defined(CONFIG_TKDN_RX620_RAM)
+#if !defined(CONFIG_RX600_DEBUG_SDRAM)
 	. = 0xffffff80;
 	.vector :
 	{

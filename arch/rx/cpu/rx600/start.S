@@ -20,7 +20,7 @@
 #include <config.h>
 #include <version.h>
 
-#if !defined(CONFIG_TKDN_RX620_RAM)
+#if !defined(CONFIG_RX600_DEBUG_SDRAM)
 	.section	".vector","ax"
 	.global	_start
 	.long	0xffffffff
@@ -65,7 +65,7 @@ _start:
 	mov.l	#__stack, r0
 	bsr	lowlevel_init
 
-#if !defined(CONFIG_TKDN_RX620_RAM)
+#if !defined(CONFIG_RX600_DEBUG_SDRAM)
 	mov.l	#_etext,r2
 	mov.l	#_fdata ,r1
 	mov.l	#__u_boot_cmd_end - _fdata,r3
