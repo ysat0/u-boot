@@ -29,16 +29,15 @@ struct rspi_slave {
 	unsigned char brr;
 };
 
-int spi_init(void)
+void spi_init(void)
 {
 	int i;
 	int offset;
 	/* disable interfaces */
-	for (i = 0, offset = 0; i < RSPI_CHANNEL; i++) { 
-		writeb(0x00, RSPI_BASE + offset);
+	for (i = 0, offset = 0; i < CONFIG_RSPI_CHANNEL; i++) { 
+		writeb(0x00, CONFIG_RSPI_BASE + offset);
 		offset += 0x20;
 	}
-	return 0;
 }
 
 struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
@@ -59,7 +58,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	rs->spi.cs = cs;
 	brr = CONFIG_RSPI_CLK / max_hz;
 	div = 1;
-	while (brr < 256) {
+	while (brr >= 256) {
 		brr /= 2;
 		div++;
 	}
@@ -89,6 +88,8 @@ int  spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 {
 	struct rspi_slave *rs = (struct rspi_slave *)slave;
 	unsigned long offset = 0x20 * slave->bus;
+	unsigned char *out = (unsigned char *)dout;
+	unsigned char *in = (unsigned char *)din;
 	
 	if (flags & SPI_XFER_BEGIN) {
 		/* RSPI initalize */
@@ -104,14 +105,14 @@ int  spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 	}
 
 	while (bitlen > 0) {
-		writel(*dout++, CONFIG_RSPI_BASE + offset + 0x04);
+		writel(*out++, CONFIG_RSPI_BASE + offset + 0x04);
 		while((readb(CONFIG_RSPI_BASE + offset + 0x03) & 0x80) == 0) {
 			if (ctrlc())
 				return -1;
-			usleep(10);
+			udelay(10);
 		}
-		if (din)
-			*din++ = readl(CONFIG_RSPI_BASE + offset + 0x04);
+		if (in)
+			*in++ = readl(CONFIG_RSPI_BASE + offset + 0x04);
 		else
 			readl(CONFIG_RSPI_BASE + offset + 0x04);
 
