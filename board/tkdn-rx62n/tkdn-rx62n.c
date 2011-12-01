@@ -41,6 +41,19 @@ int board_init(void)
 #if defined(CONFIG_SH_ETHER)
 	*(volatile unsigned long *)0x00080014 &= ~0x00008000;
 #endif
+#if defined(CONFIG_SPI_FLASH) || defined(COFIG_MMC_SPI)
+	*(volatile unsigned char *)0x0008c06c |= 0x80;
+	*(volatile unsigned long *)0x00080014 &= ~0x00020000;
+	*(volatile unsigned char *)0x0008c110 |= 0x0e;
+#endif
+#if defined(CONFIG_SPI_FLASH)
+	*(volatile unsigned char *)0x0008c02c |= 0x04;
+	*(volatile unsigned char *)0x0008c00c |= 0x04;
+#endif
+#if defined(CONFIG_MMC_SPI)
+	*(volatile unsigned char *)0x0008c02c |= 0x08;
+	*(volatile unsigned char *)0x0008c00c |= 0x08;
+#endif
 	return 0;
 }
 
@@ -70,3 +83,22 @@ int sdram_init(void)
 #endif
 	return 0;
 }
+
+#if defined(CONFIG_SPI_FLASH) || defined(COFIG_MMC_SPI)
+int spi_cs_is_valid(unsigned int bus, unsigned int cs)
+{
+	return (bus == 0) && (cs == 0 || cs == 1);
+}
+
+void spi_cs_activate(struct spi_slave *slave)
+{
+	unsigned char cs = 1 << (slave->cs + 2);
+	*(volatile unsigned char *)0x0008c02c &= ~cs;
+}
+
+void spi_cs_deactivate(struct spi_slave *slave)
+{
+	unsigned char cs = 1 << (slave->cs + 2);
+	*(volatile unsigned char *)0x0008c02c |= cs;
+}
+#endif
