@@ -42,24 +42,20 @@ int board_init(void)
 	*(volatile unsigned long *)0x00080014 &= ~0x00008000;
 #endif
 #if defined(CONFIG_SPI_FLASH) || defined(COFIG_MMC_SPI)
-	*(volatile unsigned char *)0x0008c06c |= 0x80;
-	*(volatile unsigned long *)0x00080014 &= ~0x00020000;
-	*(volatile unsigned char *)0x0008c110 |= 0x0e;
+	*(volatile unsigned char *)0x0008c063 |= 0x01;
+	*(volatile unsigned long *)0x00080014 &= ~0x000010000;
+	*(volatile unsigned char *)0x0008c111 |= 0x0e;
 #endif
 #if defined(CONFIG_SPI_FLASH)
-	*(volatile unsigned char *)0x0008c02c |= 0x04;
-	*(volatile unsigned char *)0x0008c00c |= 0x04;
-#endif
-#if defined(CONFIG_MMC_SPI)
-	*(volatile unsigned char *)0x0008c02c |= 0x08;
-	*(volatile unsigned char *)0x0008c00c |= 0x08;
+	*(volatile unsigned char *)0x0008c023 |= 0x02;
+	*(volatile unsigned char *)0x0008c003 |= 0x02;
 #endif
 	return 0;
 }
 
 int sdram_init(void)
 {
-#if !defined(CONFIG_TKDN_RX620_RAM)
+#if !defined(CONFIG_TKDN_RX62N_RAM)
 	*(volatile unsigned char *)0x00083c00 = 0x00;
 	*(volatile unsigned char *)0x00083c10 = 0x00;
 	*(volatile unsigned char *)0x00083c16 = 0x00;
@@ -87,18 +83,16 @@ int sdram_init(void)
 #if defined(CONFIG_SPI_FLASH) || defined(COFIG_MMC_SPI)
 int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 {
-	return (bus == 0) && (cs == 0 || cs == 1);
+	return (bus == 1) && (cs == 0);
 }
 
 void spi_cs_activate(struct spi_slave *slave)
 {
-	unsigned char cs = 1 << (slave->cs + 2);
-	*(volatile unsigned char *)0x0008c02c &= ~cs;
+	*(volatile unsigned char *)0x0008c023 &= ~0x02;
 }
 
 void spi_cs_deactivate(struct spi_slave *slave)
 {
-	unsigned char cs = 1 << (slave->cs + 2);
-	*(volatile unsigned char *)0x0008c02c |= cs;
+	*(volatile unsigned char *)0x0008c023 |= 0x02;
 }
 #endif
