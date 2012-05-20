@@ -70,13 +70,13 @@ int sdram_init(void)
 
 	*(volatile unsigned char *)0x00083c00 = 0x00;
 	*(volatile unsigned short *)0x00083c48 = 0x0040;
-	while(*(volatile unsigned char *)0x00083c50 & 0x01);
+	while(*(volatile unsigned char *)0x00083c50);
 	
 	*(volatile unsigned long *)0x00083c44 = 0x00020202;
 	*(volatile unsigned char *)0x00083c40 = 0x01;
 
 	*(volatile unsigned short *)0x00083c14 = 0x32e0;
-	*(volatile unsigned char *)0x00083c02 = 0x01;
+	*(volatile unsigned char *)0x00083c02 = 0x00;
 	*(volatile unsigned char *)0x00083c16 = 0x01;
 	*(volatile unsigned char *)0x00083c10 = 0x00;
 
