@@ -84,6 +84,9 @@ endif
 endif
 
 # needed for relocation
+ifndef CONFIG_ARMV7M
 ifndef CONFIG_NAND_SPL
 LDFLAGS_u-boot += -pie
 endif
+endif
+

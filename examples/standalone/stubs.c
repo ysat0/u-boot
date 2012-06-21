@@ -43,6 +43,7 @@ gd_t *global_data;
  * r8 holds the pointer to the global_data, ip is a call-clobbered
  * register
  */
+#if !defined(CONFIG_SYS_THUMB_BUILD)
 #define EXPORT_FUNC(x) \
 	asm volatile (			\
 "	.globl " #x "\n"		\
@@ -50,6 +51,16 @@ gd_t *global_data;
 "	ldr	ip, [r8, %0]\n"		\
 "	ldr	pc, [ip, %1]\n"		\
 	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "ip");
+#else
+#define EXPORT_FUNC(x) \
+	asm volatile (			\
+"	.globl " #x "\n"		\
+#x ":\n"				\
+"	ldr	r6, [r8, %0]\n"		\
+"	ldr	r6, [r6, %1]\n"		\
+"	mov	pc, r6\n"		\
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "r6");
+#endif
 #elif defined(CONFIG_MIPS)
 /*
  * k0 ($26) holds the pointer to the global_data; t9 ($25) is a call-

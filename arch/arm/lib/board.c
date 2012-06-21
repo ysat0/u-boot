@@ -340,6 +340,7 @@ void board_init_f(ulong bootflag)
 	debug("Reserving %ldk for protected RAM at %08lx\n", reg, addr);
 #endif /* CONFIG_PRAM */
 
+#if !defined(CONFIG_ARMV7M)
 #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
 	/* reserve TLB table */
 	addr -= (4096 * 4);
@@ -348,7 +349,9 @@ void board_init_f(ulong bootflag)
 	addr &= ~(0x10000 - 1);
 
 	gd->tlb_addr = addr;
+
 	debug("TLB table at: %08lx\n", addr);
+#endif
 #endif
 
 	/* round down to next 4 kB limit */

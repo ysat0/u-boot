@@ -576,7 +576,7 @@ ulong getenv_ulong(const char *name, int base, ulong default_val)
 	 */
 	const char *str = getenv(name);
 
-	return str ? simple_strtoul(str, NULL, base) : default_val;
+	return str && *str ? simple_strtoul(str, NULL, base) : default_val;
 }
 
 #if defined(CONFIG_CMD_SAVEENV) && !defined(CONFIG_ENV_IS_NOWHERE)

@@ -47,7 +47,9 @@ SOBJS-$(CONFIG_USE_ARCH_MEMCPY) += memcpy.o
 endif
 
 COBJS-y	+= cache.o
+ifndef CONFIG_ARMV7M
 COBJS-y	+= cache-cp15.o
+endif
 
 SRCS	:= $(GLSOBJS:.o=.S) $(GLCOBJS:.o=.c) \
 	   $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
