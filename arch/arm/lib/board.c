@@ -320,7 +320,11 @@ void board_init_f(ulong bootflag)
 	gd->ram_size -= CONFIG_SYS_MEM_TOP_HIDE;
 #endif
 
+#if !defined(CONFIG_SYS_USE_SRAM)
 	addr = CONFIG_SYS_SDRAM_BASE + gd->ram_size;
+#else
+	addr = CONFIG_SYS_SRAM_BASE + CONFIG_SYS_SRAM_SIZE;
+#endif
 
 #ifdef CONFIG_LOGBUFFER
 #ifndef CONFIG_ALT_LB_ADDR
