@@ -36,10 +36,13 @@ COBJS-$(CONFIG_FTSMC020) += ftsmc020.o
 COBJS-$(CONFIG_FLASH_CFI_LEGACY) += jedec_flash.o
 COBJS-$(CONFIG_MW_EEPROM) += mw_eeprom.o
 COBJS-$(CONFIG_SPEARSMI) += spr_smi.o
+COBJS-$(CONFIG_FM3_FLASH) += fm3_flash.o
+SOBJS-$(CONFIG_FM3_FLASH) += fm3_flash_low.o
 
 COBJS	:= $(COBJS-y)
-SRCS	:= $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS))
+SOBJS	:= $(SOBJS-y)
+SRCS	:= $(COBJS:.o=.c) $(SOBJS:.o=.S)
+OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
 
 all:	$(LIB)
 

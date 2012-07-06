@@ -31,9 +31,13 @@ DECLARE_GLOBAL_DATA_PTR;
 #define GPIO_PFR3	0x4003300C
 #define GPIO_PFR4	0x40033010
 #define GPIO_PFR5	0x40033014
+#define GPIO_PFR6	0x40033018
 #define GPIO_PFR7	0x4003301C
 #define GPIO_PFR9	0x40033024
+#define GPIO_PFRC	0x40033030
+#define GPIO_PFRD	0x40033034
 #define GPIO_PFRF	0x4003303C
+#define GPIO_DDR6	0x40033218
 #define GPIO_DDRF	0x4003323C
 #define GPIO_PDORF	0x4003343C
 #define GPIO_ADE	0x40033500
@@ -41,6 +45,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define GPIO_EPFR08	0x40033620
 #define GPIO_EPFR10	0x40033628
 #define GPIO_EPFR11	0x4003362C
+#define GPIO_EPFR14	0x40033638
 #define GPIO_PZRF	0x4003373C
 
 #define BUS_MODE0	0x4003F000
@@ -74,6 +79,14 @@ int board_early_init_f(void)
 
 int board_init(void)
 {
+#if defined(CONFIG_FM3_MAC)
+	/* Enable Ether pins */
+	RMW0(~0x00000004, GPIO_PFR6);
+	RMW0(~0x00000004, GPIO_DDR6);
+	RMW1(0x0000f1ff, GPIO_PFRC);
+	RMW1(0x0000000f, GPIO_PFRD);
+	writel(0x37fc0000, GPIO_EPFR14);
+#endif
 	printf("BOARD: CQ Publishing CQ-FRK-FM3 w/ LF-CQ1\n");
 	return 0;
 }
@@ -129,7 +142,6 @@ int dram_init(void)
 
 void led_set_state(unsigned short value)
 {
-#if 0
 	unsigned int output;
 	output = readl(GPIO_PDORF);
 	if (value)
@@ -137,6 +149,5 @@ void led_set_state(unsigned short value)
 	else
 		output |= 0x00000008;
 	writel(output, GPIO_PDORF);
-#endif
 }
 

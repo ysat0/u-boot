@@ -472,6 +472,8 @@ extern flash_info_t *flash_get_info(ulong base);
 #define FLASH_S29GL064M 0x00F0		/* Spansion S29GL064M-R6		*/
 #define FLASH_S29GL128N 0x00F1		/* Spansion S29GL128N			*/
 
+#define FLASH_FM3	0x0100		/* FM3 On-chip flash			*/
+
 #define FLASH_UNKNOWN	0xFFFF		/* unknown flash type			*/
 
 

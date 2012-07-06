@@ -31,11 +31,13 @@ ENTRY(_start)
 SECTIONS
 {
 	. = 0x00000000;
-
+	.startup : {
+		 *(.vector)
+		arch/arm/cpu/armv7m/start.o	(.text)
+	}
+	. = CONFIG_SYS_TEXT_BASE;
 	.text	:
 	{
-		*(.vector)
-		arch/arm/cpu/armv7m/start.o	(.text)
 		*(.text)
 		_end = .;
 	}
@@ -47,8 +49,8 @@ SECTIONS
 	. = CONFIG_SYS_SRAM_BASE;
 	.data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {
 		*(.data)
+		*(.text2)
 	}
-
 	. = ALIGN(4);
 	__u_boot_cmd_start = .;
 	.u_boot_cmd : AT(__relocation_start + SIZEOF(.data)) { *(.u_boot_cmd) }
