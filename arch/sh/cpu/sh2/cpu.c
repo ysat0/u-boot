@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2007,2008 Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
  * Copyright (C) 2008 Renesas Solutions Corp.
+ * Copyright (C) 2013 Yoshinori Sato <ysato@users.sourceforge.jp>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -26,17 +27,6 @@
 #include <asm/processor.h>
 #include <asm/io.h>
 
-#define STBCR4      0xFFFE040C
-#define cmt_clock_enable() do {\
-		writeb(readb(STBCR4) & ~0x04, STBCR4);\
-	} while (0)
-#define scif0_enable() do {\
-		writeb(readb(STBCR4) & ~0x80, STBCR4);\
-	} while (0)
-#define scif3_enable() do {\
-		writeb(readb(STBCR4) & ~0x10, STBCR4);\
-	} while (0)
-
 int checkcpu(void)
 {
 #if defined(CONFIG_SH2A)
@@ -47,14 +37,22 @@ int checkcpu(void)
 	return 0;
 }
 
+#if defined(CONFIG_CONS_SCIF0)
+# define CH 0
+#elif defined(CONFIG_CONS_SCIF1)
+# define CH 1
+#elif defined(CONFIG_CONS_SCIF2)
+# define CH 2
+#elif defined(CONFIG_CONS_SCIF3)
+# define CH 3
+#else
+# error "Default SCIF doesn't set....."
+#endif
+
 int cpu_init(void)
 {
 	/* SCIF enable */
-#if defined(CONFIG_CONS_SCIF3)
-	scif3_enable();
-#else
-	scif0_enable();
-#endif
+	scif_enable(CH);
 	/* CMT clock enable */
 	cmt_clock_enable() ;
 	return 0;
@@ -73,33 +71,3 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-void flush_cache(unsigned long addr, unsigned long size)
-{
-
-}
-
-void icache_enable(void)
-{
-}
-
-void icache_disable(void)
-{
-}
-
-int icache_status(void)
-{
-	return 0;
-}
-
-void dcache_enable(void)
-{
-}
-
-void dcache_disable(void)
-{
-}
-
-int dcache_status(void)
-{
-	return 0;
-}
