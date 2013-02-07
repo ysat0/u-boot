@@ -30,6 +30,8 @@
 #define CACHE_OC_WAY_SHIFT	13
 #define CACHE_OC_NUM_ENTRIES	256
 #define CACHE_OC_ENTRY_SHIFT	4
+#define CACHE_OC_NUM_WAYS	4
+#define CACHE_UPDATED		2
 
 #if defined(CONFIG_SH2A)
 #  include <asm/cpu_sh2a.h>
@@ -40,6 +42,8 @@
 # include <asm/cpu_sh7264.h>
 #elif defined(CONFIG_CPU_SH7269)
 # include <asm/cpu_sh7269.h>
+#elif defined(CONFIG_CPU_SH7206)
+# include <asm/cpu_sh7206.h>
 #else
 # error "Unknown SH2 variant"
 #endif
