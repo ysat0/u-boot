@@ -31,6 +31,9 @@
 #define CACHE_OC_NUM_ENTRIES	256
 #define CACHE_OC_ENTRY_SHIFT	4
 
+#if defined(CONFIG_SH2A)
+#  include <asm/cpu_sh2a.h>
+#endif
 #if defined(CONFIG_CPU_SH7203)
 # include <asm/cpu_sh7203.h>
 #elif defined(CONFIG_CPU_SH7264)
