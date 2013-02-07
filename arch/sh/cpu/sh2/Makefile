@@ -4,6 +4,7 @@
 #
 # Copyright (C) 2007,2008 Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
 # Copyright (C) 2008 Renesas Solutions Corp.
+# Copyright (C) 2013 Yoshinori Sato <ysato@users.sourceforge.jp>
 #
 # See file CREDITS for list of people who contributed to this
 # project.
@@ -30,7 +31,11 @@ LIB	= $(obj)lib$(CPU).o
 
 SOBJS	= start.o
 COBJS	= cpu.o interrupts.o watchdog.o
-
+ifdef CONFIG_SH2A
+COBJS	+= cache-sh2a.o
+else
+COBJS	+= nocache.o
+endif
 SRCS    := $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS    := $(addprefix $(obj),$(COBJS))
 SOBJS   := $(addprefix $(obj),$(SOBJS))

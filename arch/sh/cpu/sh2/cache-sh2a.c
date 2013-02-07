@@ -1,9 +1,5 @@
 /*
- * (C) Copyright 2007
- * Yoshihiro Shimoda <shimoda.yoshihiro@renesas.com>
- *
- * Copyright (C) 2007, 2008 Nobobuhiro Iwamatsu <iwamatsu@nigauri.org>
- * Copyright (C) 2008 Renesas Solutions Corp.
+ * Copyright (C) 2013 Yoshinori Sato <ysato@users.sourceforge.jp>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -30,10 +26,10 @@
 #include <asm/io.h>
 
 /*
- * Jump to P2 area.
- * When handling TLB or caches, we need to do it from P2 area.
+ * Jump to cache disabled area
+ * When handling caches, we need to do it from non-cache area.
  */
-#define jump_to_P2()			\
+#define jump_to_uncacheable()			\
 do {					\
 	unsigned long __dummy;		\
 	__asm__ __volatile__(		\
@@ -49,9 +45,9 @@ do {					\
 } while (0)
 
 /*
- * Back to P1 area.
+ * Back to cache area.
  */
-#define back_to_P1()			\
+#define back_to_cacheable()			\
 do {					\
 	unsigned long __dummy;		\
 	__asm__ __volatile__(		\
@@ -65,18 +61,13 @@ do {					\
 		: "=&r" (__dummy));	\
 } while (0)
 
-#define CACHE_VALID	1
-#define CACHE_UPDATED	2
-
 static inline void cache_wback_all(void)
 {
 	unsigned long addr, data, i, j;
 
-	jump_to_P2();
-	for (i = 0; i < CACHE_OC_NUM_ENTRIES; i++) {
+	for (i = 0; i < CACHE_OC_NUM_ENTRIES; i++){
 		for (j = 0; j < CACHE_OC_NUM_WAYS; j++) {
-			addr = CACHE_OC_ADDRESS_ARRAY
-				| (j << CACHE_OC_WAY_SHIFT)
+			addr = CACHE_OC_ADDRESS_ARRAY | (j << CACHE_OC_WAY_SHIFT)
 				| (i << CACHE_OC_ENTRY_SHIFT);
 			data = inl(addr);
 			if (data & CACHE_UPDATED) {
@@ -85,28 +76,72 @@ static inline void cache_wback_all(void)
 			}
 		}
 	}
-	back_to_P1();
+}
+void flush_cache(unsigned long addr, unsigned long size)
+{
+	unsigned long entry;
+	unsigned long tag;
+	jump_to_uncacheable();
+	while(size > 0) {
+		entry = addr & 0x000003ff0;
+		tag = addr & 0x1ffff0000;
+		/* I-Cache flush */
+		outl(tag, 0xf0000008 | entry);
+		/* D-Cache flush with wb */
+		outl(tag, 0xf0800008 | entry);
+		addr += 4;
+		size -= 4;
+	}
+	back_to_cacheable();
 }
 
-
-#define CACHE_ENABLE	0
-#define CACHE_DISABLE	1
-
-int cache_control(unsigned int cmd)
+void icache_enable(void)
 {
 	unsigned long ccr;
+	ccr = readl(CCR1);
+	ccr |= 0x00000900;
+	jump_to_uncacheable();
+	writel(ccr, CCR1);
+}
 
-	jump_to_P2();
-	ccr = inl(CCR);
+void icache_disable(void)
+{
+	unsigned long ccr;
+	ccr = readl(CCR1);
+	ccr &= ~0x00000100;
+	jump_to_uncacheable();
+	writel(ccr, CCR1);
+}
 
-	if (ccr & CCR_CACHE_ENABLE)
-		cache_wback_all();
+int icache_status(void)
+{
+	unsigned long ccr;
+	ccr = readl(CCR1);
+	return ((ccr & 0x00000100) != 0);
+}
 
-	if (cmd == CACHE_DISABLE)
-		outl(CCR_CACHE_STOP, CCR);
-	else
-		outl(CCR_CACHE_INIT, CCR);
-	back_to_P1();
+void dcache_enable(void)
+{
+	unsigned long ccr;
+	ccr = readl(CCR1);
+	ccr |= 0x00000009;
+	jump_to_uncacheable();
+	writel(ccr, CCR1);
+}
 
-	return 0;
+void dcache_disable(void)
+{
+	unsigned long ccr;
+	ccr = readl(CCR1);
+	ccr &= ~0x00000001;
+	jump_to_uncacheable();
+	cache_wback_all();
+	writel(ccr, CCR1);
+}
+
+int dcache_status(void)
+{
+	unsigned long ccr;
+	ccr = readl(CCR1);
+	return ((ccr & 0x00000001) != 0);
 }
