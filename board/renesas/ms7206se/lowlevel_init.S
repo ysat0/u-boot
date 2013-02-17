@@ -22,7 +22,8 @@
 
 #include <asm/processor.h>
 #include <asm/macro.h>
-
+#define INTMSK0 0x11800000
+	
 	.global	lowlevel_init
 
 	.text
@@ -37,21 +38,11 @@ lowlevel_init:
 	bra	1b
 	 mov.w	r1,@r3
 2:
-	mov.l	.MCLKCR,r0	// MCLKCR setting
+	mov.l	$mclkcr,r0		// MCLKCR setting
 	mov	#0x40,r1
 	mov.b	r1,@r0
 
-	// Set up the Pin Function Controler
-	mova	PFC_settings_table,r0
-3:	mov.l	@r0+,r3		       // Address (or zero)
-	tst	r3,r3
-	bt	4f
-	mov.l	@r0+,r1		       // data
-	bra	3b
-	 mov.w	r1,@r3
-
 	// Set up the Bus Controler
-4:
 	mova	BSC_settings_table,r0
 5:	mov.l	@r0+,r3		       // Address (or zero)
 	tst	r3,r3
@@ -61,34 +52,60 @@ lowlevel_init:
 	 mov.l	r1,@r3
 
 6:
-	movi20	#2000,r0
+	mov.l	$delay_count,r0
 7:
 	dt	r0
 	bf	7b
 
-	mov.l	.SDMR ,r1		// Turns on SDRAM controller
-	mov	#0,r2
+	mov.l	$SDMR,r1		// Turns on SDRAM controller
+	mov.l	$SDMR_val,r2
 	mov.l	r2,@r1
 
-	// Initialize FPGA INTC 
-	mov	#0,r0
-	mov.l	.INTC,r2
-	mov.w	r0,@r2			// INTMSK0
-	mov.w	r0,@(2,r2)		// INTMSK1
-	mov.w	r0,@(4,r2)		// INTSEL
+	// Set up the Pin Function Controler
+	mova	PFC_settings_table,r0
+3:	mov.l	@r0+,r3		       // Address (or zero)
+	tst	r3,r3
+	bt	4f
+	mov.l	@r0+,r1		       // data
+	bra	3b
+	 mov.w	r1,@r3
+4:
+	rts/n
 
-	rts
-	  nop
+	.align	4
+$delay_count:
+	.long	2000
+$SDMR:	.long	0xfffc5880
+$SDMR_val:
+	.long	0
 
-.SDMR:	.long	0xfffc5880
-.INTC:	.long	0x31180000
-.MCLKCR:	.long	0xfffe410
+$mclkcr:
+	.long	MCLKCR
 
 CPG_settings_table:
-	.long	WTCSR, 0xA500
-	.long	WTCNT, 0x5A00
-	.long	WTCSR, 0xA51E
+	.long	WTCSR,0xA500
+	.long	WTCNT,0x5A00
+	.long	WTCSR,0xA51E
 	.long	FRQCR, 0x120c	/* input:33.3333MHz I:B:P=6:2:1=200MHz:66MHz:33MHz */
+	.long	0
+
+BSC_settings_table:
+	# Settings from Hitachi docs for SE7206
+	.long	CMNCR,  0x00001010
+	.long	CS0BCR, 0x10000600
+	.long	CS2BCR, 0x10000600
+	.long	CS4BCR, 0x10000400
+	.long	CS5BCR, 0x10000400
+	.long	CS3BCR, 0x10004600
+	.long	CS0WCR, 0x00000380;	/* wait:4cycle				*/
+	.long	CS2WCR, 0x00000380;
+	.long	CS4WCR, 0x00000380;
+	.long	CS5WCR, 0x00000380;
+	.long	CS3WCR, 0x00004892;	/* pre->actv:1cycle, actv->read/write:2cycle, write->pre:1cycle, ref->actv:4cycle	*/
+	.long	SDCR,   0x00000811;
+	.long	RTCNT,  0xa55a0083;
+	.long	RTCOR,  0xa55a0083;
+	.long	RTCSR,  0xa55a0008;	/* reflesh count=B¦Õ/4	*/
 	.long	0
 
 PFC_settings_table:
@@ -116,22 +133,5 @@ PFC_settings_table:
 	.long	IFCR,   0x0003
 	.long	0
 
-BSC_settings_table:
-	# Settings from Hitachi docs for SE7206
-	.long	CMNCR,  0x00001010
-	.long	CS0BCR, 0x10000600
-	.long	CS2BCR, 0x10000600
-	.long	CS4BCR, 0x10000400
-	.long	CS5BCR, 0x10000400
-	.long	CS3BCR, 0x10004600
-	.long	CS0WCR, 0x00000380;	/* wait:4cycle				*/
-	.long	CS2WCR, 0x00000380;
-	.long	CS4WCR, 0x00000380;
-	.long	CS5WCR, 0x00000380;
-	.long	CS3WCR, 0x00004892;	/* pre->actv:1cycle, actv->read/write:2cycle, write->pre:1cycle, ref->actv:4cycle	*/
-	.long	SDCR,   0x00000811;
-	.long	RTCNT,  0xa55a0083;
-	.long	RTCOR,  0xa55a0083;
-	.long	RTCSR,  0xa55a0008;	/* reflesh count=B¦Õ/4	*/
-	.long	0
-
+$INTMSK0:
+	.long	INTMSK0
