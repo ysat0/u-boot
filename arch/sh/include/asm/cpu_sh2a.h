@@ -5,7 +5,7 @@
 #define STBCR4		0xFFFE040C
 #define scif_enable(ch)					 \
 do { 							 \
-	if (ch < 3) { 					 \
+	if (ch < 4) { 					 \
 		unsigned char mask = 1 << (7 - ch); 			 \
 		writeb((readb(STBCR4) & ~mask), STBCR4); \
 	} 						 \
