@@ -30,6 +30,9 @@ dir :=
 else
 dir := $(subst $(SRCTREE)/,,$(CURDIR))
 endif
+ifeq ($(CPU),sh2a)
+CONFIG_STANDALONE_LOAD_ADDR += -m2a-nofpu
+endif
 
 ifneq ($(OBJTREE),$(SRCTREE))
 # Create object files for SPL in a separate directory
