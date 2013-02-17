@@ -27,7 +27,7 @@
 
 	.global	_start
 _sh_start:
-	.long 0x00000010	/* Ppower ON reset PC*/
+	.long 0x00000010	/* Power ON reset PC*/
 	.long 0x00000000
 	.long 0x00000010	/* Manual reset PC */
 	.long 0x00000000
