@@ -27,10 +27,17 @@
 
 	.global	_start
 _sh_start:
+#ifdef CONFIG_SH2A
 	.long 0x00000010	/* Power ON reset PC*/
 	.long 0x00000000
 	.long 0x00000010	/* Manual reset PC */
 	.long 0x00000000
+#else /* SH2 */
+	.long 0xA0000010	/* Power ON reset PC*/
+	.long 0x00000000
+	.long 0xA0000010	/* Manual reset PC */
+	.long 0x00000000
+#endif
 _init:
 	mov.l	._lowlevel_init, r0
 100:	bsrf	r0

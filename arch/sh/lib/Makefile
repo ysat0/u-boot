@@ -31,6 +31,9 @@ GLSOBJS	+= ashldi3.o
 GLSOBJS	+= ashrsi3.o
 GLSOBJS	+= lshrdi3.o
 GLSOBJS	+= movmem.o
+ifeq ($(CONFIG_SH2),y)
+GLSOBJS += divsi3.o
+endif
 
 COBJS-y	+= board.o
 COBJS-y	+= bootm.o
