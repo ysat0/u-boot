@@ -36,6 +36,23 @@
 #if defined(CONFIG_SH2A)
 #  include <asm/cpu_sh2a.h>
 #endif
+#define STBCR3		0xF80A0000
+#if !defined(scif_enable)
+#define scif_enable(ch)					 \
+do { 							 \
+	if (ch < 3) { 					 \
+		unsigned char mask = 1 << (ch); 			 \
+		writeb((readb(STBCR3) & ~mask), STBCR3); \
+	} 						 \
+} while (0)
+#endif
+#if !defined( cmt_clock_enable)
+#define cmt_clock_enable() \
+do { 							 \
+		writeb((readb(STBCR3) & ~0x10), STBCR3); \
+} while (0)
+#endif
+
 #if defined(CONFIG_CPU_SH7203)
 # include <asm/cpu_sh7203.h>
 #elif defined(CONFIG_CPU_SH7264)
@@ -44,6 +61,8 @@
 # include <asm/cpu_sh7269.h>
 #elif defined(CONFIG_CPU_SH7206)
 # include <asm/cpu_sh7206.h>
+#elif defined(CONFIG_CPU_SH7619)
+# include <asm/cpu_sh7619.h>
 #else
 # error "Unknown SH2 variant"
 #endif
