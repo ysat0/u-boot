@@ -38,8 +38,13 @@
 # error "Please define CONFIG_SH_ETHER_PHY_ADDR"
 #endif
 #ifdef CONFIG_SH_ETHER_CACHE_WRITEBACK
+#if defined(CONFIG_SH4)
 #define flush_cache_wback(addr, len)	\
 			dcache_wback_range((u32)addr, (u32)(addr + len - 1))
+#else
+#define flush_cache_wback(addr, len)	\
+	flush_cache(addr, len)
+#endif
 #else
 #define flush_cache_wback(...)
 #endif
