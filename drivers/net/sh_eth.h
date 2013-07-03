@@ -284,6 +284,50 @@ static const u16 sh_eth_offset_fast_sh4[SH_ETH_MAX_REGISTER_OFFSET] = {
 	[TDFAR]	= 0x00d8,
 };
 
+static const u16 sh_eth_offset_7619[SH_ETH_MAX_REGISTER_OFFSET] = {
+	[ECMR]	= 0x0160,
+	[RFLR]	= 0x0178,
+	[ECSR]	= 0x0164,
+	[ECSIPR]	= 0x0168,
+	[PIR]	= 0x016C,
+	[PSR]	= 0x017C,
+	[IPGR]	= 0x01B4,
+	[APR]	= 0x01B8,
+	[MPR]	= 0x01BC,
+	[TPAUSER]	= 0x01C4,
+	[MAHR]	= 0x0170,
+	[MALR]	= 0x0174,
+	[TROCR]	= 0x01B0,
+	[CDCR]	= 0x01B4,
+	[LCCR]	= 0x01B8,
+	[CNDCR]	= 0x01BC,
+	[CEFCR]	= 0x0194,
+	[FRECR]	= 0x0198,
+	[TSFRCR]	= 0x019C,
+	[TLFRCR]	= 0x01A0,
+	[RFCR]	= 0x01A4,
+	[MAFCR]	= 0x01A8,
+
+	[EDMR]	= 0x0000,
+	[EDTRR]	= 0x0004,
+	[EDRRR]	= 0x0008,
+	[TDLAR]	= 0x000C,
+	[RDLAR]	= 0x0010,
+	[EESR]	= 0x0014,
+	[EESIPR]	= 0x0018,
+	[TRSCER]	= 0x001C,
+	[RMFCR]	= 0x0020,
+	[TFTR]	= 0x0024,
+	[FDR]	= 0x0028,
+	[RMCR]	= 0x002C,
+	[FCFTR]	= 0x0034,
+	[TRIMD]	= 0x003C,
+	[RBWAR]	= 0x0040,
+	[RDFAR]	= 0x0044,
+	[TBRAR]	= 0x004C,
+	[TDFAR]	= 0x0050,
+};
+
 /* Register Address */
 #if defined(CONFIG_CPU_SH7763) || defined(CONFIG_CPU_SH7734)
 #define SH_ETH_TYPE_GETHER
@@ -302,6 +346,9 @@ static const u16 sh_eth_offset_fast_sh4[SH_ETH_MAX_REGISTER_OFFSET] = {
 #elif defined(CONFIG_R8A7740)
 #define SH_ETH_TYPE_GETHER
 #define BASE_IO_ADDR	0xE9A00000
+#elif defined(CONFIG_CPU_SH7619)
+#define SH_ETH_TYPE_ETHER
+#define BASE_IO_ADDR	0xFB000000
 #endif
 
 /*
@@ -589,6 +636,8 @@ static inline unsigned long sh_eth_reg_addr(struct sh_eth_dev *eth,
 	const u16 *reg_offset = sh_eth_offset_gigabit;
 #elif defined(SH_ETH_TYPE_ETHER)
 	const u16 *reg_offset = sh_eth_offset_fast_sh4;
+#elif defined(CONFIG_CPU_SH7619)
+	const u16 *reg_offset = sh_eth_offset_7619;
 #else
 #error
 #endif
