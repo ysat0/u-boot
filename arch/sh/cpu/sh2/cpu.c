@@ -71,3 +71,20 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
+static void phy_init(void)
+{
+	
+}
+
+
+
+int cpu_eth_init(bd_t *bis)
+{
+#ifdef CONFIG_SH_CPU7619
+	phy_init();
+#endif
+#ifdef CONFIG_SH_ETHER
+	sh_eth_initialize(bis);
+#endif
+	return 0;
+}
