@@ -73,7 +73,7 @@ int sh_eth_send(struct eth_device *dev, void *packet, int len)
 	/* Update tx descriptor */
 	flush_cache_wback(packet, len);
 	port_info->tx_desc_cur->td2 = ADDR_TO_PHY(packet);
-	port_info->tx_desc_cur->td1 = len << 16;
+	port_info->tx_desc_cur->td1 = len << 16 | len;
 	/* Must preserve the end of descriptor list indication */
 	if (port_info->tx_desc_cur->td0 & TD_TDLE)
 		port_info->tx_desc_cur->td0 = TD_TACT | TD_TFP | TD_TDLE;
@@ -368,8 +368,10 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 	struct phy_device *phy;
 
 	/* Configure e-dmac registers */
+#if !defined(CONFIG_CPU_SH7619)
 	sh_eth_write(eth, (sh_eth_read(eth, EDMR) & ~EMDR_DESC_R) | EDMR_EL,
 		     EDMR);
+#endif
 	sh_eth_write(eth, 0, EESIPR);
 	sh_eth_write(eth, 0, TRSCER);
 	sh_eth_write(eth, 0, TFTR);

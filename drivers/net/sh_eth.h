@@ -634,10 +634,10 @@ static inline unsigned long sh_eth_reg_addr(struct sh_eth_dev *eth,
 {
 #if defined(SH_ETH_TYPE_GETHER)
 	const u16 *reg_offset = sh_eth_offset_gigabit;
-#elif defined(SH_ETH_TYPE_ETHER)
-	const u16 *reg_offset = sh_eth_offset_fast_sh4;
 #elif defined(CONFIG_CPU_SH7619)
 	const u16 *reg_offset = sh_eth_offset_7619;
+#elif defined(SH_ETH_TYPE_ETHER)
+	const u16 *reg_offset = sh_eth_offset_fast_sh4;
 #else
 #error
 #endif
@@ -647,11 +647,11 @@ static inline unsigned long sh_eth_reg_addr(struct sh_eth_dev *eth,
 static inline void sh_eth_write(struct sh_eth_dev *eth, unsigned long data,
 				int enum_index)
 {
-	outl(data, sh_eth_reg_addr(eth, enum_index));
+	__raw_writel(data, sh_eth_reg_addr(eth, enum_index));
 }
 
 static inline unsigned long sh_eth_read(struct sh_eth_dev *eth,
 					int enum_index)
 {
-	return inl(sh_eth_reg_addr(eth, enum_index));
+	return __raw_readl(sh_eth_reg_addr(eth, enum_index));
 }
