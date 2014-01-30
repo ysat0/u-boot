@@ -73,14 +73,21 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 static void phy_init(void)
 {
-	
+	int i;
+	unsigned d;
+	while (__raw_readw(0xf8490010) & 0x8000);
+	__raw_writew(CONFIG_SH_ETHER_PHY_ADDR, 0xf849000c);
+	__raw_writew(0xa007, 0xf8490000);
+	udelay(1000);
+	__raw_writew(0xe007, 0xf8490000);
+	udelay(10000);
 }
 
 
 
 int cpu_eth_init(bd_t *bis)
 {
-#ifdef CONFIG_SH_CPU7619
+#ifdef CONFIG_CPU_SH7619
 	phy_init();
 #endif
 #ifdef CONFIG_SH_ETHER
