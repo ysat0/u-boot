@@ -30,7 +30,12 @@
 #define CH7301_I2C_ADDR 0x75
 
 #define ICS8N3QV01_I2C_ADDR 0x6E
-#define ICS8N3QV01_FREF 114285
+#define ICS8N3QV01_FREF 114285000
+#define ICS8N3QV01_FREF_LL 114285000LL
+#define ICS8N3QV01_F_DEFAULT_0 156250000LL
+#define ICS8N3QV01_F_DEFAULT_1 125000000LL
+#define ICS8N3QV01_F_DEFAULT_2 100000000LL
+#define ICS8N3QV01_F_DEFAULT_3  25175000LL
 
 #define SIL1178_MASTER_I2C_ADDRESS 0x38
 #define SIL1178_SLAVE_I2C_ADDRESS 0x39
@@ -65,8 +70,8 @@ enum {
 #if defined(CONFIG_SYS_ICS8N3QV01) || defined(CONFIG_SYS_SIL1178)
 static void fpga_iic_write(unsigned screen, u8 slave, u8 reg, u8 data)
 {
-	ihs_fpga_t *fpga = (ihs_fpga_t *) CONFIG_SYS_FPGA_BASE(screen);
-	ihs_i2c_t *i2c = &fpga->i2c;
+	struct ihs_fpga *fpga = (struct ihs_fpga *)CONFIG_SYS_FPGA_BASE(screen);
+	struct ihs_i2c *i2c = &fpga->i2c;
 
 	while (in_le16(&fpga->extended_interrupt) & (1 << 12))
 		;
@@ -76,8 +81,8 @@ static void fpga_iic_write(unsigned screen, u8 slave, u8 reg, u8 data)
 
 static u8 fpga_iic_read(unsigned screen, u8 slave, u8 reg)
 {
-	ihs_fpga_t *fpga = (ihs_fpga_t *) CONFIG_SYS_FPGA_BASE(screen);
-	ihs_i2c_t *i2c = &fpga->i2c;
+	struct ihs_fpga *fpga = (struct ihs_fpga *)CONFIG_SYS_FPGA_BASE(screen);
+	struct ihs_i2c *i2c = &fpga->i2c;
 	unsigned int ctr = 0;
 
 	while (in_le16(&fpga->extended_interrupt) & (1 << 12))
@@ -124,7 +129,7 @@ static void mpc92469ac_calc_parameters(unsigned int fout,
 
 static void mpc92469ac_set(unsigned screen, unsigned int fout)
 {
-	ihs_fpga_t *fpga = (ihs_fpga_t *) CONFIG_SYS_FPGA_BASE(screen);
+	struct ihs_fpga *fpga = (struct ihs_fpga *)CONFIG_SYS_FPGA_BASE(screen);
 	unsigned int n;
 	unsigned int m;
 	unsigned int bitval = 0;
@@ -150,6 +155,41 @@ static void mpc92469ac_set(unsigned screen, unsigned int fout)
 #endif
 
 #ifdef CONFIG_SYS_ICS8N3QV01
+
+static unsigned int ics8n3qv01_get_fout_calc(unsigned screen, unsigned index)
+{
+	unsigned long long n;
+	unsigned long long mint;
+	unsigned long long mfrac;
+	u8 reg_a, reg_b, reg_c, reg_d, reg_f;
+	unsigned long long fout_calc;
+
+	if (index > 3)
+		return 0;
+
+	reg_a = fpga_iic_read(screen, ICS8N3QV01_I2C_ADDR, 0 + index);
+	reg_b = fpga_iic_read(screen, ICS8N3QV01_I2C_ADDR, 4 + index);
+	reg_c = fpga_iic_read(screen, ICS8N3QV01_I2C_ADDR, 8 + index);
+	reg_d = fpga_iic_read(screen, ICS8N3QV01_I2C_ADDR, 12 + index);
+	reg_f = fpga_iic_read(screen, ICS8N3QV01_I2C_ADDR, 20 + index);
+
+	mint = ((reg_a >> 1) & 0x1f) | (reg_f & 0x20);
+	mfrac = ((reg_a & 0x01) << 17) | (reg_b << 9) | (reg_c << 1)
+		| (reg_d >> 7);
+	n = reg_d & 0x7f;
+
+	fout_calc = (mint * ICS8N3QV01_FREF_LL
+		     + mfrac * ICS8N3QV01_FREF_LL / 262144LL
+		     + ICS8N3QV01_FREF_LL / 524288LL
+		     + n / 2)
+		    / n
+		    * 1000000
+		    / (1000000 - 100);
+
+	return fout_calc;
+}
+
+
 static void ics8n3qv01_calc_parameters(unsigned int fout,
 	unsigned int *_mint, unsigned int *_mfrac,
 	unsigned int *_n)
@@ -160,7 +200,7 @@ static void ics8n3qv01_calc_parameters(unsigned int fout,
 	unsigned int mint;
 	unsigned long long mfrac;
 
-	n = 2550000000U / fout;
+	n = (2215000000U + fout / 2) / fout;
 	if ((n & 1) && (n > 5))
 		n -= 1;
 
@@ -184,9 +224,18 @@ static void ics8n3qv01_set(unsigned screen, unsigned int fout)
 	unsigned int n;
 	unsigned int mint;
 	unsigned int mfrac;
+	unsigned int fout_calc;
+	unsigned long long fout_prog;
+	long long off_ppm;
 	u8 reg0, reg4, reg8, reg12, reg18, reg20;
 
-	ics8n3qv01_calc_parameters(fout, &mint, &mfrac, &n);
+	fout_calc = ics8n3qv01_get_fout_calc(screen, 1);
+	off_ppm = (fout_calc - ICS8N3QV01_F_DEFAULT_1) * 1000000
+		  / ICS8N3QV01_F_DEFAULT_1;
+	printf("       PLL is off by %lld ppm\n", off_ppm);
+	fout_prog = (unsigned long long)fout * (unsigned long long)fout_calc
+		    / ICS8N3QV01_F_DEFAULT_1;
+	ics8n3qv01_calc_parameters(fout_prog, &mint, &mfrac, &n);
 
 	reg0 = fpga_iic_read(screen, ICS8N3QV01_I2C_ADDR, 0) & 0xc0;
 	reg0 |= (mint & 0x1f) << 1;
@@ -216,8 +265,8 @@ static void ics8n3qv01_set(unsigned screen, unsigned int fout)
 static int osd_write_videomem(unsigned screen, unsigned offset,
 	u16 *data, size_t charcount)
 {
-	ihs_fpga_t *fpga =
-		(ihs_fpga_t *) CONFIG_SYS_FPGA_BASE(screen);
+	struct ihs_fpga *fpga =
+		(struct ihs_fpga *) CONFIG_SYS_FPGA_BASE(screen);
 	unsigned int k;
 
 	for (k = 0; k < charcount; ++k) {
@@ -269,8 +318,8 @@ static int osd_print(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 int osd_probe(unsigned screen)
 {
-	ihs_fpga_t *fpga = (ihs_fpga_t *) CONFIG_SYS_FPGA_BASE(screen);
-	ihs_osd_t *osd = &fpga->osd;
+	struct ihs_fpga *fpga = (struct ihs_fpga *)CONFIG_SYS_FPGA_BASE(screen);
+	struct ihs_osd *osd = &fpga->osd;
 	u16 version = in_le16(&osd->version);
 	u16 features = in_le16(&osd->features);
 	unsigned width;
@@ -327,6 +376,8 @@ int osd_probe(unsigned screen)
 	out_le16(&osd->control, 0x0049);
 
 	out_le16(&osd->xy_size, ((32 - 1) << 8) | (16 - 1));
+	out_le16(&osd->x_pos, 0x007f);
+	out_le16(&osd->y_pos, 0x005f);
 
 	return 0;
 }

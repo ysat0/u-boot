@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Freescale Semiconductor, Inc.
+ * Copyright 2007-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -34,9 +34,9 @@
 #include <miiphy.h>
 #include <libfdt.h>
 #include <fdt_support.h>
+#include <fsl_mdio.h>
 #include <tsec.h>
 #include <asm/fsl_law.h>
-#include <asm/mp.h>
 #include <netdev.h>
 
 #include "../common/ngpixis.h"
@@ -44,16 +44,25 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+int board_early_init_f(void)
+{
+#ifdef CONFIG_MMC
+	ccsr_gur_t *gur = (ccsr_gur_t *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+
+	setbits_be32(&gur->pmuxcr,
+			 (MPC85xx_PMUXCR_SDHC_CD |
+			 MPC85xx_PMUXCR_SDHC_WP));
+#endif
+
+	return 0;
+}
+
 int checkboard(void)
 {
 	u8 sw;
 
-	puts("Board: P2020DS ");
-#ifdef CONFIG_PHYS_64BIT
-	puts("(36-bit addrmap) ");
-#endif
-
-	printf("Sys ID: 0x%02x, Sys Ver: 0x%02x, FPGA Ver: 0x%02x, ",
+	printf("Board: P2020DS Sys ID: 0x%02x, "
+	       "Sys Ver: 0x%02x, FPGA Ver: 0x%02x, ",
 		in_8(&pixis->id), in_8(&pixis->arch), in_8(&pixis->scver));
 
 	sw = in_8(&PIXIS_SW(PIXIS_LBMAP_SWITCH));
@@ -75,7 +84,7 @@ int checkboard(void)
 
 phys_size_t fixed_sdram(void)
 {
-	volatile ccsr_ddr_t *ddr = (ccsr_ddr_t *)CONFIG_SYS_MPC85xx_DDR_ADDR;
+	volatile ccsr_ddr_t *ddr = (ccsr_ddr_t *)CONFIG_SYS_MPC8xxx_DDR_ADDR;
 	uint d_init;
 
 	ddr->cs0_config = CONFIG_SYS_DDR_CS0_CONFIG;
@@ -189,6 +198,7 @@ int board_early_init_r(void)
 #ifdef CONFIG_TSEC_ENET
 int board_eth_init(bd_t *bis)
 {
+	struct fsl_pq_mdio_info mdio_info;
 	struct tsec_info_struct tsec_info[4];
 	int num = 0;
 
@@ -223,6 +233,11 @@ int board_eth_init(bd_t *bis)
 	fsl_sgmii_riser_init(tsec_info, num);
 #endif
 
+	mdio_info.regs = (struct tsec_mii_mng *)CONFIG_SYS_MDIO_BASE_ADDR;
+	mdio_info.name = DEFAULT_MII_NAME;
+
+	fsl_pq_mdio_init(bis, &mdio_info);
+
 	tsec_eth_init(bis, tsec_info, num);
 
 	return pci_eth_init(bis);
@@ -242,17 +257,14 @@ void ft_board_setup(void *blob, bd_t *bd)
 
 	fdt_fixup_memory(blob, (u64)base, (u64)size);
 
+#ifdef CONFIG_HAS_FSL_DR_USB
+	fdt_fixup_dr_usb(blob, bd);
+#endif
+
 	FT_FSL_PCI_SETUP;
 
 #ifdef CONFIG_FSL_SGMII_RISER
 	fsl_sgmii_riser_fdt_fixup(blob);
 #endif
-}
-#endif
-
-#ifdef CONFIG_MP
-void board_lmb_reserve(struct lmb *lmb)
-{
-	cpu_mp_lmb_reserve(lmb);
 }
 #endif

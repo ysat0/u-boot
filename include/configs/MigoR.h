@@ -38,7 +38,6 @@
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_NFS
-#define CONFIG_CMD_DFL
 #define CONFIG_CMD_SDRAM
 #define CONFIG_CMD_SAVEENV
 
@@ -50,7 +49,6 @@
 #undef  CONFIG_SHOW_BOOT_PROGRESS
 
 /* SMC9111 */
-#define CONFIG_NET_MULTI
 #define CONFIG_SMC91111
 #define CONFIG_SMC91111_BASE    (0xB0000000)
 
@@ -99,7 +97,6 @@
 #define CONFIG_SYS_MONITOR_LEN	(128 * 1024)
 /* Size of DRAM reserved for malloc() use */
 #define CONFIG_SYS_MALLOC_LEN	(256 * 1024)
-/* size in bytes reserved for initial data */
 #define CONFIG_SYS_BOOTMAPSZ	(8 * 1024 * 1024)
 
 /* FLASH */

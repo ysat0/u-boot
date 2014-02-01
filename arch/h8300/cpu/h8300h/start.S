@@ -27,22 +27,18 @@
 	.long	_start
 vector	=	1
 	.rept	63
-	.long	__ram_vec + (vector * 4)
+	.long	_ram_vec + (vector * 4)
 vector	=	vector + 1
 	.endr
 
 	.text
 	.align	2
 _start:
-	mov.l	#__init_stack,sp
-	jsr	@_lowlevel_init
+	mov.l	#_init_stack,sp
+	jsr	@lowlevel_init
 
-	mov.l	#__fdata,er5
-	mov.l	#__ram_data,er6
-	mov.l	#__sizeof_data,er4
-	eepmov.w
-	mov.l	#_bss_start,er4
-	mov.l	#_bss_end,er5
+	mov.l	#bss_start,er4
+	mov.l	#bss_end,er5
 	sub	er4,er5
 	shlr.l	er5
 	shlr.l	er5
@@ -51,9 +47,9 @@ _start:
 	adds	#4,er4
 	dec.l	#1,er5
 	bne	1b
-	mov.l	#__ram_vec,sp
-	mov.l	#_bss_end,er0		/* global data */
-	jsr	@_h8300_generic_init
+	mov.l	#_ram_vec,sp
+	mov.l	#bss_end,er0		/* global data */
+	jsr	@h8300_generic_init
 	
 	bra	.
 

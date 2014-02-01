@@ -92,8 +92,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN	(1024 * 1024) /* 1MiB for malloc() */
-/* size in bytes reserved for initial data */
+#define CONFIG_SYS_MALLOC_LEN	(1024 * 1024 * 4) /* 4MiB for malloc() */
 
 /*
  * Other required minimal configurations
@@ -106,12 +105,14 @@
 #define CONFIG_ARCH_MISC_INIT	/* call arch_misc_init() */
 #define CONFIG_BOARD_EARLY_INIT_F /* call board_init_f for early inits */
 #define CONFIG_DISPLAY_CPUINFO	/* Display cpu info */
-#define CONFIG_STACKSIZE	0x00100000	/* regular stack- 1M */
 #define CONFIG_SYS_LOAD_ADDR	0x00800000	/* default load adr- 8M */
 #define CONFIG_SYS_MEMTEST_START 0x00800000	/* 8M */
 #define CONFIG_SYS_MEMTEST_END	0x00ffffff	/*(_16M -1) */
 #define CONFIG_SYS_RESET_ADDRESS 0xffff0000	/* Rst Vector Adr */
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
+
+/* ====> Include platform Common Definitions */
+#include <asm/arch/config.h>
 
 /*
  * DRAM Banks configuration, Custom config can be done in <board>.h
@@ -124,17 +125,12 @@
 #endif
 #endif /* CONFIG_NR_DRAM_BANKS */
 
-/* ====> Include platform Common Definations */
-#include <asm/arch/config.h>
-
-/* ====> Include driver Common Definations */
+/* ====> Include driver Common Definitions */
 /*
  * Common NAND configuration
  */
 #ifdef CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE     1
-#define NAND_MAX_CHIPS                 1
-#define CONFIG_SYS_64BIT_VSPRINTF      /* needed for nand_util.c */
 #endif
 
 /*

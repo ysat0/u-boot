@@ -26,27 +26,25 @@
 #include <asm/arch/mx5x_pins.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/crm_regs.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/iomux.h>
 #include <asm/errno.h>
+#include <asm/imx-common/boot_mode.h>
 #include <netdev.h>
 #include <i2c.h>
 #include <mmc.h>
 #include <fsl_esdhc.h>
+#include <power/pmic.h>
 #include <fsl_pmic.h>
-#include <mxc_gpio.h>
+#include <asm/gpio.h>
 #include <mc13892.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-u32 get_board_rev(void)
-{
-	return get_cpu_rev();
-}
-
 int dram_init(void)
 {
 	/* dram_init must store complete ramsize in gd->ram_size */
-	gd->ram_size = get_ram_size((volatile void *)CONFIG_SYS_SDRAM_BASE,
+	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
 				PHYS_SDRAM_1_SIZE);
 	return 0;
 }
@@ -124,12 +122,22 @@ static void setup_i2c(unsigned int port_number)
 void power_init(void)
 {
 	unsigned int val;
+	struct pmic *p;
+	int ret;
+
+	ret = pmic_init(I2C_PMIC);
+	if (ret)
+		return;
+
+	p = pmic_get("FSL_PMIC");
+	if (!p)
+		return;
 
 	/* Set VDDA to 1.25V */
-	val = pmic_reg_read(REG_SW_2);
+	pmic_reg_read(p, REG_SW_2, &val);
 	val &= ~SWX_OUT_MASK;
 	val |= SWX_OUT_1_25;
-	pmic_reg_write(REG_SW_2, val);
+	pmic_reg_write(p, REG_SW_2, val);
 
 	/*
 	 * Need increase VCC and VDDA to 1.3V
@@ -137,16 +145,16 @@ void power_init(void)
 	 */
 	if (is_soc_rev(CHIP_REV_2_0) == 0) {
 		/* Set VCC to 1.3V for TO2 */
-		val = pmic_reg_read(REG_SW_1);
+		pmic_reg_read(p, REG_SW_1, &val);
 		val &= ~SWX_OUT_MASK;
 		val |= SWX_OUT_1_30;
-		pmic_reg_write(REG_SW_1, val);
+		pmic_reg_write(p, REG_SW_1, val);
 
 		/* Set VDDA to 1.3V for TO2 */
-		val = pmic_reg_read(REG_SW_2);
+		pmic_reg_read(p, REG_SW_2, &val);
 		val &= ~SWX_OUT_MASK;
 		val |= SWX_OUT_1_30;
-		pmic_reg_write(REG_SW_2, val);
+		pmic_reg_write(p, REG_SW_2, val);
 	}
 }
 
@@ -204,26 +212,35 @@ static void setup_iomux_fec(void)
 
 #ifdef CONFIG_FSL_ESDHC
 struct fsl_esdhc_cfg esdhc_cfg[2] = {
-	{MMC_SDHC1_BASE_ADDR, 1},
-	{MMC_SDHC3_BASE_ADDR, 1},
+	{MMC_SDHC1_BASE_ADDR},
+	{MMC_SDHC3_BASE_ADDR},
 };
 
-int board_mmc_getcd(u8 *cd, struct mmc *mmc)
+int board_mmc_getcd(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	int ret;
+
+	mxc_request_iomux(MX53_PIN_EIM_DA11, IOMUX_CONFIG_ALT1);
+	gpio_direction_input(IMX_GPIO_NR(3, 11));
+	mxc_request_iomux(MX53_PIN_EIM_DA13, IOMUX_CONFIG_ALT1);
+	gpio_direction_input(IMX_GPIO_NR(3, 13));
 
 	if (cfg->esdhc_base == MMC_SDHC1_BASE_ADDR)
-		*cd = mxc_gpio_get(77); /*GPIO3_13*/
+		ret = !gpio_get_value(IMX_GPIO_NR(3, 13));
 	else
-		*cd = mxc_gpio_get(75); /*GPIO3_11*/
+		ret = !gpio_get_value(IMX_GPIO_NR(3, 11));
 
-	return 0;
+	return ret;
 }
 
 int board_mmc_init(bd_t *bis)
 {
 	u32 index;
 	s32 status = 0;
+
+	esdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
+	esdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 
 	for (index = 0; index < CONFIG_SYS_FSL_ESDHC_NUM; index++) {
 		switch (index) {
@@ -355,43 +372,35 @@ int board_early_init_f(void)
 
 int board_init(void)
 {
-	gd->bd->bi_arch_number = MACH_TYPE_MX53_EVK;
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	return 0;
 }
 
+#ifdef CONFIG_CMD_BMODE
+static const struct boot_mode board_boot_modes[] = {
+	/* 4 bit bus width */
+	{"mmc0",	MAKE_CFGVAL(0x40, 0x20, 0x00, 0x12)},
+	{"mmc1",	MAKE_CFGVAL(0x40, 0x20, 0x08, 0x12)},
+	{NULL,		0},
+};
+#endif
+
 int board_late_init(void)
 {
 	setup_i2c(1);
 	power_init();
 
+#ifdef CONFIG_CMD_BMODE
+	add_board_boot_modes(board_boot_modes);
+#endif
 	return 0;
 }
 
 int checkboard(void)
 {
-	u32 cause;
-	struct src *src_regs = (struct src *)SRC_BASE_ADDR;
+	puts("Board: MX53EVK\n");
 
-	puts("Board: MX53EVK [");
-
-	cause = src_regs->srsr;
-	switch (cause) {
-	case 0x0001:
-		printf("POR");
-		break;
-	case 0x0009:
-		printf("RST");
-		break;
-	case 0x0010:
-	case 0x0011:
-		printf("WDOG");
-		break;
-	default:
-		printf("unknown");
-	}
-	printf("]\n");
 	return 0;
 }

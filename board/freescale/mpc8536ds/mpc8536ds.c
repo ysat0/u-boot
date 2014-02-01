@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Copyright 2008-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -36,6 +36,7 @@
 #include <libfdt.h>
 #include <spd_sdram.h>
 #include <fdt_support.h>
+#include <fsl_mdio.h>
 #include <tsec.h>
 #include <netdev.h>
 #include <sata.h>
@@ -48,10 +49,16 @@ int board_early_init_f (void)
 	volatile ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 
 	setbits_be32(&gur->pmuxcr,
-			(MPC85xx_PMUXCR_SD_DATA |
-			 MPC85xx_PMUXCR_SDHC_CD |
+			(MPC85xx_PMUXCR_SDHC_CD |
 			 MPC85xx_PMUXCR_SDHC_WP));
 
+	/* The MPC8536DS board insert the SDHC_WP pin for erratum NMG_eSDHC118,
+	 * however, this erratum only applies to MPC8536 Rev1.0.
+	 * So set SDHC_WP to active-low when use MPC8536 Rev1.1 and greater.*/
+	if ((((SVR_MAJ(get_svr()) & 0x7) == 0x1) &&
+			(SVR_MIN(get_svr()) >= 0x1))
+			|| (SVR_MAJ(get_svr() & 0x7) > 0x1))
+		setbits_be32(&gur->gencfgr, MPC85xx_GENCFGR_SDHC_WP_INV);
 #endif
 	return 0;
 }
@@ -61,12 +68,7 @@ int checkboard (void)
 	u8 vboot;
 	u8 *pixis_base = (u8 *)PIXIS_BASE;
 
-	puts("Board: MPC8536DS ");
-#ifdef CONFIG_PHYS_64BIT
-	puts("(36-bit addrmap) ");
-#endif
-
-	printf ("Sys ID: 0x%02x, "
+	printf("Board: MPC8536DS Sys ID: 0x%02x, "
 		"Sys Ver: 0x%02x, FPGA Ver: 0x%02x, ",
 		in_8(pixis_base + PIXIS_ID), in_8(pixis_base + PIXIS_VER),
 		in_8(pixis_base + PIXIS_PVER));
@@ -234,6 +236,7 @@ int board_early_init_r(void)
 int board_eth_init(bd_t *bis)
 {
 #ifdef CONFIG_TSEC_ENET
+	struct fsl_pq_mdio_info mdio_info;
 	struct tsec_info_struct tsec_info[2];
 	int num = 0;
 
@@ -268,6 +271,10 @@ int board_eth_init(bd_t *bis)
 	}
 #endif
 
+	mdio_info.regs = (struct tsec_mii_mng *)CONFIG_SYS_MDIO_BASE_ADDR;
+	mdio_info.name = DEFAULT_MII_NAME;
+	fsl_pq_mdio_init(bis, &mdio_info);
+
 	tsec_eth_init(bis, tsec_info, num);
 #endif
 	return pci_eth_init(bis);
@@ -283,5 +290,10 @@ void ft_board_setup(void *blob, bd_t *bd)
 #ifdef CONFIG_FSL_SGMII_RISER
 	fsl_sgmii_riser_fdt_fixup(blob);
 #endif
+
+#ifdef CONFIG_HAS_FSL_MPH_USB
+	fdt_fixup_dr_usb(blob, bd);
+#endif
+
 }
 #endif

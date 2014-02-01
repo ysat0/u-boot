@@ -333,13 +333,14 @@ int misc_init_r(void)
 
 int checkboard(void)
 {
-	char *s = getenv("serial#");
+	char buf[64];
+	int i = getenv_f("serial#", buf, sizeof(buf));
 
 	puts("Board: lwmon5");
 
-	if (s != NULL) {
+	if (i > 0) {
 		puts(", serial# ");
-		puts(s);
+		puts(buf);
 	}
 	putc('\n');
 
@@ -356,16 +357,16 @@ void hw_watchdog_reset(void)
 	 * Don't allow watch-dog triggering more frequently than
 	 * the predefined value CONFIG_WD_MAX_RATE [ticks].
 	 */
-	if (ct >= gd->wdt_last) {
-		if ((ct - gd->wdt_last) < CONFIG_WD_MAX_RATE)
+	if (ct >= gd->arch.wdt_last) {
+		if ((ct - gd->arch.wdt_last) < CONFIG_WD_MAX_RATE)
 			return;
 	} else {
 		/* Time base counter had been reset */
-		if (((unsigned long long)(-1) - gd->wdt_last + ct) <
+		if (((unsigned long long)(-1) - gd->arch.wdt_last + ct) <
 		    CONFIG_WD_MAX_RATE)
 			return;
 	}
-	gd->wdt_last = get_ticks();
+	gd->arch.wdt_last = get_ticks();
 #endif
 
 	/*

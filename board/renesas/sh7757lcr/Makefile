@@ -26,12 +26,6 @@ SOBJS	:= lowlevel_init.o
 $(LIB):	$(obj).depend $(COBJS) $(SOBJS)
 	$(call cmd_link_o_target, $(COBJS) $(SOBJS))
 
-clean:
-	rm -f $(SOBJS) $(OBJS)
-
-distclean:	clean
-	rm -f $(LIB) core *.bak $(obj).depend
-
 #########################################################################
 
 # defines $(obj).depend target
@@ -40,4 +34,3 @@ include $(SRCTREE)/rules.mk
 sinclude $(obj).depend
 
 #########################################################################
-

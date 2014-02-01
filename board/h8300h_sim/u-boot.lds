@@ -33,8 +33,8 @@ MEMORY
 
 SECTIONS
 {
-	PROVIDE (__start = .);
-	PROVIDE (__ftext = .);
+	PROVIDE (_start = .);
+	PROVIDE (_ftext = .);
 
 	.text :
 	{
@@ -44,46 +44,39 @@ SECTIONS
 		*(.text)
 		. = ALIGN(4);
 	} > from
-	PROVIDE (__ecode = .);
+	PROVIDE (_ecode = .);
 	.rodata :
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
+#include "u-boot.lst"
 	} > from
-	PROVIDE (__etext = .);
+	PROVIDE (_etext = .);
 
-	PROVIDE (___u_boot_cmd_start = .);
-	.u_boot_cmd :
-	{
-		*(.u_boot_cmd)
-		. = ALIGN(4);
-	} > from
-	PROVIDE (___u_boot_cmd_end = .);
-
-	PROVIDE (__fdata = .);
+	PROVIDE (_fdata = .);
 	.data :
 	{
-		PROVIDE (__ram_data = .);
+		PROVIDE (_ram_data = .);
 	
 		*(.data)
 		. = ALIGN(4);
 	} >sdram AT>from
-	PROVIDE (__sizeof_data = SIZEOF(.data));
-	PROVIDE (__edata = .);
+	PROVIDE (_sizeof_data = SIZEOF(.data));
+	PROVIDE (_edata = .);
 
-	PROVIDE (_bss_start = .);
-	PROVIDE (___bss_start = .);
+	PROVIDE (bss_start = .);
+	PROVIDE (__bss_start = .);
 	.bss :
 	{
 		*(.bss)
 		. = ALIGN(4);
 	} > sdram
-	PROVIDE (_bss_end = .);
+	PROVIDE (bss_end = .);
 
-	PROVIDE (__end = .);
+	PROVIDE (_end = .);
 	.iram :
 	{
 	}
-	PROVIDE (__ram_vec =    0xffbe00);
-	PROVIDE (__init_stack = 0xffc000);
+	PROVIDE (_ram_vec =    0xffbe00);
+	PROVIDE (_init_stack = 0xffc000);
 }

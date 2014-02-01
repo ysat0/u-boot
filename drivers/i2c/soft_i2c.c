@@ -30,6 +30,9 @@
 #include <ioports.h>
 #include <asm/io.h>
 #endif
+#if defined(CONFIG_AVR32)
+#include <asm/arch/portmux.h>
+#endif
 #if defined(CONFIG_AT91FAMILY)
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
@@ -40,9 +43,6 @@
 #endif
 #ifdef	CONFIG_IXP425			/* only valid for IXP425 */
 #include <asm/arch/ixp425.h>
-#endif
-#ifdef CONFIG_LPC2292
-#include <asm/arch/hardware.h>
 #endif
 #if defined(CONFIG_MPC852T) || defined(CONFIG_MPC866)
 #include <asm/io.h>
@@ -119,7 +119,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef DEBUG_I2C
 #define PRINTD(fmt,args...)	do {	\
-	if (gd->have_console)		\
 		printf (fmt ,##args);	\
 	} while (0)
 #else
@@ -286,6 +285,7 @@ int i2c_set_bus_num(unsigned int bus)
 		int	ret;
 
 		ret = i2x_mux_select_mux(bus);
+		i2c_init_board();
 		if (ret == 0)
 			i2c_bus_num = bus;
 		else

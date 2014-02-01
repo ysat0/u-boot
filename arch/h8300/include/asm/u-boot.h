@@ -25,6 +25,8 @@
 #ifndef __ASM_H8300_U_BOOT_H_
 #define __ASM_H8300_U_BOOT_H_
 
+#define IH_ARCH_DEFAULT IH_ARCH_H8300
+
 typedef struct bd_info {
 	unsigned long   bi_memstart;    /* start of DRAM memory */
 	phys_size_t	bi_memsize;     /* size  of DRAM memory in bytes */

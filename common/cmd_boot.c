@@ -28,20 +28,23 @@
 #include <command.h>
 #include <net.h>
 
+#ifdef CONFIG_CMD_GO
+
 /* Allow ports to override the default behavior */
 __attribute__((weak))
-unsigned long do_go_exec (ulong (*entry)(int, char * const []), int argc, char * const argv[])
+unsigned long do_go_exec(ulong (*entry)(int, char * const []), int argc,
+				 char * const argv[])
 {
 	return entry (argc, argv);
 }
 
-int do_go (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_go(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong	addr, rc;
 	int     rcode = 0;
 
 	if (argc < 2)
-		return cmd_usage(cmdtp);
+		return CMD_RET_USAGE;
 
 	addr = simple_strtoul(argv[1], NULL, 16);
 
@@ -66,6 +69,8 @@ U_BOOT_CMD(
 	"addr [arg ...]\n    - start application at address 'addr'\n"
 	"      passing 'arg' as arguments"
 );
+
+#endif
 
 U_BOOT_CMD(
 	reset, 1, 0,	do_reset,

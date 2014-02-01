@@ -37,7 +37,7 @@ SOBJS-$(CONFIG_H8300H) += 3069flash_low.o
 endif
 COBJS-$(CONFIG_FLASH_CFI_LEGACY) += jedec_flash.o
 COBJS-$(CONFIG_MW_EEPROM) += mw_eeprom.o
-COBJS-$(CONFIG_SPEARSMI) += spr_smi.o
+COBJS-$(CONFIG_ST_SMI) += st_smi.o
 
 COBJS	:= $(COBJS-y)
 SOBJS	:= $(SOBJS-y)

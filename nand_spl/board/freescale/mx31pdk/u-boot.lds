@@ -46,11 +46,15 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-	__u_boot_cmd_start = .;
-	.u_boot_cmd : { *(.u_boot_cmd) }
-	__u_boot_cmd_end = .;
 
 	. = ALIGN(4);
+	.u_boot_list : {
+		#include <u-boot.lst>
+	}
+
+	. = ALIGN(4);
+
+	__image_copy_end = .;
 
 	.rel.dyn : {
 		__rel_dyn_start = .;
@@ -63,11 +67,13 @@ SECTIONS
 		*(.dynsym)
 	}
 
+	_end = .;
+
 	.bss __rel_dyn_start (OVERLAY) : {
 		__bss_start = .;
 		*(.bss)
 		 . = ALIGN(4);
-		_end = .;
+		__bss_end__ = .;
 	}
 
 	/DISCARD/ : { *(.bss*) }

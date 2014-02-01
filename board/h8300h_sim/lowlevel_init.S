@@ -19,12 +19,12 @@
 #include <config.h>
 
 	.h8300h
-	.global	_lowlevel_init
+	.global	lowlevel_init
 
 	.text
 	.align	2
 
-_lowlevel_init:
+lowlevel_init:
 	rts
 
 	.end

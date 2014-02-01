@@ -19,12 +19,12 @@
 #include <config.h>
 
 	.h8300h
-	.global	_lowlevel_init
+	.global	lowlevel_init
 
 	.text
 	.align	2
 
-_lowlevel_init:
+lowlevel_init:
 	mov.l	#init_table,er4
 	mov.w	#0x00fe,e5	/* 0xfee0xx */
 1:
@@ -37,6 +37,12 @@ _lowlevel_init:
 	mov.l	#420000,er0	/* wait 50ms */
 4:	dec.l	#1,er0
 	bpl	4b
+
+	mov.l	#_fdata,er5
+	mov.l	#_ram_data,er6
+	mov.l	#_sizeof_data,er4
+	eepmov.w
+
 	rts
 
 	.align	2

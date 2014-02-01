@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Freescale Semiconductor, Inc.
+ * Copyright 2007-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -35,6 +35,7 @@
 #include <libfdt.h>
 #include <fdt_support.h>
 #include <tsec.h>
+#include <fsl_mdio.h>
 #include <netdev.h>
 
 #include "../common/sgmii_riser.h"
@@ -44,11 +45,7 @@ int checkboard (void)
 	u8 vboot;
 	u8 *pixis_base = (u8 *)PIXIS_BASE;
 
-	puts ("Board: MPC8572DS ");
-#ifdef CONFIG_PHYS_64BIT
-	puts ("(36-bit addrmap) ");
-#endif
-	printf ("Sys ID: 0x%02x, "
+	printf("Board: MPC8572DS Sys ID: 0x%02x, "
 		"Sys Ver: 0x%02x, FPGA Ver: 0x%02x, ",
 		in_8(pixis_base + PIXIS_ID), in_8(pixis_base + PIXIS_VER),
 		in_8(pixis_base + PIXIS_PVER));
@@ -187,6 +184,7 @@ int board_early_init_r(void)
 #ifdef CONFIG_TSEC_ENET
 int board_eth_init(bd_t *bis)
 {
+	struct fsl_pq_mdio_info mdio_info;
 	struct tsec_info_struct tsec_info[4];
 	int num = 0;
 
@@ -233,6 +231,10 @@ int board_eth_init(bd_t *bis)
 	fsl_sgmii_riser_init(tsec_info, num);
 #endif
 
+	mdio_info.regs = (struct tsec_mii_mng *)CONFIG_SYS_MDIO_BASE_ADDR;
+	mdio_info.name = DEFAULT_MII_NAME;
+	fsl_pq_mdio_init(bis, &mdio_info);
+
 	tsec_eth_init(bis, tsec_info, num);
 
 	return pci_eth_init(bis);
@@ -257,14 +259,5 @@ void ft_board_setup(void *blob, bd_t *bd)
 #ifdef CONFIG_FSL_SGMII_RISER
 	fsl_sgmii_riser_fdt_fixup(blob);
 #endif
-}
-#endif
-
-#ifdef CONFIG_MP
-extern void cpu_mp_lmb_reserve(struct lmb *lmb);
-
-void board_lmb_reserve(struct lmb *lmb)
-{
-	cpu_mp_lmb_reserve(lmb);
 }
 #endif

@@ -50,7 +50,8 @@ struct ueth_data {
 	unsigned char	protocol;		/* .............. */
 	unsigned char	irqinterval;	/* Intervall for IRQ Pipe */
 
-	/* private fields for each driver can go here if needed */
+	/* driver private */
+	void *dev_priv;
 };
 
 /*
@@ -63,6 +64,14 @@ int asix_eth_probe(struct usb_device *dev, unsigned int ifnum,
 		      struct ueth_data *ss);
 int asix_eth_get_info(struct usb_device *dev, struct ueth_data *ss,
 		      struct eth_device *eth);
+#endif
+
+#ifdef CONFIG_USB_ETHER_SMSC95XX
+void smsc95xx_eth_before_probe(void);
+int smsc95xx_eth_probe(struct usb_device *dev, unsigned int ifnum,
+			struct ueth_data *ss);
+int smsc95xx_eth_get_info(struct usb_device *dev, struct ueth_data *ss,
+			struct eth_device *eth);
 #endif
 
 #endif /* __USB_ETHER_H__ */

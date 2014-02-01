@@ -60,9 +60,11 @@ SECTIONS
   PROVIDE (edata = .);
 
   . = .;
-  __u_boot_cmd_start = .;
-  .u_boot_cmd : { *(.u_boot_cmd) }
-  __u_boot_cmd_end = .;
+
+  . = ALIGN(4);
+  .u_boot_list : {
+	#include <u-boot.lst>
+  }
 
 
   . = .;
@@ -85,6 +87,6 @@ SECTIONS
    *(COMMON)
    . = ALIGN(4);
   }
-  _end = . ;
+  __bss_end__ = . ;
   PROVIDE (end = .);
 }

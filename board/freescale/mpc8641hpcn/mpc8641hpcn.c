@@ -1,5 +1,5 @@
 /*
- * Copyright 2006, 2007, 2010 Freescale Semiconductor.
+ * Copyright 2006, 2007, 2010-2011 Freescale Semiconductor.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -34,11 +34,6 @@
 
 phys_size_t fixed_sdram(void);
 
-int board_early_init_f(void)
-{
-	return 0;
-}
-
 int checkboard(void)
 {
 	u8 vboot;
@@ -55,9 +50,6 @@ int checkboard(void)
 	else
 		puts ("Promjet\n");
 
-#ifdef CONFIG_PHYS_64BIT
-	printf ("       36-bit physical address map\n");
-#endif
 	return 0;
 }
 
@@ -74,7 +66,7 @@ initdram(int board_type)
 
 	setup_ddr_bat(dram_size);
 
-	puts("    DDR: ");
+	debug("    DDR: ");
 	return dram_size;
 }
 
@@ -261,12 +253,3 @@ void board_reset(void)
 	while (1)
 		;
 }
-
-#ifdef CONFIG_MP
-extern void cpu_mp_lmb_reserve(struct lmb *lmb);
-
-void board_lmb_reserve(struct lmb *lmb)
-{
-	cpu_mp_lmb_reserve(lmb);
-}
-#endif

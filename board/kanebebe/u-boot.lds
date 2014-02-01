@@ -45,8 +45,8 @@ SECTIONS
 	{
 		*(.config)
 	} > config		
-	PROVIDE (__start = .);
-	PROVIDE (__ftext = .);
+	PROVIDE (_start = .);
+	PROVIDE (_ftext = .);
 	.text :
 	{
 		arch/h8300/cpu/h8300h/start.o		(.text)
@@ -54,42 +54,43 @@ SECTIONS
 		*(.text)
 		. = ALIGN(4);
 	} > irom
-	PROVIDE (__ecode = .);
+	PROVIDE (_ecode = .);
 	.rodata :
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
+#include <u-boot.lst>
 	} > irom
-	PROVIDE (__etext = .);
+	PROVIDE (_etext = .);
 
-	PROVIDE (__fdata = .);
+	PROVIDE (_fdata = .);
 	.data :
 	{
-		PROVIDE (__ram_data = .);
-		PROVIDE (___u_boot_cmd_start = .);
+		PROVIDE (_ram_data = .);
+		PROVIDE (__u_boot_cmd_start = .);
 		*(.u_boot_cmd)
 		. = ALIGN(4);
-		PROVIDE (___u_boot_cmd_end = .);
+		PROVIDE (__u_boot_cmd_end = .);
 		*(.data)
 		. = ALIGN(4);
 	} >dram AT>irom
-	PROVIDE (__sizeof_data = SIZEOF(.data));
-	PROVIDE (__edata = .);
-	PROVIDE (__iram_text = __fdata + SIZEOF(.data));
+	PROVIDE (_sizeof_data = SIZEOF(.data));
+	PROVIDE (_edata = .);
+	PROVIDE (_iram_text = _fdata + SIZEOF(.data));
 
-	PROVIDE (_bss_start = .);
-	PROVIDE (___bss_start = .);
+	PROVIDE (bss_start = .);
+	PROVIDE (__bss_start = .);
 	.bss :
 	{
 		*(.bss)
 		. = ALIGN(4);
 	} > dram
-	PROVIDE (_bss_end = .);
+	PROVIDE (bss_end = .);
 
-	PROVIDE (__end = .);
+	PROVIDE (_end = .);
 	.iram_text :
 	{
-		PROVIDE (__iram_top = .);
+		PROVIDE (_iram_top = .);
 		*(.text2)
 	} >iram AT>irom
 	.iram_bss :
@@ -97,6 +98,6 @@ SECTIONS
 		*(.bss2)
 	} >iram AT>irom
 
-	PROVIDE (__init_stack = 0xfffe20);
-	PROVIDE (__ram_vec =    0xfffe20);
+	PROVIDE (_init_stack = 0xfffe20);
+	PROVIDE (_ram_vec =    0xfffe20);
 }

@@ -23,9 +23,9 @@
  */
 
 	.h8300h
-	.global _h8300_flash_setup
-	.global	_h83069_flash_write
-	.global	_h83069_flash_wbuf
+	.global h8300_flash_setup
+	.global	h83069_flash_write
+	.global	h83069_flash_wbuf
 
 DRCRA	=	0xfee026
 FCCS	=	0xfee0b0
@@ -42,13 +42,13 @@ INITENT	=	0xffbf20 + 32
 MAINENT	=	0xffbf20 + 16
 
 	.text
-_h8300_flash_setup:
+h8300_flash_setup:
 	mov.l	er4,@-sp
 	mov.l	er5,@-sp
 	mov.l	er6,@-sp
-	mov.l	#__iram_text,er5
-	mov.l	#__iram_top,er6
-	mov.l	#__text2_end,er4
+	mov.l	#_iram_text,er5
+	mov.l	#_iram_top,er6
+	mov.l	#_text2_end,er4
 	sub.l	er6,er4
 	eepmov.w
 	mov.l	@sp+,er6
@@ -82,7 +82,7 @@ load_progs:
 	mov.b	#0,r0h
 	rts
 
-_h83069_flash_write:
+h83069_flash_write:
 	mov.l	er0,@freq
 	mov.l	er1,@dest
 	mov.b	#1,r3l
@@ -121,7 +121,7 @@ _h83069_flash_write:
 	bne	2f
 	mov.b	#0x5a,r0l
 	mov.b	r0l,@FKEY
-	mov.l	#_h83069_flash_wbuf,er3
+	mov.l	#h83069_flash_wbuf,er3
 	mov.l	er3,@src
 	mov.l	@dest,er1
 1:	mov.l	@src,er0
@@ -148,13 +148,13 @@ _h83069_flash_write:
 	mov.w	r0,@TCSR
 	bra	.
 	
-__text2_end:	
+_text2_end:	
 	
 	.section	".bss2","w"
 freq:	.space	4
 src:	.space	4
 dest:	.space	4
-_h83069_flash_wbuf:
+h83069_flash_wbuf:
 	.space	4096
 	.space	256
 flash_stack:	

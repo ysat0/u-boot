@@ -21,6 +21,6 @@
 #
 #
 PLATFORM_CPPFLAGS += -mh
-USE_PRIVATE_LIBGCC = $(shell dirname `$(CC) $(CFLAGS) -mh -mint32 -print-libgcc-file-name`)
-LDEMUL = -mh8300helf
+USE_PRIVATE_LIBGCC = $(shell dirname `$(CC) $(CFLAGS) -mh -print-libgcc-file-name`)
+LDEMUL = -mh8300helf_linux
 LDFLAGS += $(LDEMUL)
