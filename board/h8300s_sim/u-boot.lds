@@ -38,8 +38,10 @@ SECTIONS
 
 	.text :
 	{
-		arch/h8300/cpu/h8300s/start.o		(.text)
+		*(.vector)		
+
 		. = ALIGN(4);
+		KEEP(arch/h8300/cpu/h8300s/start.o		(.text))
 		*(.text)
 		. = ALIGN(4);
 	} > from
@@ -48,6 +50,7 @@ SECTIONS
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
+#include "u-boot.lst"
 	} > from
 	PROVIDE (__etext = .);
 
@@ -84,5 +87,5 @@ SECTIONS
 	{
 	}
 	PROVIDE (__ram_vec =    0xffbe00);
-	PROVIDE (__init_stack = 0xffc000);
+	PROVIDE (_init_stack = 0xffc000);
 }

@@ -35,11 +35,11 @@ vector	=	vector + 1
 	.text
 	.align	2
 _start:
-	mov.l	#__init_stack,sp
+	mov.l	#_init_stack,sp
 	bsr	1f
 1:
 	mov.l	@sp+,er0
-	mov.l	#_lowlevel_init,er1
+	mov.l	#lowlevel_init,er1
 	sub.l	#1b,er1
 	add.l	er1,er0
 	jsr	@er0
@@ -80,7 +80,7 @@ _start:
 #endif
 	mov.l	#CONFIG_SYS_LOAD_ADDR - CONFIG_SYS_GBL_DATA_SIZE - CONFIG_SYS_MALLOC_LEN,er0
 	mov.l	er0,sp
-	jsr	@_h8300_generic_init
+	jsr	@h8300_generic_init
 	bra	.
 
 	.end

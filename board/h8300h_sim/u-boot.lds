@@ -39,8 +39,8 @@ SECTIONS
 	.text :
 	{
 		*(.vector)
-		arch/h8300/cpu/h8300h/start.o		(.text)
 		. = ALIGN(4);
+		KEEP(arch/h8300/cpu/h8300h/start.o		(.text))
 		*(.text)
 		. = ALIGN(4);
 	} > from

@@ -56,40 +56,37 @@ SECTIONS
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
+#include "u-boot.lst"
 	} > dram
 	PROVIDE (__etext = .);
 
-	PROVIDE (__fdata = .);
+	PROVIDE (_fdata = .);
 	.data :
 	{
-		PROVIDE (__ram_data = .);
-		PROVIDE (___u_boot_cmd_start = .);
-		*(.u_boot_cmd)
-		. = ALIGN(4);
-		PROVIDE (___u_boot_cmd_end = .);
+		PROVIDE (_ram_data = .);
 		*(.data)
 		. = ALIGN(4);
 	} >dram
-	PROVIDE (__sizeof_data = SIZEOF(.data));
+	PROVIDE (_sizeof_data = SIZEOF(.data));
 	PROVIDE (__edata = .);
-	PROVIDE (__iram_text = __fdata + SIZEOF(.data));
+	PROVIDE (_iram_text =_fdata + SIZEOF(.data));
 	.iram :
 	{
-		PROVIDE (__iram_top = .);
+		PROVIDE (_iram_top = .);
 		*(.text2)
 		*(.bss2)		
 	} >iram AT>dram
 
 	.bss :
 	{
-		PROVIDE (_bss_start = .);
+		PROVIDE (bss_start = .);
 		PROVIDE (___bss_start = .);
 		*(.bss)
 		. = ALIGN(4);
 	} > dram
-	PROVIDE (_bss_end = .);
+	PROVIDE (bss_end = .);
 
 	PROVIDE (__end = .);
-	PROVIDE (__init_stack = 0xfffe20);
-	PROVIDE (__ram_vec =    0xfffe20);
+	PROVIDE (_init_stack = 0xfffe20);
+	PROVIDE (_ram_vec =    0xfffe20);
 }

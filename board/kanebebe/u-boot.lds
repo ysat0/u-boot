@@ -49,7 +49,7 @@ SECTIONS
 	PROVIDE (_ftext = .);
 	.text :
 	{
-		arch/h8300/cpu/h8300h/start.o		(.text)
+		KEEP(arch/h8300/cpu/h8300h/start.o		(.text))
 		. = ALIGN(4);
 		*(.text)
 		. = ALIGN(4);
