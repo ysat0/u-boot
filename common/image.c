@@ -96,6 +96,7 @@ static const table_entry_t uimage_arch[] = {
 	{	IH_ARCH_AVR32,		"avr32",	"AVR32",	},
 	{	IH_ARCH_NDS32,		"nds32",	"NDS32",	},
 	{	IH_ARCH_OPENRISC,	"or1k",		"OpenRISC 1000",},
+	{	IH_ARCH_H8300,		"h8300",	"H8/300",	},
 	{	-1,			"",		"",		},
 };
 
