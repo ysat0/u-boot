@@ -29,7 +29,7 @@ MEMORY
 	vector : ORIGIN = 0x000000, LENGTH = 4K
 	config : ORIGIN = 0x001000, LENGTH = 28K
 	irom : ORIGIN = 0x008000, LENGTH = 480K
-	dram : ORIGIN = 0x7C0000, LENGTH = 256K
+	dram : ORIGIN = 0x7a0000, LENGTH = 384K
 	/* 0xffbf20 - 0xffc720 using flash writer */
 	iram : ORIGIN = 0xffcf20, LENGTH = 12K
 }
@@ -67,10 +67,6 @@ SECTIONS
 	.data :
 	{
 		PROVIDE (_ram_data = .);
-		PROVIDE (__u_boot_cmd_start = .);
-		*(.u_boot_cmd)
-		. = ALIGN(4);
-		PROVIDE (__u_boot_cmd_end = .);
 		*(.data)
 		. = ALIGN(4);
 	} >dram AT>irom
