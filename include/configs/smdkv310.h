@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2011 Samsung Electronics
  *
- * Configuration settings for the SAMSUNG SMDKV310 (S5PC210) board.
+ * Configuration settings for the SAMSUNG SMDKV310 (EXYNOS4210) board.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -28,7 +28,7 @@
 /* High Level Configuration Options */
 #define CONFIG_SAMSUNG			1	/* in a SAMSUNG core */
 #define CONFIG_S5P			1	/* S5P Family */
-#define CONFIG_S5PC210			1	/* which is in a S5PC210 SoC */
+#define CONFIG_EXYNOS4210		1	/* which is a EXYNOS4210 SoC */
 #define CONFIG_SMDKV310			1	/* working with SMDKV310*/
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
@@ -62,15 +62,15 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (1 << 20))
 
 /* select serial console configuration */
-#define CONFIG_SERIAL_MULTI		1
 #define CONFIG_SERIAL1			1	/* use SERIAL 1 */
 #define CONFIG_BAUDRATE			115200
-#define S5PC210_DEFAULT_UART_OFFSET	0x010000
+#define EXYNOS4_DEFAULT_UART_OFFSET	0x010000
 
 /* SD/MMC configuration */
-#define CONFIG_GENERIC_MMC		1
-#define CONFIG_MMC			1
-#define CONFIG_S5P_MMC			1
+#define CONFIG_GENERIC_MMC
+#define CONFIG_MMC
+#define CONFIG_SDHCI
+#define CONFIG_S5P_SDHCI
 
 /* PWM */
 #define CONFIG_PWM			1
@@ -100,7 +100,6 @@
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT		"SMDKV310 # "
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size*/
 #define CONFIG_SYS_PBSIZE		384	/* Print Buffer Size */
@@ -114,12 +113,6 @@
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x3E00000)
 
 #define CONFIG_SYS_HZ			1000
-
-/* valid baudrates */
-#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
-
-/* Stack sizes */
-#define CONFIG_STACKSIZE		(256 << 10)	/* 256KB */
 
 /* SMDKV310 has 4 bank of DRAM */
 #define CONFIG_NR_DRAM_BANKS	4
@@ -137,11 +130,6 @@
 #define CONFIG_SYS_NO_FLASH		1
 #undef	CONFIG_CMD_IMLS
 #define CONFIG_IDENT_STRING		" for SMDKC210/V310"
-
-#ifdef CONFIG_USE_IRQ
-#define CONFIG_STACKSIZE_IRQ		(4*1024)	/* IRQ stack */
-#define CONFIG_STACKSIZE_FIQ		(4*1024)	/* FIQ stack */
-#endif
 
 #define CONFIG_CLK_1000_400_200
 

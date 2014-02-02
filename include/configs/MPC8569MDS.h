@@ -274,7 +274,6 @@ extern unsigned long get_clock_freq(void);
 
 /* Serial Port */
 #define CONFIG_CONS_INDEX		1
-#define CONFIG_SERIAL_MULTI		1
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE    1
@@ -292,7 +291,6 @@ extern unsigned long get_clock_freq(void);
 /* Use the HUSH parser*/
 #define CONFIG_SYS_HUSH_PARSER
 #ifdef  CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 #endif
 
 /* pass open firmware flat tree */
@@ -510,7 +508,8 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	1	/* allow baudrate change */
 
 /* QE microcode/firmware address */
-#define CONFIG_SYS_QE_FW_ADDR	0xfff00000
+#define CONFIG_SYS_QE_FMAN_FW_IN_NOR
+#define CONFIG_SYS_QE_FMAN_FW_ADDR	0xfff00000
 
 /*
  * BOOTP options

@@ -366,6 +366,7 @@
  *-----------------------------------------------------------------------
  */
 
+#define CONFIG_IDE_PREINIT	1	/* Use preinit IDE hook */
 #define CONFIG_IDE_8xx_PCCARD	1	/* Use IDE with PC Card Adapter */
 
 #undef	CONFIG_IDE_8xx_DIRECT		/* Direct IDE	 not supported	*/
@@ -454,5 +455,7 @@
 
 #define CONFIG_USB_STORAGE	1
 #define CONFIG_USB_SL811HS	1
+#define	CONFIG_USB_SL811HS_ADDRESS 0x50000000
+#define	CONFIG_USB_SL811HS_DATA    0x50000001
 
 #endif	/* __CONFIG_H */

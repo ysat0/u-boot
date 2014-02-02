@@ -27,10 +27,12 @@
 #include <post.h>
 #include <asm/arch/da850_lowlevel.h>
 #include <asm/arch/hardware.h>
+#include <asm/arch/davinci_misc.h>
 #include <asm/arch/ddr2_defs.h>
 #include <asm/arch/emif_defs.h>
 #include <asm/arch/pll_defs.h>
 
+#if defined(CONFIG_SYS_DA850_PLL_INIT)
 void da850_waitloop(unsigned long loopcnt)
 {
 	unsigned long	i;
@@ -83,6 +85,13 @@ int da850_pll_init(struct davinci_pllc_regs *reg, unsigned long pllmult)
 
 	/* Enable the PLL from Disable Mode PLLDIS bit to 0 */
 	clrbits_le32(&reg->pllctl, PLLCTL_PLLDIS);
+
+#if defined(CONFIG_SYS_DA850_PLL0_PREDIV)
+	/* program the prediv */
+	if (reg == davinci_pllc0_regs && CONFIG_SYS_DA850_PLL0_PREDIV)
+		writel((PLL_DIVEN | CONFIG_SYS_DA850_PLL0_PREDIV),
+			&reg->prediv);
+#endif
 
 	/* Program the required multiplier value in PLLM */
 	writel(pllmult, &reg->pllm);
@@ -155,7 +164,9 @@ int da850_pll_init(struct davinci_pllc_regs *reg, unsigned long pllmult)
 
 	return 0;
 }
+#endif /* CONFIG_SYS_DA850_PLL_INIT */
 
+#if defined(CONFIG_SYS_DA850_DDR_INIT)
 int da850_ddr_setup(void)
 {
 	unsigned long	tmp;
@@ -179,13 +190,21 @@ int da850_ddr_setup(void)
 
 		setbits_le32(&davinci_syscfg1_regs->vtpio_ctl, VTP_LOCK);
 		setbits_le32(&davinci_syscfg1_regs->vtpio_ctl, VTP_POWERDWN);
-
-		setbits_le32(&davinci_syscfg1_regs->vtpio_ctl, VTP_IOPWRDWN);
 	}
-
+	setbits_le32(&davinci_syscfg1_regs->vtpio_ctl, VTP_IOPWRDWN);
 	writel(CONFIG_SYS_DA850_DDR2_DDRPHYCR, &dv_ddr2_regs_ctrl->ddrphycr);
-	clrbits_le32(&davinci_syscfg1_regs->ddr_slew,
-		(1 << DDR_SLEW_CMOSEN_BIT));
+
+	if (CONFIG_SYS_DA850_DDR2_SDBCR & (1 << DV_DDR_SDCR_DDR2EN_SHIFT)) {
+		/* DDR2 */
+		clrbits_le32(&davinci_syscfg1_regs->ddr_slew,
+			(1 << DDR_SLEW_DDR_PDENA_BIT) |
+			(1 << DDR_SLEW_CMOSEN_BIT));
+	} else {
+		/* MOBILE DDR */
+		setbits_le32(&davinci_syscfg1_regs->ddr_slew,
+			(1 << DDR_SLEW_DDR_PDENA_BIT) |
+			(1 << DDR_SLEW_CMOSEN_BIT));
+	}
 
 	/*
 	 * SDRAM Configuration Register (SDCR):
@@ -205,7 +224,11 @@ int da850_ddr_setup(void)
 	writel(tmp, &dv_ddr2_regs_ctrl->sdbcr);
 
 	/* write memory configuration and timing */
-	writel(CONFIG_SYS_DA850_DDR2_SDBCR2, &dv_ddr2_regs_ctrl->sdbcr2);
+	if (!(CONFIG_SYS_DA850_DDR2_SDBCR & (1 << DV_DDR_SDCR_DDR2EN_SHIFT))) {
+		/* MOBILE DDR only*/
+		writel(CONFIG_SYS_DA850_DDR2_SDBCR2,
+			&dv_ddr2_regs_ctrl->sdbcr2);
+	}
 	writel(CONFIG_SYS_DA850_DDR2_SDTIMR, &dv_ddr2_regs_ctrl->sdtimr);
 	writel(CONFIG_SYS_DA850_DDR2_SDTIMR2, &dv_ddr2_regs_ctrl->sdtimr2);
 
@@ -229,18 +252,12 @@ int da850_ddr_setup(void)
 
 	/* disable self refresh */
 	clrbits_le32(&dv_ddr2_regs_ctrl->sdrcr,
-		DV_DDR_SDRCR_LPMODEN | DV_DDR_SDRCR_LPMODEN);
+		DV_DDR_SDRCR_LPMODEN | DV_DDR_SDRCR_MCLKSTOPEN);
 	writel(CONFIG_SYS_DA850_DDR2_PBBPR, &dv_ddr2_regs_ctrl->pbbpr);
 
 	return 0;
 }
-
-void da850_pinmux_ctl(unsigned long offset, unsigned long mask,
-	unsigned long value)
-{
-	clrbits_le32(&davinci_syscfg_regs->pinmux[offset], mask);
-	setbits_le32(&davinci_syscfg_regs->pinmux[offset], (mask & value));
-}
+#endif /* CONFIG_SYS_DA850_DDR_INIT */
 
 __attribute__((weak))
 void board_gpio_init(void)
@@ -257,35 +274,15 @@ int arch_cpu_init(void)
 	dv_maskbits(&davinci_syscfg_regs->suspsrc,
 		CONFIG_SYS_DA850_SYSCFG_SUSPSRC);
 
-	/* Setup Pinmux */
-	da850_pinmux_ctl(0, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX0);
-	da850_pinmux_ctl(1, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX1);
-	da850_pinmux_ctl(2, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX2);
-	da850_pinmux_ctl(3, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX3);
-	da850_pinmux_ctl(4, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX4);
-	da850_pinmux_ctl(5, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX5);
-	da850_pinmux_ctl(6, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX6);
-	da850_pinmux_ctl(7, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX7);
-	da850_pinmux_ctl(8, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX8);
-	da850_pinmux_ctl(9, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX9);
-	da850_pinmux_ctl(10, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX10);
-	da850_pinmux_ctl(11, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX11);
-	da850_pinmux_ctl(12, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX12);
-	da850_pinmux_ctl(13, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX13);
-	da850_pinmux_ctl(14, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX14);
-	da850_pinmux_ctl(15, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX15);
-	da850_pinmux_ctl(16, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX16);
-	da850_pinmux_ctl(17, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX17);
-	da850_pinmux_ctl(18, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX18);
-	da850_pinmux_ctl(19, 0xFFFFFFFF, CONFIG_SYS_DA850_PINMUX19);
+	/* configure pinmux settings */
+	if (davinci_configure_pin_mux_items(pinmuxes, pinmuxes_size))
+		return 1;
 
+#if defined(CONFIG_SYS_DA850_PLL_INIT)
 	/* PLL setup */
 	da850_pll_init(davinci_pllc0_regs, CONFIG_SYS_DA850_PLL0_PLLM);
 	da850_pll_init(davinci_pllc1_regs, CONFIG_SYS_DA850_PLL1_PLLM);
-
-	/* GPIO setup */
-	board_gpio_init();
-
+#endif
 	/* setup CSn config */
 #if defined(CONFIG_SYS_DA850_CS2CFG)
 	writel(CONFIG_SYS_DA850_CS2CFG, &davinci_emif_regs->ab1cr);
@@ -294,7 +291,12 @@ int arch_cpu_init(void)
 	writel(CONFIG_SYS_DA850_CS3CFG, &davinci_emif_regs->ab2cr);
 #endif
 
-	lpsc_on(CONFIG_SYS_DA850_LPSC_UART);
+	da8xx_configure_lpsc_items(lpsc, lpsc_size);
+
+	/* GPIO setup */
+	board_gpio_init();
+
+
 	NS16550_init((NS16550_t)(CONFIG_SYS_NS16550_COM1),
 			CONFIG_SYS_NS16550_CLK / 16 / CONFIG_BAUDRATE);
 
@@ -306,6 +308,9 @@ int arch_cpu_init(void)
 		DAVINCI_UART_PWREMU_MGMT_UTRST),
 	       &davinci_uart2_ctrl_regs->pwremu_mgmt);
 
+#if defined(CONFIG_SYS_DA850_DDR_INIT)
 	da850_ddr_setup();
+#endif
+
 	return 0;
 }

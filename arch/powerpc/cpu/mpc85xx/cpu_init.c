@@ -37,15 +37,18 @@
 #include <asm/mmu.h>
 #include <asm/fsl_law.h>
 #include <asm/fsl_serdes.h>
+#include <asm/fsl_srio.h>
+#include <hwconfig.h>
+#include <linux/compiler.h>
 #include "mp.h"
-#ifdef CONFIG_SYS_QE_FW_IN_NAND
+#ifdef CONFIG_SYS_QE_FMAN_FW_IN_NAND
 #include <nand.h>
 #include <errno.h>
 #endif
 
-DECLARE_GLOBAL_DATA_PTR;
+#include "../../../../drivers/block/fsl_sata.h"
 
-extern void srio_init(void);
+DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_QE
 extern qe_iop_conf_t qe_iop_conf_tab[];
@@ -179,7 +182,7 @@ static void enable_cpc(void)
 	printf("Corenet Platform Cache: %d KB enabled\n", size);
 }
 
-void invalidate_cpc(void)
+static void invalidate_cpc(void)
 {
 	int i;
 	cpc_corenet_t *cpc = (cpc_corenet_t *)CONFIG_SYS_FSL_CPC_ADDR;
@@ -292,6 +295,57 @@ static void __fsl_serdes__init(void)
 }
 __attribute__((weak, alias("__fsl_serdes__init"))) void fsl_serdes_init(void);
 
+#ifdef CONFIG_SYS_FSL_QORIQ_CHASSIS2
+int enable_cluster_l2(void)
+{
+	int i = 0;
+	u32 cluster;
+	ccsr_gur_t *gur = (void __iomem *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+	struct ccsr_cluster_l2 __iomem *l2cache;
+
+	cluster = in_be32(&gur->tp_cluster[i].lower);
+	if (cluster & TP_CLUSTER_EOC)
+		return 0;
+
+	/* The first cache has already been set up, so skip it */
+	i++;
+
+	/* Look through the remaining clusters, and set up their caches */
+	do {
+		int j, cluster_valid = 0;
+
+		l2cache = (void __iomem *)(CONFIG_SYS_FSL_CLUSTER_1_L2 + i * 0x40000);
+
+		cluster = in_be32(&gur->tp_cluster[i].lower);
+
+		/* check that at least one core/accel is enabled in cluster */
+		for (j = 0; j < 4; j++) {
+			u32 idx = (cluster >> (j*8)) & TP_CLUSTER_INIT_MASK;
+			u32 type = in_be32(&gur->tp_ityp[idx]);
+
+			if (type & TP_ITYP_AV)
+				cluster_valid = 1;
+		}
+
+		if (cluster_valid) {
+			/* set stash ID to (cluster) * 2 + 32 + 1 */
+			clrsetbits_be32(&l2cache->l2csr1, 0xff, 32 + i * 2 + 1);
+
+			printf("enable l2 for cluster %d %p\n", i, l2cache);
+
+			out_be32(&l2cache->l2csr0, L2CSR0_L2FI|L2CSR0_L2LFC);
+			while ((in_be32(&l2cache->l2csr0)
+				& (L2CSR0_L2FI|L2CSR0_L2LFC)) != 0)
+					;
+			out_be32(&l2cache->l2csr0, L2CSR0_L2E);
+		}
+		i++;
+	} while (!(cluster & TP_CLUSTER_EOC));
+
+	return 0;
+}
+#endif
+
 /*
  * Initialize L2 as cache.
  *
@@ -301,25 +355,79 @@ __attribute__((weak, alias("__fsl_serdes__init"))) void fsl_serdes_init(void);
  */
 int cpu_init_r(void)
 {
+	__maybe_unused u32 svr = get_svr();
 #ifdef CONFIG_SYS_LBC_LCRR
-	volatile fsl_lbc_t *lbc = LBC_BASE_ADDR;
+	fsl_lbc_t *lbc = (void __iomem *)LBC_BASE_ADDR;
+#endif
+#ifdef CONFIG_L2_CACHE
+	ccsr_l2cache_t *l2cache = (void __iomem *)CONFIG_SYS_MPC85xx_L2_ADDR;
+#elif defined(CONFIG_SYS_FSL_QORIQ_CHASSIS2)
+	struct ccsr_cluster_l2 * l2cache = (void __iomem *)CONFIG_SYS_FSL_CLUSTER_1_L2;
+#endif
+#if defined(CONFIG_PPC_SPINTABLE_COMPATIBLE) && defined(CONFIG_MP)
+	extern int spin_table_compat;
+	const char *spin;
 #endif
 
-#if defined(CONFIG_SYS_P4080_ERRATUM_CPU22)
-	flush_dcache();
-	mtspr(L1CSR2, (mfspr(L1CSR2) | L1CSR2_DCWS));
-	sync();
+#if defined(CONFIG_SYS_P4080_ERRATUM_CPU22) || \
+	defined(CONFIG_SYS_FSL_ERRATUM_NMG_CPU_A011)
+	/*
+	 * CPU22 and NMG_CPU_A011 share the same workaround.
+	 * CPU22 applies to P4080 rev 1.0, 2.0, fixed in 3.0
+	 * NMG_CPU_A011 applies to P4080 rev 1.0, 2.0, fixed in 3.0
+	 * also applies to P3041 rev 1.0, 1.1, P2041 rev 1.0, 1.1, both
+	 * fixed in 2.0. NMG_CPU_A011 is activated by default and can
+	 * be disabled by hwconfig with syntax:
+	 *
+	 * fsl_cpu_a011:disable
+	 */
+	extern int enable_cpu_a011_workaround;
+#ifdef CONFIG_SYS_P4080_ERRATUM_CPU22
+	enable_cpu_a011_workaround = (SVR_MAJ(svr) < 3);
+#else
+	char buffer[HWCONFIG_BUFFER_SIZE];
+	char *buf = NULL;
+	int n, res;
+
+	n = getenv_f("hwconfig", buffer, sizeof(buffer));
+	if (n > 0)
+		buf = buffer;
+
+	res = hwconfig_arg_cmp_f("fsl_cpu_a011", "disable", buf);
+	if (res > 0)
+		enable_cpu_a011_workaround = 0;
+	else {
+		if (n >= HWCONFIG_BUFFER_SIZE) {
+			printf("fsl_cpu_a011 was not found. hwconfig variable "
+				"may be too long\n");
+		}
+		enable_cpu_a011_workaround =
+			(SVR_SOC_VER(svr) == SVR_P4080 && SVR_MAJ(svr) < 3) ||
+			(SVR_SOC_VER(svr) != SVR_P4080 && SVR_MAJ(svr) < 2);
+	}
+#endif
+	if (enable_cpu_a011_workaround) {
+		flush_dcache();
+		mtspr(L1CSR2, (mfspr(L1CSR2) | L1CSR2_DCWS));
+		sync();
+	}
+#endif
+
+#if defined(CONFIG_PPC_SPINTABLE_COMPATIBLE) && defined(CONFIG_MP)
+	spin = getenv("spin_table_compat");
+	if (spin && (*spin == 'n'))
+		spin_table_compat = 0;
+	else
+		spin_table_compat = 1;
 #endif
 
 	puts ("L2:    ");
 
 #if defined(CONFIG_L2_CACHE)
-	volatile ccsr_l2cache_t *l2cache = (void *)CONFIG_SYS_MPC85xx_L2_ADDR;
 	volatile uint cache_ctl;
-	uint svr, ver;
+	uint ver;
 	u32 l2siz_field;
 
-	svr = get_svr();
 	ver = SVR_SOC_VER(svr);
 
 	asm("msync;isync");
@@ -352,8 +460,7 @@ int cpu_init_r(void)
 		break;
 	case 0x1:
 		if (ver == SVR_8540 || ver == SVR_8560   ||
-		    ver == SVR_8541 || ver == SVR_8541_E ||
-		    ver == SVR_8555 || ver == SVR_8555_E) {
+		    ver == SVR_8541 || ver == SVR_8555) {
 			puts("128 KB ");
 			/* set L2E=1, L2I=1, & L2BLKSZ=1 (128 Kbyte) */
 			cache_ctl = 0xc4000000;
@@ -364,8 +471,7 @@ int cpu_init_r(void)
 		break;
 	case 0x2:
 		if (ver == SVR_8540 || ver == SVR_8560   ||
-		    ver == SVR_8541 || ver == SVR_8541_E ||
-		    ver == SVR_8555 || ver == SVR_8555_E) {
+		    ver == SVR_8541 || ver == SVR_8555) {
 			puts("256 KB ");
 			/* set L2E=1, L2I=1, & L2BLKSZ=2 (256 Kbyte) */
 			cache_ctl = 0xc8000000;
@@ -390,7 +496,7 @@ int cpu_init_r(void)
 				&& l2srbar >= CONFIG_SYS_FLASH_BASE) {
 			l2srbar = CONFIG_SYS_INIT_L2_ADDR;
 			l2cache->l2srbar0 = l2srbar;
-			printf("moving to 0x%08x", CONFIG_SYS_INIT_L2_ADDR);
+			printf(", moving to 0x%08x", CONFIG_SYS_INIT_L2_ADDR);
 		}
 #endif /* CONFIG_SYS_INIT_L2_ADDR */
 		puts("\n");
@@ -401,8 +507,7 @@ int cpu_init_r(void)
 		puts("enabled\n");
 	}
 #elif defined(CONFIG_BACKSIDE_L2_CACHE)
-	if ((SVR_SOC_VER(get_svr()) == SVR_P2040) ||
-	    (SVR_SOC_VER(get_svr()) == SVR_P2040_E)) {
+	if (SVR_SOC_VER(svr) == SVR_P2040) {
 		puts("N/A\n");
 		goto skip_l2;
 	}
@@ -429,6 +534,11 @@ int cpu_init_r(void)
 	}
 
 skip_l2:
+#elif defined(CONFIG_SYS_FSL_QORIQ_CHASSIS2)
+	if (l2cache->l2csr0 & L2CSR0_L2E)
+		printf("%d KB enabled\n", (l2cache->l2cfg0 & 0x3fff) * 64);
+
+	enable_cluster_l2();
 #else
 	puts("disabled\n");
 #endif
@@ -438,19 +548,48 @@ skip_l2:
 	/* needs to be in ram since code uses global static vars */
 	fsl_serdes_init();
 
+#ifdef CONFIG_SYS_FSL_ERRATUM_A005871
+	if (IS_SVR_REV(svr, 1, 0)) {
+		int i;
+		__be32 *p = (void __iomem *)CONFIG_SYS_DCSRBAR + 0xb004c;
+
+		for (i = 0; i < 12; i++) {
+			p += i + (i > 5 ? 11 : 0);
+			out_be32(p, 0x2);
+		}
+		p = (void __iomem *)CONFIG_SYS_DCSRBAR + 0xb0108;
+		out_be32(p, 0x34);
+	}
+#endif
+
 #ifdef CONFIG_SYS_SRIO
 	srio_init();
+#ifdef CONFIG_SYS_FSL_SRIO_PCIE_BOOT_MASTER 
+	char *s = getenv("bootmaster");
+	if (s) {
+		if (!strcmp(s, "SRIO1")) {
+			srio_boot_master(1);
+			srio_boot_master_release_slave(1);
+		}
+		if (!strcmp(s, "SRIO2")) {
+			srio_boot_master(2);
+			srio_boot_master_release_slave(2);
+		}
+	}
+#endif
 #endif
 
 #if defined(CONFIG_MP)
 	setup_mp();
 #endif
 
-#ifdef CONFIG_SYS_FSL_ERRATUM_ESDHC136
+#ifdef CONFIG_SYS_FSL_ERRATUM_ESDHC13
 	{
-		void *p;
-		p = (void *)CONFIG_SYS_DCSRBAR + 0x20520;
-		setbits_be32(p, 1 << (31 - 14));
+		if (SVR_MAJ(svr) < 3) {
+			void *p;
+			p = (void *)CONFIG_SYS_DCSRBAR + 0x20520;
+			setbits_be32(p, 1 << (31 - 14));
+		}
 	}
 #endif
 
@@ -488,6 +627,30 @@ skip_l2:
 	fman_enet_init();
 #endif
 
+#if defined(CONFIG_FSL_SATA_V2) && defined(CONFIG_FSL_SATA_ERRATUM_A001)
+	/*
+	 * For P1022/1013 Rev1.0 silicon, after power on SATA host
+	 * controller is configured in legacy mode instead of the
+	 * expected enterprise mode. Software needs to clear bit[28]
+	 * of HControl register to change to enterprise mode from
+	 * legacy mode.  We assume that the controller is offline.
+	 */
+	if (IS_SVR_REV(svr, 1, 0) &&
+	    ((SVR_SOC_VER(svr) == SVR_P1022) ||
+	     (SVR_SOC_VER(svr) == SVR_P1013))) {
+		fsl_sata_reg_t *reg;
+
+		/* first SATA controller */
+		reg = (void *)CONFIG_SYS_MPC85xx_SATA1_ADDR;
+		clrbits_le32(&reg->hcontrol, HCONTROL_ENTERPRISE_EN);
+
+		/* second SATA controller */
+		reg = (void *)CONFIG_SYS_MPC85xx_SATA2_ADDR;
+		clrbits_le32(&reg->hcontrol, HCONTROL_ENTERPRISE_EN);
+	}
+#endif
+
+
 	return 0;
 }
 
@@ -503,7 +666,7 @@ void arch_preboot_os(void)
 	 * disabled by the time we get called.
 	 */
 	msr = mfmsr();
-	msr &= ~(MSR_ME|MSR_CE|MSR_DE);
+	msr &= ~(MSR_ME|MSR_CE);
 	mtmsr(msr);
 
 	setup_ivors();
@@ -523,17 +686,17 @@ void cpu_secondary_init_r(void)
 {
 #ifdef CONFIG_QE
 	uint qe_base = CONFIG_SYS_IMMR + 0x00080000; /* QE immr base */
-#ifdef CONFIG_SYS_QE_FW_IN_NAND
+#ifdef CONFIG_SYS_QE_FMAN_FW_IN_NAND
 	int ret;
-	size_t fw_length = CONFIG_SYS_QE_FW_LENGTH;
+	size_t fw_length = CONFIG_SYS_QE_FMAN_FW_LENGTH;
 
 	/* load QE firmware from NAND flash to DDR first */
-	ret = nand_read(&nand_info[0], (loff_t)CONFIG_SYS_QE_FW_IN_NAND,
-			&fw_length, (u_char *)CONFIG_SYS_QE_FW_ADDR);
+	ret = nand_read(&nand_info[0], (loff_t)CONFIG_SYS_QE_FMAN_FW_IN_NAND,
+			&fw_length, (u_char *)CONFIG_SYS_QE_FMAN_FW_ADDR);
 
 	if (ret && ret == -EUCLEAN) {
 		printf ("NAND read for QE firmware at offset %x failed %d\n",
-				CONFIG_SYS_QE_FW_IN_NAND, ret);
+				CONFIG_SYS_QE_FMAN_FW_IN_NAND, ret);
 	}
 #endif
 	qe_init(qe_base);

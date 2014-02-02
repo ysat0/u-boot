@@ -22,6 +22,8 @@
 #include <asm/io.h>
 #include <asm/processor.h>
 #include "serial_sh.h"
+#include <serial.h>
+#include <linux/compiler.h>
 
 #if defined(CONFIG_CONS_SCIF0)
 # define SCIF_BASE	SCIF0_BASE
@@ -35,6 +37,10 @@
 # define SCIF_BASE	SCIF4_BASE
 #elif defined(CONFIG_CONS_SCIF5)
 # define SCIF_BASE	SCIF5_BASE
+#elif defined(CONFIG_CONS_SCIF6)
+# define SCIF_BASE	SCIF6_BASE
+#elif defined(CONFIG_CONS_SCIF7)
+# define SCIF_BASE	SCIF7_BASE
 #else
 # error "Default SCIF doesn't set....."
 #endif
@@ -53,14 +59,67 @@ static struct uart_port sh_sci = {
 	.type		= PORT_TYPE,
 };
 
-void serial_setbrg(void)
+/* TDRE / RDRF emulation for RX610 */
+/* RX610's SCI don't have TDRE and RDRF in SSR
+   This part emulate these flags of IR */
+#if defined(CONFIG_CPU_RX610)
+
+#define port_to_irq(port) ((((port)->mapbase - 0x88240) / 8) + 214)
+#define read_ir(irq) __raw_readb((unsigned char *)(0x00087000 + (irq)))
+#define clear_ir(irq) __raw_writeb(0, (unsigned char *)(0x00087000 + (irq)))
+
+#define write_ier(flg, irq)			\
+do { \
+	unsigned char ier = __raw_readb((unsigned char *)(0x00087200 + ((irq) >> 3))); \
+	ier &= ~(1 << ((irq) & 7));					\
+	if (flg) \
+		ier |= (1 << ((irq) & 7));			       \
+	__raw_writeb(ier, (unsigned char *)(0x00087200 + ((irq) >> 3))); \
+} while(0)
+
+
+static unsigned int sci_SCxSR_in(struct uart_port *port)
+{
+	int irq = port_to_irq(port);
+	unsigned char ssr;
+	ssr = __raw_readb(port->membase + 4);
+	ssr &= ~0xc0;
+	/* map to RXI -> RDRF and TXI -> TDRE */
+	ssr |= read_ir(irq + 1) << 6 | read_ir(irq + 2) << 7;
+	return ssr;
+}
+
+static void sci_SCxSR_out(struct uart_port *port, unsigned int value)
+{
+	int irq = port_to_irq(port);
+	/* clear ir */
+	if ((value & 0x84) != 0x84)
+		clear_ir(irq + 2);
+	if ((value & 0x40) == 0)
+		clear_ir(irq + 1);
+	value |= 0xc0;		/* b7 and b6 is always 1 */
+	value &= ~0x01;		/* b0 is always 0 */
+	__raw_writeb(value, port->membase + 4);
+}
+
+static void sci_SCSCR_out(struct uart_port *port, unsigned int value)
+{
+	int irq = port_to_irq(port);
+	write_ier(value & 0x40, irq + 1);
+	write_ier(value & 0x80, irq + 2);
+	/* TXI and RXI always enabled */
+	__raw_writeb(value | 0xc0, port->membase + 2);
+}
+#endif
+
+static void sh_serial_setbrg(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 	sci_out(&sh_sci, SCBRR, SCBRR_VALUE(gd->baudrate, CONFIG_SYS_CLK_FREQ));
 	udelay(10000);
 }
 
-int serial_init(void)
+static int sh_serial_init(void)
 {
 	sci_out(&sh_sci, SCSMR, 0);
 	sci_out(&sh_sci, SCSMR, 0);
@@ -101,7 +160,7 @@ static int scif_rxfill(struct uart_port *port)
 	else
 		return sci_in(port, SCRFDR);
 }
-#elif (CONFIG_SCI)
+#elif defined(CONFIG_SCI)
 static int scif_rxfill(struct uart_port *port)
 {
 	return (sci_in(port, SCxSR) & SCxSR_RDxF(port))?1:0;
@@ -118,6 +177,14 @@ static int serial_rx_fifo_level(void)
 	return scif_rxfill(&sh_sci);
 }
 
+static void handle_error(void)
+{
+	sci_in(&sh_sci, SCxSR);
+	sci_out(&sh_sci, SCxSR, SCxSR_ERROR_CLEAR(&sh_sci));
+	sci_in(&sh_sci, SCLSR);
+	sci_out(&sh_sci, SCLSR, 0x00);
+}
+
 void serial_raw_putc(const char c)
 {
 	while (1) {
@@ -130,32 +197,23 @@ void serial_raw_putc(const char c)
 	sci_out(&sh_sci, SCxSR, sci_in(&sh_sci, SCxSR) & ~SCxSR_TEND(&sh_sci));
 }
 
-void serial_putc(const char c)
+static void sh_serial_putc(const char c)
 {
 	if (c == '\n')
 		serial_raw_putc('\r');
 	serial_raw_putc(c);
 }
 
-void serial_puts(const char *s)
+static int sh_serial_tstc(void)
 {
-	char c;
-	while ((c = *s++) != 0)
-		serial_putc(c);
-}
+	if (sci_in(&sh_sci, SCxSR) & SCIF_ERRORS) {
+		handle_error();
+		return 0;
+	}
 
-int serial_tstc(void)
-{
 	return serial_rx_fifo_level() ? 1 : 0;
 }
 
-void handle_error(void)
-{
-	sci_in(&sh_sci, SCxSR);
-	sci_out(&sh_sci, SCxSR, SCxSR_ERROR_CLEAR(&sh_sci));
-	sci_in(&sh_sci, SCLSR);
-	sci_out(&sh_sci, SCLSR, 0x00);
-}
 
 int serial_getc_check(void)
 {
@@ -163,14 +221,14 @@ int serial_getc_check(void)
 
 	status = sci_in(&sh_sci, SCxSR);
 
-	if (status & SCIF_ERRORS)
+	if (status & SCxSR_ERRORS(&sh_sci))
 		handle_error();
 	if (sci_in(&sh_sci, SCLSR) & SCxSR_ORER(&sh_sci))
 		handle_error();
 	return status & (SCIF_DR | SCxSR_RDxF(&sh_sci));
 }
 
-int serial_getc(void)
+static int sh_serial_getc(void)
 {
 	unsigned short status;
 	char ch;
@@ -189,4 +247,25 @@ int serial_getc(void)
 	if (sci_in(&sh_sci, SCLSR) & SCxSR_ORER(&sh_sci))
 		handle_error();
 	return ch;
+}
+
+static struct serial_device sh_serial_drv = {
+	.name	= "sh_serial",
+	.start	= sh_serial_init,
+	.stop	= NULL,
+	.setbrg	= sh_serial_setbrg,
+	.putc	= sh_serial_putc,
+	.puts	= default_serial_puts,
+	.getc	= sh_serial_getc,
+	.tstc	= sh_serial_tstc,
+};
+
+void sh_serial_initialize(void)
+{
+	serial_register(&sh_serial_drv);
+}
+
+__weak struct serial_device *default_serial_console(void)
+{
+	return &sh_serial_drv;
 }

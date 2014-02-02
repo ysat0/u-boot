@@ -21,6 +21,8 @@
 
 #include <common.h>
 
+#include <os.h>
+
 /*
  * Pointer to initial global data area
  *
@@ -32,9 +34,19 @@ void flush_cache(unsigned long start, unsigned long size)
 {
 }
 
+ulong get_tbclk(void)
+{
+	return CONFIG_SYS_HZ;
+}
+
+unsigned long long get_ticks(void)
+{
+	return get_timer(0);
+}
+
 ulong get_timer(ulong base)
 {
-	return 0;
+	return (os_get_nsec() / 1000000) - base;
 }
 
 int timer_init(void)

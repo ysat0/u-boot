@@ -17,10 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-#ifndef __M28_H__
-#define __M28_H__
-
-#include <asm/arch/regs-base.h>
+#ifndef __M28EVK_CONFIG_H__
+#define __M28EVK_CONFIG_H__
 
 /*
  * SoC configurations
@@ -36,11 +34,10 @@
 
 #define	CONFIG_MACH_TYPE	MACH_TYPE_M28EVK
 
+#include <asm/arch/regs-base.h>
+
 #define	CONFIG_SYS_NO_FLASH
-#define	CONFIG_SYS_ICACHE_OFF
-#define	CONFIG_SYS_DCACHE_OFF
 #define	CONFIG_BOARD_EARLY_INIT_F
-#define	CONFIG_ARCH_CPU_INIT
 #define	CONFIG_ARCH_MISC_INIT
 
 /*
@@ -48,8 +45,11 @@
  */
 #define	CONFIG_SPL
 #define	CONFIG_SPL_NO_CPU_SUPPORT_CODE
-#define	CONFIG_SPL_START_S_PATH		"board/denx/m28evk"
-#define	CONFIG_SPL_LDSCRIPT		"board/denx/m28evk/u-boot-spl.lds"
+#define	CONFIG_SPL_START_S_PATH		"arch/arm/cpu/arm926ejs/mxs"
+#define	CONFIG_SPL_LDSCRIPT	"arch/arm/cpu/arm926ejs/mxs/u-boot-spl.lds"
+#define	CONFIG_SPL_LIBCOMMON_SUPPORT
+#define	CONFIG_SPL_LIBGENERIC_SUPPORT
+#define	CONFIG_SPL_GPIO_SUPPORT
 
 /*
  * U-Boot Commands
@@ -82,15 +82,21 @@
  */
 #define	CONFIG_NR_DRAM_BANKS		1		/* 1 bank of DRAM */
 #define	PHYS_SDRAM_1			0x40000000	/* Base address */
-#define	PHYS_SDRAM_1_SIZE		0x40000000	/* Max 1 GB RAM */
-#define	CONFIG_STACKSIZE		0x00010000	/* 128 KB stack */
+#define	PHYS_SDRAM_1_SIZE		0x20000000	/* Max 512 MB RAM */
 #define	CONFIG_SYS_MALLOC_LEN		0x00400000	/* 4 MB for malloc */
 #define	CONFIG_SYS_GBL_DATA_SIZE	128		/* Initial data */
 #define	CONFIG_SYS_MEMTEST_START	0x40000000	/* Memtest start adr */
 #define	CONFIG_SYS_MEMTEST_END		0x40400000	/* 4 MB RAM test */
 #define	CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
 /* Point initial SP in SRAM so SPL can use it too. */
-#define	CONFIG_SYS_INIT_SP_ADDR		0x00002000
+
+#define CONFIG_SYS_INIT_RAM_ADDR	0x00000000
+#define CONFIG_SYS_INIT_RAM_SIZE	(128 * 1024)
+
+#define CONFIG_SYS_INIT_SP_OFFSET \
+	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_SP_ADDR \
+	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 /*
  * We need to sacrifice first 4 bytes of RAM here to avoid triggering some
  * strange BUG in ROM corrupting first 4 bytes of RAM when loading U-Boot
@@ -114,7 +120,6 @@
 #define	CONFIG_AUTO_COMPLETE			/* Command auto complete */
 #define	CONFIG_CMDLINE_EDITING			/* Command history etc */
 #define	CONFIG_SYS_HUSH_PARSER
-#define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
 /*
  * Serial Driver
@@ -124,31 +129,34 @@
 #define	CONFIG_PL01x_PORTS		{ (void *)MXS_UARTDBG_BASE }
 #define	CONFIG_CONS_INDEX		0
 #define	CONFIG_BAUDRATE			115200	/* Default baud rate */
-#define	CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 /*
  * MMC Driver
  */
 #ifdef	CONFIG_CMD_MMC
 #define	CONFIG_MMC
+#define	CONFIG_BOUNCE_BUFFER
 #define	CONFIG_GENERIC_MMC
 #define	CONFIG_MXS_MMC
 #endif
 
 /*
+ * APBH DMA
+ */
+#define CONFIG_APBH_DMA
+
+/*
  * NAND
  */
+#define	CONFIG_ENV_SIZE			(16 * 1024)
 #ifdef	CONFIG_CMD_NAND
 #define	CONFIG_NAND_MXS
-#define CONFIG_APBH_DMA
 #define	CONFIG_SYS_MAX_NAND_DEVICE	1
 #define	CONFIG_SYS_NAND_BASE		0x60000000
 #define	CONFIG_SYS_NAND_5_ADDR_CYCLE
-#define	NAND_MAX_CHIPS			8
 
 /* Environment is in NAND */
 #define	CONFIG_ENV_IS_IN_NAND
-#define	CONFIG_ENV_SIZE			(16 * 1024)
 #define	CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
 #define	CONFIG_ENV_SECT_SIZE		(128 * 1024)
 #define	CONFIG_ENV_RANGE		(512 * 1024)
@@ -163,26 +171,28 @@
 #define	CONFIG_LZO
 #define	CONFIG_MTD_DEVICE
 #define	CONFIG_MTD_PARTITIONS
-#define	MTDIDS_DEFAULT			"nand0=gpmi-nand.0"
+#define	MTDIDS_DEFAULT			"nand0=gpmi-nand"
 #define	MTDPARTS_DEFAULT			\
-	"mtdparts=gpmi-nand.0:"			\
+	"mtdparts=gpmi-nand:"			\
 		"3m(bootloader)ro,"		\
 		"512k(environment),"		\
 		"512k(redundant-environment),"	\
 		"4m(kernel),"			\
+		"128k(fdt),"			\
+		"8m(ramdisk),"			\
 		"-(filesystem)"
+#else
+#define	CONFIG_ENV_IS_NOWHERE
 #endif
 
 /*
  * Ethernet on SOC (FEC)
  */
 #ifdef	CONFIG_CMD_NET
-#define	CONFIG_NET_MULTI
 #define	CONFIG_ETHPRIME			"FEC0"
 #define	CONFIG_FEC_MXC
 #define	CONFIG_FEC_MXC_MULTI
 #define	CONFIG_MII
-#define	CONFIG_DISCOVER_PHY
 #define	CONFIG_FEC_XCV_TYPE		RMII
 #endif
 
@@ -235,21 +245,24 @@
 #ifdef	CONFIG_CMD_SPI
 #define	CONFIG_HARD_SPI
 #define	CONFIG_MXS_SPI
+#define	CONFIG_MXS_SPI_DMA_ENABLE
 #define	CONFIG_SPI_HALF_DUPLEX
 #define	CONFIG_DEFAULT_SPI_BUS		2
+#define	CONFIG_DEFAULT_SPI_CS		0
 #define	CONFIG_DEFAULT_SPI_MODE		SPI_MODE_0
 
 /* SPI FLASH */
 #ifdef	CONFIG_CMD_SF
 #define	CONFIG_SPI_FLASH
 #define	CONFIG_SPI_FLASH_STMICRO
-#define	CONFIG_SPI_FLASH_CS		2
+#define	CONFIG_SF_DEFAULT_BUS		2
+#define	CONFIG_SF_DEFAULT_CS		0
+#define	CONFIG_SF_DEFAULT_SPEED		40000000
 #define	CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
-#define	CONFIG_SF_DEFAULT_SPEED		24000000
 
-#define	CONFIG_ENV_SPI_CS		0
 #define	CONFIG_ENV_SPI_BUS		2
-#define	CONFIG_ENV_SPI_MAX_HZ		24000000
+#define	CONFIG_ENV_SPI_CS		0
+#define	CONFIG_ENV_SPI_MAX_HZ		40000000
 #define	CONFIG_ENV_SPI_MODE		SPI_MODE_0
 #endif
 #endif
@@ -265,6 +278,7 @@
 #define	CONFIG_BOOTCOMMAND	"run bootcmd_net"
 #define	CONFIG_LOADADDR		0x42000000
 #define	CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR
+#define	CONFIG_OF_LIBFDT
 
 /*
  * Extra Environments
@@ -272,6 +286,7 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	"update_nand_full_filename=u-boot.nand\0"			\
 	"update_nand_firmware_filename=u-boot.sb\0"			\
+	"update_sd_firmware_filename=u-boot.sd\0"			\
 	"update_nand_firmware_maxsz=0x100000\0"				\
 	"update_nand_stride=0x40\0"	/* MX28 datasheet ch. 12.12 */	\
 	"update_nand_count=0x4\0"	/* MX28 datasheet ch. 12.12 */	\
@@ -284,7 +299,7 @@
 		"if tftp ${update_nand_full_filename} ; then "		\
 		"run update_nand_get_fcb_size ; "			\
 		"nand scrub -y 0x0 ${filesize} ; "			\
-		"nand write.raw ${loadaddr} 0x0 ${update_nand_fcb} ; "	\
+		"nand write.raw ${loadaddr} 0x0 ${fcb_sz} ; "	\
 		"setexpr update_off ${loadaddr} + ${update_nand_fcb} ; " \
 		"setexpr update_sz ${filesize} - ${update_nand_fcb} ; " \
 		"nand write ${update_off} ${update_nand_fcb} ${update_sz} ; " \
@@ -298,6 +313,14 @@
 		"nand erase ${fcb_sz} ${fw_sz} ; "			\
 		"nand write ${loadaddr} ${fcb_sz} ${filesize} ; "	\
 		"nand write ${loadaddr} ${fw_off} ${filesize} ; "	\
+		"fi\0"							\
+	"update_sd_firmware="		/* Update the SD firmware partition */ \
+		"if mmc rescan ; then "					\
+		"if tftp ${update_sd_firmware_filename} ; then "	\
+		"setexpr fw_sz ${filesize} / 0x200 ; "	/* SD block size */ \
+		"setexpr fw_sz ${fw_sz} + 1 ; "				\
+		"mmc write ${loadaddr} 0x800 ${fw_sz} ; "		\
+		"fi ; "							\
 		"fi\0"
 
-#endif /* __M28_H__ */
+#endif /* __M28EVK_CONFIG_H__ */

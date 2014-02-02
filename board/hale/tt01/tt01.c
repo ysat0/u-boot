@@ -25,10 +25,13 @@
 #include <common.h>
 #include <netdev.h>
 #include <command.h>
-#include <pmic.h>
+#include <power/pmic.h>
+#include <fsl_pmic.h>
+#include <mc13783.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/io.h>
+#include <errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -50,7 +53,7 @@ static void board_setup_clocks(void)
 	writel((CCM_CCMR_SETUP | CCMR_MPE) & ~CCMR_MDS, &ccm->ccmr);
 
 	/* Set up clock to 532MHz */
-	writel(PDR0_CSI_PODF(0x1ff) | PDR0_PER_PODF(7) |
+	writel(PDR0_CSI_PODF(0x3f) | PDR0_CSI_PRDF(7) | PDR0_PER_PODF(7) |
 			PDR0_HSP_PODF(3) | PDR0_NFC_PODF(5) |
 			PDR0_IPG_PODF(1) | PDR0_MAX_PODF(3) |
 			PDR0_MCU_PODF(0), &ccm->pdr0);
@@ -175,10 +178,8 @@ int board_init(void)
 
 int board_late_init(void)
 {
-	pmic_init();
-
 #ifdef CONFIG_HW_WATCHDOG
-	mxc_hw_watchdog_enable();
+	hw_watchdog_init();
 #endif
 
 	return 0;
@@ -190,6 +191,43 @@ int checkboard(void)
 	return 0;
 }
 
+#ifdef CONFIG_MXC_MMC
+int board_mmc_init(bd_t *bis)
+{
+	u32 val;
+	struct pmic *p;
+	int ret;
+
+	/*
+	* this is the first driver to use the pmic, so call
+	* pmic_init() here. board_late_init() is too late for
+	* the MMC driver.
+	*/
+
+	ret = pmic_init(I2C_PMIC);
+	if (ret)
+		return ret;
+
+	p = pmic_get("FSL_PMIC");
+	if (!p)
+		return -ENODEV;
+
+	/* configure pins for SDHC1 only */
+	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SD1_CLK, MUX_CTL_FUNC));
+	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SD1_CMD, MUX_CTL_FUNC));
+	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SD1_DATA0, MUX_CTL_FUNC));
+	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SD1_DATA1, MUX_CTL_FUNC));
+	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SD1_DATA2, MUX_CTL_FUNC));
+	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SD1_DATA3, MUX_CTL_FUNC));
+
+	/* turn on power V_MMC1 */
+	if (pmic_reg_read(p, REG_MODE_1, &val) < 0)
+		pmic_reg_write(p, REG_MODE_1, val | VMMC1EN);
+
+	return mxc_mmc_init(bis);
+}
+#endif
+
 int board_eth_init(bd_t *bis)
 {
 	int rc = 0;
@@ -198,3 +236,24 @@ int board_eth_init(bd_t *bis)
 #endif
 	return rc;
 }
+
+#ifdef CONFIG_CONSOLE_EXTRA_INFO
+void video_get_info_str(int line_number, char *info)
+{
+	u32 srev = get_cpu_rev();
+
+	switch (line_number) {
+	case 2:
+		sprintf(info, " CPU  : Freescale i.MX31 rev %d.%d%s at %d MHz",
+			(srev & 0xF0) >> 4, (srev & 0x0F),
+			((srev & 0x8000) ? " unknown" : ""),
+		mxc_get_clock(MXC_ARM_CLK) / 1000000);
+		break;
+	case 3:
+		strcpy(info, " " BOARD_STRING);
+		break;
+	default:
+		info[0] = 0;
+	}
+}
+#endif

@@ -34,12 +34,12 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 /* delay x useconds */
 void __udelay(unsigned long usec)
 {
-	/* Ignore this for now */
+	os_usleep(usec);
 }
 
 unsigned long timer_get_us(void)
 {
-	return 0;
+	return os_get_nsec() / 1000;
 }
 
 int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
@@ -54,7 +54,7 @@ int cleanup_before_linux(void)
 
 void *map_physmem(phys_addr_t paddr, unsigned long len, unsigned long flags)
 {
-	return (void *)(gd->ram_buf + paddr);
+	return (void *)(gd->arch.ram_buf + paddr);
 }
 
 void flush_dcache_range(unsigned long start, unsigned long stop)

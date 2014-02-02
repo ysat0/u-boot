@@ -273,11 +273,10 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #endif
 #endif
 
+#define CONFIG_CMD_NAND
 #define CONFIG_SYS_NAND_BASE_LIST	{CONFIG_SYS_NAND_BASE}
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define NAND_MAX_CHIPS			1
 #define CONFIG_MTD_NAND_VERIFY_WRITE
-#define CONFIG_CMD_NAND			1
 #define CONFIG_NAND_FSL_ELBC		1
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(16 * 1024)
 
@@ -344,7 +343,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_NS16550_MIN_FUNCTIONS
 #endif
 
-#define CONFIG_SERIAL_MULTI	1 /* Enable both serial ports */
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV	/* determine from environment */
 
 #define CONFIG_SYS_BAUDRATE_TABLE	\
@@ -355,9 +353,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
-#ifdef	CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
-#endif
 
 /*
  * Pass open firmware flat tree
@@ -519,6 +514,7 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 	#define CONFIG_ENV_OFFSET	((512 * 1024) + CONFIG_SYS_NAND_BLOCK_SIZE)
 #elif defined(CONFIG_RAMBOOT_SDCARD)
 #define CONFIG_ENV_IS_IN_MMC
+#define CONFIG_FSL_FIXED_MMC_LOCATION
 #define CONFIG_ENV_SIZE			0x2000
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #elif defined(CONFIG_RAMBOOT_SPIFLASH)
@@ -656,14 +652,19 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 
 #define	CONFIG_EXTRA_ENV_SETTINGS				\
 	"netdev=eth0\0"						\
-	"uboot=" MK_STR(CONFIG_UBOOTPATH) "\0"				\
-	"loadaddr=1000000\0"			\
+	"uboot=" __stringify(CONFIG_UBOOTPATH) "\0"		\
+	"loadaddr=1000000\0"					\
 	"tftpflash=tftpboot $loadaddr $uboot; "			\
-		"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
-		"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
-		"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; "	\
-		"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
-		"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0"	\
+		"protect off " __stringify(CONFIG_SYS_TEXT_BASE)	\
+			" +$filesize; "	\
+		"erase " __stringify(CONFIG_SYS_TEXT_BASE)		\
+			" +$filesize; "	\
+		"cp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
+			" $filesize; "	\
+		"protect on " __stringify(CONFIG_SYS_TEXT_BASE)		\
+			" +$filesize; "	\
+		"cmp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
+			" $filesize\0"	\
 	"consoledev=ttyS0\0"				\
 	"ramdiskaddr=2000000\0"			\
 	"ramdiskfile=rootfs.ext2.gz.uboot\0"		\

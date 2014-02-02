@@ -82,10 +82,10 @@ void lbc_sdram_init(void);
 
 /* Convert an address into the right format for the BR registers */
 #if defined(CONFIG_PHYS_64BIT) && !defined(CONFIG_FSL_ELBC)
-#define BR_PHYS_ADDR(x)	((unsigned long)((x & 0x0ffff8000ULL) | \
-					 ((x & 0x300000000ULL) >> 19)))
+#define BR_PHYS_ADDR(x)	\
+	((u32)(((x) & 0x0ffff8000ULL) | (((x) & 0x300000000ULL) >> 19)))
 #else
-#define BR_PHYS_ADDR(x) (x & 0xffff8000)
+#define BR_PHYS_ADDR(x) ((u32)(x) & 0xffff8000)
 #endif
 
 /* OR - Option Registers
@@ -475,6 +475,8 @@ extern void init_early_memctl_regs(void);
 extern void upmconfig(uint upm, uint *table, uint size);
 
 #define LBC_BASE_ADDR ((fsl_lbc_t *)CONFIG_SYS_LBC_ADDR)
+#define get_lbc_lcrr() (in_be32(&(LBC_BASE_ADDR)->lcrr))
+#define get_lbc_lbcr() (in_be32(&(LBC_BASE_ADDR)->lbcr))
 #define get_lbc_br(i) (in_be32(&(LBC_BASE_ADDR)->bank[i].br))
 #define get_lbc_or(i) (in_be32(&(LBC_BASE_ADDR)->bank[i].or))
 #define set_lbc_br(i, v) (out_be32(&(LBC_BASE_ADDR)->bank[i].br, v))

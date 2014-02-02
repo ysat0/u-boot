@@ -23,38 +23,63 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/tegra2.h>
-#ifdef CONFIG_TEGRA2_MMC
+#include <asm/arch/clock.h>
+#include <asm/arch/funcmux.h>
+#include <asm/arch/pinmux.h>
+#include <asm/arch/tegra.h>
+#include <asm/arch-tegra/mmc.h>
+#include <asm/gpio.h>
+#ifdef CONFIG_TEGRA_MMC
 #include <mmc.h>
 #endif
 
-/*
- * Routine: gpio_config_uart
- * Description: Does nothing on Harmony - no conflict w/SPI.
- */
-void gpio_config_uart(void)
-{
-}
 
-#ifdef CONFIG_TEGRA2_MMC
+#ifdef CONFIG_TEGRA_MMC
 /*
- * Routine: gpio_config_mmc
- * Description: Set GPIOs for SD card
+ * Routine: pin_mux_mmc
+ * Description: setup the pin muxes/tristate values for the SDMMC(s)
  */
-void gpio_config_mmc(void)
+static void pin_mux_mmc(void)
 {
-	/* Not implemented for now */
+	funcmux_select(PERIPH_ID_SDMMC4, FUNCMUX_SDMMC4_ATB_GMA_GME_8_BIT);
+	funcmux_select(PERIPH_ID_SDMMC2, FUNCMUX_SDMMC2_DTA_DTD_8BIT);
+
+	/* For power GPIO PI6 */
+	pinmux_tristate_disable(PINGRP_ATA);
+	/* For CD GPIO PH2 */
+	pinmux_tristate_disable(PINGRP_ATD);
+
+	/* For power GPIO PT3 */
+	pinmux_tristate_disable(PINGRP_DTB);
+	/* For CD GPIO PI5 */
+	pinmux_tristate_disable(PINGRP_ATC);
 }
 
 /* this is a weak define that we are overriding */
-int board_mmc_getcd(u8 *cd, struct mmc *mmc)
+int board_mmc_init(bd_t *bd)
 {
-	debug("board_mmc_getcd called\n");
-	/*
-	 * Hard-code CD presence for now. Need to add GPIO inputs
-	 * for Harmony
-	 */
-	*cd = 1;
+	debug("board_mmc_init called\n");
+
+	/* Enable muxes, etc. for SDMMC controllers */
+	pin_mux_mmc();
+
+	debug("board_mmc_init: init SD slot J26\n");
+	/* init dev 0, SD slot J26, with 8-bit bus */
+	tegra_mmc_init(0, 8, GPIO_PI6, GPIO_PH2);
+
+	debug("board_mmc_init: init SD slot J5\n");
+	/* init dev 2, SD slot J5, with 4-bit bus */
+	tegra_mmc_init(2, 4, GPIO_PT3, GPIO_PI5);
+
 	return 0;
 }
 #endif
+
+void pin_mux_usb(void)
+{
+	funcmux_select(PERIPH_ID_USB2, FUNCMUX_USB2_ULPI);
+	pinmux_set_func(PINGRP_CDEV2, PMUX_FUNC_PLLP_OUT4);
+	pinmux_tristate_disable(PINGRP_CDEV2);
+	/* USB2 PHY reset GPIO */
+	pinmux_tristate_disable(PINGRP_UAC);
+}

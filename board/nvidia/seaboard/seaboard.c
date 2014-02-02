@@ -23,63 +23,67 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/tegra2.h>
+#include <asm/arch/tegra.h>
+#include <asm/arch/clock.h>
+#include <asm/arch/funcmux.h>
+#include <asm/arch/gpio.h>
+#include <asm/arch/pinmux.h>
+#include <asm/arch-tegra/mmc.h>
 #include <asm/gpio.h>
-#ifdef CONFIG_TEGRA2_MMC
+#ifdef CONFIG_TEGRA_MMC
 #include <mmc.h>
 #endif
 
-/*
- * Routine: gpio_config_uart
- * Description: Force GPIO_PI3 low on Seaboard so UART4 works.
- */
-void gpio_config_uart(void)
+/* TODO: Remove this code when the SPI switch is working */
+#if !defined(CONFIG_SPI_UART_SWITCH) && (CONFIG_MACH_TYPE != MACH_TYPE_VENTANA)
+void gpio_early_init_uart(void)
 {
-	int gp = GPIO_PI3;
-	struct gpio_ctlr *gpio = (struct gpio_ctlr *)NV_PA_GPIO_BASE;
-	struct gpio_ctlr_bank *bank = &gpio->gpio_bank[GPIO_BANK(gp)];
-	u32 val;
-
 	/* Enable UART via GPIO_PI3 (port 8, bit 3) so serial console works */
-	val = readl(&bank->gpio_config[GPIO_PORT(gp)]);
-	val |= 1 << GPIO_BIT(gp);
-	writel(val, &bank->gpio_config[GPIO_PORT(gp)]);
-
-	val = readl(&bank->gpio_out[GPIO_PORT(gp)]);
-	val &= ~(1 << GPIO_BIT(gp));
-	writel(val, &bank->gpio_out[GPIO_PORT(gp)]);
-
-	val = readl(&bank->gpio_dir_out[GPIO_PORT(gp)]);
-	val |= 1 << GPIO_BIT(gp);
-	writel(val, &bank->gpio_dir_out[GPIO_PORT(gp)]);
+#ifndef CONFIG_SPL_BUILD
+	gpio_request(GPIO_PI3, NULL);
+#endif
+	gpio_direction_output(GPIO_PI3, 0);
 }
+#endif
 
-#ifdef CONFIG_TEGRA2_MMC
+#ifdef CONFIG_TEGRA_MMC
 /*
- * Routine: gpio_config_mmc
- * Description: Set GPIOs for SDMMC3 SDIO slot.
+ * Routine: pin_mux_mmc
+ * Description: setup the pin muxes/tristate values for the SDMMC(s)
  */
-void gpio_config_mmc(void)
+static void pin_mux_mmc(void)
 {
-	/* Set EN_VDDIO_SD (GPIO I6) */
-	gpio_direction_output(GPIO_PI6, 1);
+	funcmux_select(PERIPH_ID_SDMMC4, FUNCMUX_SDMMC4_ATB_GMA_GME_8_BIT);
+	funcmux_select(PERIPH_ID_SDMMC3, FUNCMUX_SDMMC3_SDB_4BIT);
 
-	/* Config pin as GPI for Card Detect (GPIO I5) */
-	gpio_direction_input(GPIO_PI5);
+	/* For power GPIO PI6 */
+	pinmux_tristate_disable(PINGRP_ATA);
+	/* For CD GPIO PI5 */
+	pinmux_tristate_disable(PINGRP_ATC);
 }
 
 /* this is a weak define that we are overriding */
-int board_mmc_getcd(u8 *cd, struct mmc *mmc)
+int board_mmc_init(bd_t *bd)
 {
-	debug("board_mmc_getcd called\n");
-	*cd = 1;			/* Assume card is inserted, or eMMC */
+	debug("board_mmc_init called\n");
 
-	if (IS_SD(mmc)) {
-		/* Seaboard SDMMC3 = SDIO3_CD = GPIO_PI5 */
-		if (gpio_get_value(GPIO_PI5))
-			*cd = 0;
-	}
+	/* Enable muxes, etc. for SDMMC controllers */
+	pin_mux_mmc();
+
+	debug("board_mmc_init: init eMMC\n");
+	/* init dev 0, eMMC chip, with 8-bit bus */
+	tegra_mmc_init(0, 8, -1, -1);
+
+	debug("board_mmc_init: init SD slot\n");
+	/* init dev 1, SD slot, with 4-bit bus */
+	tegra_mmc_init(1, 4, GPIO_PI6, GPIO_PI5);
 
 	return 0;
 }
 #endif
+
+void pin_mux_usb(void)
+{
+	/* For USB's GPIO PD0. For now, since we have no pinmux in fdt */
+	pinmux_tristate_disable(PINGRP_SLXK);
+}

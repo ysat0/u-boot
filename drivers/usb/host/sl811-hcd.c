@@ -40,7 +40,9 @@
 #include <usb.h>
 #include "sl811.h"
 
+#if defined(CONFIG_KUP4X)
 #include "../../../board/kup/common/kup.h"
+#endif
 
 #ifdef __PPC__
 # define EIEIO		__asm__ volatile ("eieio")
@@ -48,8 +50,8 @@
 # define EIEIO		/* nothing */
 #endif
 
-#define	 SL811_ADR (0x50000000)
-#define	 SL811_DAT (0x50000001)
+#define	 SL811_ADR (CONFIG_USB_SL811HS_ADDRESS)
+#define	 SL811_DAT (CONFIG_USB_SL811HS_DATA)
 
 #ifdef SL811_DEBUG
 static int debug = 9;
@@ -106,6 +108,7 @@ static void inline sl811_write_buf(__u8 offset, __u8 *buf, __u8 size)
 	}
 }
 
+#if defined(CONFIG_KUP4X)
 int usb_init_kup4x (void)
 {
 	volatile immap_t *immap = (immap_t *) CONFIG_SYS_IMMR;
@@ -136,6 +139,7 @@ int usb_init_kup4x (void)
 	printf ("SL811 ready\n");
 	return (0);
 }
+#endif
 
 /*
  * This function resets SL811HS controller and detects the speed of
@@ -210,14 +214,14 @@ static int sl811_hc_reset(void)
 	return 1;
 }
 
-int usb_lowlevel_init(void)
+int usb_lowlevel_init(int index, void **controller)
 {
 	root_hub_devnum = 0;
 	sl811_hc_reset();
 	return 0;
 }
 
-int usb_lowlevel_stop(void)
+int usb_lowlevel_stop(int index)
 {
 	sl811_hc_reset();
 	return 0;
@@ -234,7 +238,7 @@ static int sl811_send_packet(struct usb_device *dev, unsigned long pipe, __u8 *b
 	__u16 status = 0;
 	int err = 0, time_start = get_timer(0);
 	int need_preamble = !(rh_status.wPortStatus & USB_PORT_STAT_LOW_SPEED) &&
-		usb_pipeslow(pipe);
+		(dev->speed == USB_SPEED_LOW);
 
 	if (len > 239)
 		return -1;
@@ -550,11 +554,12 @@ static int sl811_rh_submit_urb(struct usb_device *usb_dev, unsigned long pipe,
 	__u8 *bufp = data_buf;
 	int len = 0;
 	int status = 0;
-
 	__u16 bmRType_bReq;
-	__u16 wValue;
-	__u16 wIndex;
-	__u16 wLength;
+	__u16 wValue  = le16_to_cpu (cmd->value);
+	__u16 wLength = le16_to_cpu (cmd->length);
+#ifdef SL811_DEBUG
+	__u16 wIndex  = le16_to_cpu (cmd->index);
+#endif
 
 	if (usb_pipeint(pipe)) {
 		PDEBUG(0, "interrupt transfer unimplemented!\n");
@@ -562,9 +567,6 @@ static int sl811_rh_submit_urb(struct usb_device *usb_dev, unsigned long pipe,
 	}
 
 	bmRType_bReq  = cmd->requesttype | (cmd->request << 8);
-	wValue	      = le16_to_cpu (cmd->value);
-	wIndex	      = le16_to_cpu (cmd->index);
-	wLength	      = le16_to_cpu (cmd->length);
 
 	PDEBUG(5, "submit rh urb, req = %d(%x) val = %#x index = %#x len=%d\n",
 	       bmRType_bReq, bmRType_bReq, wValue, wIndex, wLength);

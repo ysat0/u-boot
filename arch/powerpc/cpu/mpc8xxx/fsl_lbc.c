@@ -11,7 +11,7 @@
 
 #ifdef CONFIG_MPC85xx
 /* Boards should provide their own version of this if they use lbc sdram */
-void __lbc_sdram_init(void)
+static void __lbc_sdram_init(void)
 {
 	/* Do nothing */
 }
@@ -28,6 +28,8 @@ void print_lbc_regs(void)
 		printf("BR%d\t0x%08X\tOR%d\t0x%08X\n",
 		       i, get_lbc_br(i), i, get_lbc_or(i));
 	}
+	printf("LBCR\t0x%08X\tLCRR\t0x%08X\n",
+		       get_lbc_lbcr(), get_lbc_lcrr());
 }
 
 void init_early_memctl_regs(void)

@@ -31,6 +31,7 @@
 #include <common.h>
 #include <netdev.h>
 #include <twl4030.h>
+#include <linux/mtd/nand.h>
 #include <asm/io.h>
 #include <asm/arch/mmc_host_def.h>
 #include <asm/arch/mux.h>
@@ -107,6 +108,20 @@ int get_board_revision(void)
 {
 	int revision;
 
+#ifdef CONFIG_DRIVER_OMAP34XX_I2C
+	unsigned char data;
+
+	/* board revisions <= R2410 connect 4030 irq_1 to gpio112             */
+	/* these boards should return a revision number of 0                  */
+	/* the code below forces a 4030 RTC irq to ensure that gpio112 is low */
+	i2c_set_bus_num(TWL4030_I2C_BUS);
+	data = 0x01;
+	i2c_write(0x4B, 0x29, 1, &data, 1);
+	data = 0x0c;
+	i2c_write(0x4B, 0x2b, 1, &data, 1);
+	i2c_read(0x4B, 0x2a, 1, &data, 1);
+#endif
+
 	if (!gpio_request(112, "") &&
 	    !gpio_request(113, "") &&
 	    !gpio_request(115, "")) {
@@ -119,12 +134,49 @@ int get_board_revision(void)
 			   gpio_get_value(113) << 1 |
 			   gpio_get_value(112);
 	} else {
-		printf("Error: unable to acquire board revision GPIOs\n");
+		puts("Error: unable to acquire board revision GPIOs\n");
 		revision = -1;
 	}
 
 	return revision;
 }
+
+#ifdef CONFIG_SPL_BUILD
+/*
+ * Routine: get_board_mem_timings
+ * Description: If we use SPL then there is no x-loader nor config header
+ * so we have to setup the DDR timings ourself on both banks.
+ */
+void get_board_mem_timings(struct board_sdrc_timings *timings)
+{
+	timings->mr = MICRON_V_MR_165;
+	switch (get_board_revision()) {
+	case REVISION_0: /* Micron 1286MB/256MB, 1/2 banks of 128MB */
+		timings->mcfg = MICRON_V_MCFG_165(128 << 20);
+		timings->ctrla = MICRON_V_ACTIMA_165;
+		timings->ctrlb = MICRON_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+		break;
+	case REVISION_1: /* Micron 256MB/512MB, 1/2 banks of 256MB */
+		timings->mcfg = MICRON_V_MCFG_165(256 << 20);
+		timings->ctrla = MICRON_V_ACTIMA_165;
+		timings->ctrlb = MICRON_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+		break;
+	case REVISION_2: /* Hynix 256MB/512MB, 1/2 banks of 256MB */
+		timings->mcfg = HYNIX_V_MCFG_165(256 << 20);
+		timings->ctrla = HYNIX_V_ACTIMA_165;
+		timings->ctrlb = HYNIX_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+		break;
+	default:
+		timings->mcfg = MICRON_V_MCFG_165(128 << 20);
+		timings->ctrla = MICRON_V_ACTIMA_165;
+		timings->ctrlb = MICRON_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+	}
+}
+#endif
 
 /*
  * Routine: get_sdio2_config
@@ -151,7 +203,7 @@ int get_sdio2_config(void)
 
 		gpio_direction_input(130);
 	} else {
-		printf("Error: unable to acquire sdio2 clk GPIOs\n");
+		puts("Error: unable to acquire sdio2 clk GPIOs\n");
 		sdio_direct = -1;
 	}
 
@@ -200,15 +252,15 @@ int misc_init_r(void)
 
 	switch (get_sdio2_config()) {
 	case 0:
-		printf("Tranceiver detected on mmc2\n");
+		puts("Tranceiver detected on mmc2\n");
 		MUX_OVERO_SDIO2_TRANSCEIVER();
 		break;
 	case 1:
-		printf("Direct connection on mmc2\n");
+		puts("Direct connection on mmc2\n");
 		MUX_OVERO_SDIO2_DIRECT();
 		break;
 	default:
-		printf("Unable to detect mmc2 connection type\n");
+		puts("Unable to detect mmc2 connection type\n");
 	}
 
 	switch (get_expansion_id()) {
@@ -269,10 +321,10 @@ int misc_init_r(void)
 		setenv("defaultdisplay", "dvi");
 		break;
 	case GUMSTIX_NO_EEPROM:
-		printf("No EEPROM on expansion board\n");
+		puts("No EEPROM on expansion board\n");
 		break;
 	default:
-		printf("Unrecognized expansion board\n");
+		puts("Unrecognized expansion board\n");
 	}
 
 	if (expansion_config.content == 1)
@@ -337,10 +389,10 @@ int board_eth_init(bd_t *bis)
 	return rc;
 }
 
-#ifdef CONFIG_GENERIC_MMC
+#if defined(CONFIG_GENERIC_MMC) && !defined(CONFIG_SPL_BUILD)
 int board_mmc_init(bd_t *bis)
 {
-	omap_mmc_init(0);
+	omap_mmc_init(0, 0, 0);
 	return 0;
 }
 #endif

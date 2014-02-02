@@ -28,6 +28,16 @@
 /* Number of bits in a C 'long' on this architecture */
 #define CONFIG_SANDBOX_BITS_PER_LONG	64
 
+#define CONFIG_OF_CONTROL
+#define CONFIG_OF_LIBFDT
+#define CONFIG_LMB
+
+#define CONFIG_SYS_VSNPRINTF
+
+#define CONFIG_CMD_GPIO
+#define CONFIG_SANDBOX_GPIO
+#define CONFIG_SANDBOX_GPIO_COUNT	20
+
 /*
  * Size of malloc() pool, although we don't actually use this yet.
  */
@@ -35,7 +45,6 @@
 
 #define CONFIG_SYS_PROMPT		"=>"	/* Command Prompt */
 #define CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_LONGHELP			/* #undef to save memory */
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 

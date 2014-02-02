@@ -137,8 +137,9 @@ cmd_tbl_t *find_cmd_tbl (const char *cmd, cmd_tbl_t *table, int table_len)
 
 cmd_tbl_t *find_cmd (const char *cmd)
 {
-	int len = &__u_boot_cmd_end - &__u_boot_cmd_start;
-	return find_cmd_tbl(cmd, &__u_boot_cmd_start, len);
+	cmd_tbl_t *start = ll_entry_start(cmd_tbl_t, cmd);
+	const int len = ll_entry_count(cmd_tbl_t, cmd);
+	return find_cmd_tbl(cmd, start, len);
 }
 
 int cmd_usage(const cmd_tbl_t *cmdtp)
@@ -181,7 +182,9 @@ int var_complete(int argc, char * const argv[], char last_char, int maxv, char *
 
 static int complete_cmdv(int argc, char * const argv[], char last_char, int maxv, char *cmdv[])
 {
-	cmd_tbl_t *cmdtp;
+	cmd_tbl_t *cmdtp = ll_entry_start(cmd_tbl_t, cmd);
+	const int count = ll_entry_count(cmd_tbl_t, cmd);
+	const cmd_tbl_t *cmdend = cmdtp + count;
 	const char *p;
 	int len, clen;
 	int n_found = 0;
@@ -195,12 +198,12 @@ static int complete_cmdv(int argc, char * const argv[], char last_char, int maxv
 
 	if (argc == 0) {
 		/* output full list of commands */
-		for (cmdtp = &__u_boot_cmd_start; cmdtp != &__u_boot_cmd_end; cmdtp++) {
+		for (; cmdtp != cmdend; cmdtp++) {
 			if (n_found >= maxv - 2) {
-				cmdv[n_found++] = "...";
+				cmdv[n_found] = "...";
 				break;
 			}
-			cmdv[n_found++] = cmdtp->name;
+			cmdv[n_found] = cmdtp->name;
 		}
 		cmdv[n_found] = NULL;
 		return n_found;
@@ -228,7 +231,7 @@ static int complete_cmdv(int argc, char * const argv[], char last_char, int maxv
 		len = p - cmd;
 
 	/* return the partial matches */
-	for (cmdtp = &__u_boot_cmd_start; cmdtp != &__u_boot_cmd_end; cmdtp++) {
+	for (; cmdtp != cmdend; cmdtp++) {
 
 		clen = strlen(cmdtp->name);
 		if (clen < len)
@@ -487,3 +490,67 @@ void fixup_cmdtable(cmd_tbl_t *cmdtp, int size)
 	}
 }
 #endif
+
+/**
+ * Call a command function. This should be the only route in U-Boot to call
+ * a command, so that we can track whether we are waiting for input or
+ * executing a command.
+ *
+ * @param cmdtp		Pointer to the command to execute
+ * @param flag		Some flags normally 0 (see CMD_FLAG_.. above)
+ * @param argc		Number of arguments (arg 0 must be the command text)
+ * @param argv		Arguments
+ * @return 0 if command succeeded, else non-zero (CMD_RET_...)
+ */
+static int cmd_call(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int result;
+
+	result = (cmdtp->cmd)(cmdtp, flag, argc, argv);
+	if (result)
+		debug("Command failed, result=%d", result);
+	return result;
+}
+
+enum command_ret_t cmd_process(int flag, int argc, char * const argv[],
+			       int *repeatable, ulong *ticks)
+{
+	enum command_ret_t rc = CMD_RET_SUCCESS;
+	cmd_tbl_t *cmdtp;
+
+	/* Look up command in command table */
+	cmdtp = find_cmd(argv[0]);
+	if (cmdtp == NULL) {
+		printf("Unknown command '%s' - try 'help'\n", argv[0]);
+		return 1;
+	}
+
+	/* found - check max args */
+	if (argc > cmdtp->maxargs)
+		rc = CMD_RET_USAGE;
+
+#if defined(CONFIG_CMD_BOOTD)
+	/* avoid "bootd" recursion */
+	else if (cmdtp->cmd == do_bootd) {
+		if (flag & CMD_FLAG_BOOTD) {
+			puts("'bootd' recursion detected\n");
+			rc = CMD_RET_FAILURE;
+		} else {
+			flag |= CMD_FLAG_BOOTD;
+		}
+	}
+#endif
+
+	/* If OK so far, then do the command */
+	if (!rc) {
+		if (ticks)
+			*ticks = get_timer(0);
+		rc = cmd_call(cmdtp, flag, argc, argv);
+		if (ticks)
+			*ticks = get_timer(*ticks);
+		*repeatable &= cmdtp->repeatable;
+	}
+	if (rc == CMD_RET_USAGE)
+		rc = cmd_usage(cmdtp);
+	return rc;
+}

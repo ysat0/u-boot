@@ -618,7 +618,7 @@ static ed_t * ep_add_ed (struct usb_device *usb_dev, unsigned long pipe)
 			| usb_pipeendpoint (pipe) << 7
 			| (usb_pipeisoc (pipe)? 0x8000: 0)
 			| (usb_pipecontrol (pipe)? 0: (usb_pipeout (pipe)? 0x800: 0x1000))
-			| usb_pipeslow (pipe) << 13
+			| (usb_dev->speed == USB_SPEED_LOW) << 13
 			| usb_maxpacket (usb_dev, pipe) << 16);
 
 	return ed_ret;
@@ -1269,7 +1269,7 @@ int submit_common_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 		}
 
 		if (--timeout) {
-			wait_ms(1);
+			mdelay(1);
 			if (!urb_finished)
 				dbg("\%");
 
@@ -1372,7 +1372,7 @@ static int hc_reset (ohci_t *ohci)
 		writel (OHCI_OCR, &ohci->regs->cmdstatus); /* request ownership */
 		info("USB HC TakeOver from SMM");
 		while (readl (&ohci->regs->control) & OHCI_CTRL_IR) {
-			wait_ms (10);
+			mdelay (10);
 			if (--smm_timeout == 0) {
 				err("USB HC TakeOver failed!");
 				return -1;
@@ -1529,7 +1529,7 @@ hc_interrupt (void)
 	/* FIXME:  this assumes SOF (1/ms) interrupts don't get lost... */
 	if (ints & OHCI_INTR_SF) {
 		unsigned int frame = ohci_cpu_to_le16 (ohci->hcca->frame_no) & 1;
-		wait_ms(1);
+		mdelay(1);
 		writel (OHCI_INTR_SF, &regs->intrdisable);
 		if (ohci->ed_rm_list[frame] != NULL)
 			writel (OHCI_INTR_SF, &regs->intrenable);
@@ -1561,7 +1561,7 @@ static void hc_release_ohci (ohci_t *ohci)
  */
 static char ohci_inited = 0;
 
-int usb_lowlevel_init(void)
+int usb_lowlevel_init(int index, void **controller)
 {
 
 	/* Set the USB Clock						     */
@@ -1629,7 +1629,7 @@ int usb_lowlevel_init(void)
 	return 0;
 }
 
-int usb_lowlevel_stop(void)
+int usb_lowlevel_stop(int index)
 {
 	/* this gets called really early - before the controller has */
 	/* even been initialized! */

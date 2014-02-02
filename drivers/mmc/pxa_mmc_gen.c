@@ -30,12 +30,12 @@
 #include <asm/io.h>
 
 /* PXAMMC Generic default config for various CPUs */
-#if defined(CONFIG_PXA250)
+#if defined(CONFIG_CPU_PXA25X)
 #define PXAMMC_FIFO_SIZE	1
 #define PXAMMC_MIN_SPEED	312500
 #define PXAMMC_MAX_SPEED	20000000
 #define PXAMMC_HOST_CAPS	(0)
-#elif defined(CONFIG_PXA27X)
+#elif defined(CONFIG_CPU_PXA27X)
 #define PXAMMC_CRC_SKIP
 #define PXAMMC_FIFO_SIZE	32
 #define PXAMMC_MIN_SPEED	304000
@@ -118,7 +118,7 @@ static int pxa_mmc_start_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	int ret;
 
 	/* The card can send a "busy" response */
-	if (cmd->flags & MMC_RSP_BUSY)
+	if (cmd->resp_type & MMC_RSP_BUSY)
 		cmdat |= MMC_CMDAT_BUSY;
 
 	/* Inform the controller about response type */
@@ -181,9 +181,11 @@ static int pxa_mmc_cmd_done(struct mmc *mmc, struct mmc_cmd *cmd)
 	/* The command response didn't arrive */
 	if (stat & MMC_STAT_TIME_OUT_RESPONSE)
 		return -ETIMEDOUT;
-	else if (stat & MMC_STAT_RES_CRC_ERROR && cmd->flags & MMC_RSP_CRC) {
+	else if (stat & MMC_STAT_RES_CRC_ERROR
+			&& cmd->resp_type & MMC_RSP_CRC) {
 #ifdef	PXAMMC_CRC_SKIP
-		if (cmd->flags & MMC_RSP_136 && cmd->response[0] & (1 << 31))
+		if (cmd->resp_type & MMC_RSP_136
+				&& cmd->response[0] & (1 << 31))
 			printf("Ignoring CRC, this may be dangerous!\n");
 		else
 #endif
@@ -411,6 +413,7 @@ int pxa_mmc_register(int card_index)
 	mmc->send_cmd	= pxa_mmc_request;
 	mmc->set_ios	= pxa_mmc_set_ios;
 	mmc->init	= pxa_mmc_init;
+	mmc->getcd	= NULL;
 
 	mmc->voltages	= MMC_VDD_32_33 | MMC_VDD_33_34;
 	mmc->f_max	= PXAMMC_MAX_SPEED;

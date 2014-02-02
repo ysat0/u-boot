@@ -144,10 +144,9 @@
 #endif
 #define CONFIG_SYS_FPGA_BASE		0xFF000000
 
+#define CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define NAND_MAX_CHIPS			1
 #define CONFIG_MTD_NAND_VERIFY_WRITE
-#define CONFIG_CMD_NAND			1
 #define CONFIG_NAND_FSL_ELBC		1
 
 #define CONFIG_SYS_NAND_BR_PRELIM	(CONFIG_SYS_NAND_BASE \
@@ -243,7 +242,6 @@
 
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
 /* I2C */
 #define CONFIG_HARD_I2C		/* I2C with hardware support*/
@@ -539,19 +537,21 @@
 #define CONFIG_BOOTCOMMAND	"nand read $loadaddr kernel 600000;" \
 					"bootm $loadaddr - $fdtaddr"
 
-#define XMK_STR(x)	#x
-#define MK_STR(x)	XMK_STR(x)
-
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"netdev=" CONFIG_NETDEV "\0"					\
 	"ethprime=TSEC1\0"						\
 	"uboot=" CONFIG_UBOOTPATH "\0"					\
 	"tftpflash=tftpboot $loadaddr $uboot; "				\
-		"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; " \
-		"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
-		"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; " \
-		"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; " \
-		"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0" \
+		"protect off " __stringify(CONFIG_SYS_TEXT_BASE)	\
+			" +$filesize; "	\
+		"erase " __stringify(CONFIG_SYS_TEXT_BASE)		\
+			" +$filesize; "	\
+		"cp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
+			" $filesize; "	\
+		"protect on " __stringify(CONFIG_SYS_TEXT_BASE)		\
+			" +$filesize; "	\
+		"cmp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
+			" $filesize\0"	\
 	"fdtaddr=ae0000\0"						\
 	"fdtfile=" CONFIG_FDTFILE "\0"					\
 	"console=ttyS0\0"						\
@@ -593,8 +593,5 @@
 	"tftp $loadaddr $bootfile;"					\
 	"tftp $fdtaddr $fdtfile;"					\
 	"bootm $loadaddr $ramdiskaddr $fdtaddr"
-
-#undef MK_STR
-#undef XMK_STR
 
 #endif	/* __CONFIG_H */

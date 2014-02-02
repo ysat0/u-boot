@@ -28,40 +28,12 @@
  * MA 02111-1307 USA
  */
 #include <common.h>
+#include <spl.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/sizes.h>
 #include <asm/emif.h>
-#include <asm/omap_common.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-/*
- * This is used to verify if the configuration header
- * was executed by rom code prior to control of transfer
- * to the bootloader. SPL is responsible for saving and
- * passing the boot_params pointer to the u-boot.
- */
-struct omap_boot_parameters boot_params __attribute__ ((section(".data")));
-
-#ifdef CONFIG_SPL_BUILD
-/*
- * We use static variables because global data is not ready yet.
- * Initialized data is available in SPL right from the beginning.
- * We would not typically need to save these parameters in regular
- * U-Boot. This is needed only in SPL at the moment.
- */
-u32 omap_bootmode = MMCSD_MODE_FAT;
-
-u32 omap_boot_device(void)
-{
-	return (u32) (boot_params.omap_bootdevice);
-}
-
-u32 omap_boot_mode(void)
-{
-	return omap_bootmode;
-}
-#endif
 
 void do_set_mux(u32 base, struct pad_conf_entry const *array, int size)
 {
@@ -104,14 +76,14 @@ u32 cortex_rev(void)
 	return rev;
 }
 
-void omap_rev_string(char *omap_rev_string)
+void omap_rev_string(void)
 {
 	u32 omap_rev = omap_revision();
 	u32 omap_variant = (omap_rev & 0xFFFF0000) >> 16;
 	u32 major_rev = (omap_rev & 0x00000F00) >> 8;
 	u32 minor_rev = (omap_rev & 0x000000F0) >> 4;
 
-	sprintf(omap_rev_string, "OMAP%x ES%x.%x", omap_variant, major_rev,
+	printf("OMAP%x ES%x.%x\n", omap_variant, major_rev,
 		minor_rev);
 }
 
@@ -119,6 +91,11 @@ void omap_rev_string(char *omap_rev_string)
 static void init_boot_params(void)
 {
 	boot_params_ptr = (u32 *) &boot_params;
+}
+
+void spl_display_print(void)
+{
+	omap_rev_string();
 }
 #endif
 
@@ -139,15 +116,24 @@ static void init_boot_params(void)
 void s_init(void)
 {
 	init_omap_revision();
+#ifdef CONFIG_SPL_BUILD
+	if (warm_reset() && (omap_revision() <= OMAP5430_ES1_0))
+		force_emif_self_refresh();
+#endif
 	watchdog_init();
 	set_mux_conf_regs();
 #ifdef CONFIG_SPL_BUILD
 	setup_clocks_for_console();
+
+	gd = &gdata;
+
 	preloader_console_init();
 	do_io_settings();
 #endif
 	prcm_init();
 #ifdef CONFIG_SPL_BUILD
+	timer_init();
+
 	/* For regular u-boot sdram_init() is called from dram_init() */
 	sdram_init();
 	init_boot_params();
@@ -188,11 +174,16 @@ void watchdog_init(void)
  */
 u32 omap_sdram_size(void)
 {
-	u32 section, i, total_size = 0, size, addr;
+	u32 section, i, valid;
+	u64 sdram_start = 0, sdram_end = 0, addr,
+	    size, total_size = 0, trap_size = 0;
 
 	for (i = 0; i < 4; i++) {
 		section	= __raw_readl(DMM_BASE + i*4);
+		valid = (section & EMIF_SDRC_ADDRSPC_MASK) >>
+			(EMIF_SDRC_ADDRSPC_SHIFT);
 		addr = section & EMIF_SYS_ADDR_MASK;
+
 		/* See if the address is valid */
 		if ((addr >= DRAM_ADDR_SPACE_START) &&
 		    (addr < DRAM_ADDR_SPACE_END)) {
@@ -200,9 +191,20 @@ u32 omap_sdram_size(void)
 				   EMIF_SYS_SIZE_SHIFT);
 			size = 1 << size;
 			size *= SZ_16M;
-			total_size += size;
+
+			if (valid != DMM_SDRC_ADDR_SPC_INVALID) {
+				if (!sdram_start || (addr < sdram_start))
+					sdram_start = addr;
+				if (!sdram_end || ((addr + size) > sdram_end))
+					sdram_end = addr + size;
+			} else {
+				trap_size = size;
+			}
+
 		}
+
 	}
+	total_size = (sdram_end - sdram_start) - (trap_size);
 
 	return total_size;
 }
@@ -229,21 +231,15 @@ int checkboard(void)
 }
 
 /*
-* This function is called by start_armboot. You can reliably use static
-* data. Any boot-time function that require static data should be
-* called from here
-*/
-int arch_cpu_init(void)
-{
-	return 0;
-}
-
-/*
  *  get_device_type(): tell if GP/HS/EMU/TST
  */
 u32 get_device_type(void)
 {
-	return 0;
+	struct omap_sys_ctrl_regs *ctrl =
+		      (struct omap_sys_ctrl_regs *) SYSCTRL_GENERAL_CORE_BASE;
+
+	return (readl(&ctrl->control_status) &
+				      (DEVICE_TYPE_MASK)) >> DEVICE_TYPE_SHIFT;
 }
 
 /*
@@ -251,10 +247,8 @@ u32 get_device_type(void)
  */
 int print_cpuinfo(void)
 {
-	char rev_string_buffer[50];
-
-	omap_rev_string(rev_string_buffer);
-	printf("CPU  : %s\n", rev_string_buffer);
+	puts("CPU  : ");
+	omap_rev_string();
 
 	return 0;
 }

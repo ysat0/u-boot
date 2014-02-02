@@ -68,6 +68,15 @@ static char *mdio_names[16] = {
 	NULL, NULL, NULL,
 };
 
+/*
+ * Mapping of all 18 SERDES lanes to board slots. A value of '0' here means
+ * that the mapping must be determined dynamically, or that the lane maps to
+ * something other than a board slot.
+ */
+static u8 lane_to_slot[] = {
+	1, 1, 2, 2, 3, 3, 3, 3, 6, 6, 4, 4, 4, 4, 5, 5, 5, 5
+};
+
 static char *p4080ds_mdio_name_for_muxval(u32 muxval)
 {
 	return mdio_names[(muxval & EMI_MASK) >> 28];
@@ -96,6 +105,8 @@ struct mii_dev *mii_dev_for_muxval(u32 muxval)
 #if defined(CONFIG_SYS_P4080_ERRATUM_SERDES9) && defined(CONFIG_PHY_TERANETICS)
 int board_phy_config(struct phy_device *phydev)
 {
+	if (phydev->drv->config)
+		phydev->drv->config(phydev);
 	if (phydev->drv->uid == PHY_UID_TN2020) {
 		unsigned long timeout = 1 * 1000; /* 1 seconds */
 		enum srds_prtcl device;
@@ -288,15 +299,6 @@ void fdt_fixup_board_enet(void *fdt)
 	}
 }
 
-enum board_slots {
-	SLOT1 = 1,
-	SLOT2,
-	SLOT3,
-	SLOT4,
-	SLOT5,
-	SLOT6,
-};
-
 int board_eth_init(bd_t *bis)
 {
 #ifdef CONFIG_FMAN_ENET
@@ -304,27 +306,6 @@ int board_eth_init(bd_t *bis)
 	int i;
 	struct fsl_pq_mdio_info dtsec_mdio_info;
 	struct tgec_mdio_info tgec_mdio_info;
-
-	u8 lane_to_slot[] = {
-		SLOT1, /* 0 - Bank 1:A */
-		SLOT1, /* 1 - Bank 1:B */
-		SLOT2, /* 2 - Bank 1:C */
-		SLOT2, /* 3 - Bank 1:D */
-		SLOT3, /* 4 - Bank 1:E */
-		SLOT3, /* 5 - Bank 1:F */
-		SLOT3, /* 6 - Bank 1:G */
-		SLOT3, /* 7 - Bank 1:H */
-		SLOT6, /* 8 - Bank 1:I */
-		SLOT6, /* 9 - Bank 1:J */
-		SLOT4, /* 10 - Bank 2:A */
-		SLOT4, /* 11 - Bank 2:B */
-		SLOT4, /* 12 - Bank 2:C */
-		SLOT4, /* 13 - Bank 2:D */
-		SLOT5, /* 14 - Bank 3:A */
-		SLOT5, /* 15 - Bank 3:B */
-		SLOT5, /* 16 - Bank 3:C */
-		SLOT5, /* 17 - Bank 3:D */
-	};
 
 	/* Initialize the mdio_mux array so we can recognize empty elements */
 	for (i = 0; i < NUM_FM_PORTS; i++)
@@ -378,17 +359,17 @@ int board_eth_init(bd_t *bis)
 				break;
 			slot = lane_to_slot[lane];
 			switch (slot) {
-			case SLOT3:
+			case 3:
 				mdio_mux[i] = EMI1_SLOT3;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
 				break;
-			case SLOT4:
+			case 4:
 				mdio_mux[i] = EMI1_SLOT4;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
 				break;
-			case SLOT5:
+			case 5:
 				mdio_mux[i] = EMI1_SLOT5;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
@@ -415,12 +396,12 @@ int board_eth_init(bd_t *bis)
 				break;
 			slot = lane_to_slot[lane];
 			switch (slot) {
-			case SLOT4:
+			case 4:
 				mdio_mux[i] = EMI2_SLOT4;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
 				break;
-			case SLOT5:
+			case 5:
 				mdio_mux[i] = EMI2_SLOT5;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
@@ -442,17 +423,17 @@ int board_eth_init(bd_t *bis)
 				break;
 			slot = lane_to_slot[lane];
 			switch (slot) {
-			case SLOT3:
+			case 3:
 				mdio_mux[i] = EMI1_SLOT3;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
 				break;
-			case SLOT4:
+			case 4:
 				mdio_mux[i] = EMI1_SLOT4;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
 				break;
-			case SLOT5:
+			case 5:
 				mdio_mux[i] = EMI1_SLOT5;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
@@ -479,12 +460,12 @@ int board_eth_init(bd_t *bis)
 				break;
 			slot = lane_to_slot[lane];
 			switch (slot) {
-			case SLOT4:
+			case 4:
 				mdio_mux[i] = EMI2_SLOT4;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));
 				break;
-			case SLOT5:
+			case 5:
 				mdio_mux[i] = EMI2_SLOT5;
 				fm_info_set_mdio(i,
 					mii_dev_for_muxval(mdio_mux[i]));

@@ -35,6 +35,7 @@
 #include <asm/io.h>
 #include <malloc.h>
 #include <ata.h>
+#include <sata.h>
 #include <linux/ctype.h>
 
 #include "sata_dwc.h"
@@ -267,8 +268,6 @@ static int sata_dwc_softreset(struct ata_port *ap);
 static int ata_dev_read_id(struct ata_device *dev, unsigned int *p_class,
 		unsigned int flags, u16 *id);
 static int check_sata_dev_state(void);
-
-extern block_dev_desc_t sata_dev_desc[CONFIG_SYS_SATA_MAX_DEVICE];
 
 static const struct ata_port_info sata_dwc_port_info[] = {
 	{
@@ -532,7 +531,7 @@ int scan_sata(int dev)
 	u8 status;
 	const u16 *id;
 	struct ata_device *ata_dev = &ata_device;
-	unsigned long pio_mask, mwdma_mask, udma_mask;
+	unsigned long pio_mask, mwdma_mask;
 	char revbuf[7];
 	u16 iobuf[ATA_SECTOR_WORDS];
 
@@ -621,10 +620,6 @@ int scan_sata(int dev)
 		if (dma > 1)
 			mwdma_mask |= (1 << 4);
 	}
-
-	udma_mask = 0;
-	if (id[ATA_ID_FIELD_VALID] & (1 << 2))
-		udma_mask = id[ATA_ID_UDMA_MODES] & 0xff;
 
 	if (ata_dev->class == ATA_DEV_ATA) {
 		if (ata_id_is_cfa(id)) {
@@ -1911,7 +1906,7 @@ err_out:
 #define SATA_MAX_WRITE_BLK 0xFFFF
 #endif
 
-ulong sata_write(int device, ulong blknr, lbaint_t blkcnt, void *buffer)
+ulong sata_write(int device, ulong blknr, lbaint_t blkcnt, const void *buffer)
 {
 	ulong start,blks, buf_addr;
 	unsigned short smallblks;

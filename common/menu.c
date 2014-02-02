@@ -87,10 +87,12 @@ static inline void *menu_item_print(struct menu *m,
 				struct menu_item *item,
 				void *extra)
 {
-	if (!m->item_data_print)
-		printf("%s\n", item->key);
-	else
+	if (!m->item_data_print) {
+		puts(item->key);
+		putc('\n');
+	} else {
 		m->item_data_print(item->data);
+	}
 
 	return NULL;
 }
@@ -111,14 +113,24 @@ static inline void *menu_item_destroy(struct menu *m,
 	return NULL;
 }
 
+void __menu_display_statusline(struct menu *m)
+{
+	return;
+}
+void menu_display_statusline(struct menu *m)
+	__attribute__ ((weak, alias("__menu_display_statusline")));
+
 /*
  * Display a menu so the user can make a choice of an item. First display its
  * title, if any, and then each item in the menu.
  */
 static inline void menu_display(struct menu *m)
 {
-	if (m->title)
-		printf("%s:\n", m->title);
+	if (m->title) {
+		puts(m->title);
+		putc('\n');
+	}
+	menu_display_statusline(m);
 
 	menu_items_iter(m, menu_item_print, NULL);
 }
@@ -159,32 +171,6 @@ static inline struct menu_item *menu_item_by_key(struct menu *m,
 }
 
 /*
- * Wait for the user to hit a key according to the timeout set for the menu.
- * Returns 1 if the user hit a key, or 0 if the timeout expired.
- */
-static inline int menu_interrupted(struct menu *m)
-{
-	if (!m->timeout)
-		return 0;
-
-	if (abortboot(m->timeout/10))
-		return 1;
-
-	return 0;
-}
-
-/*
- * Checks whether or not the default menu item should be used without
- * prompting for a user choice. If the menu is set to always prompt, or the
- * user hits a key during the timeout period, return 0. Otherwise, return 1 to
- * indicate we should use the default menu item.
- */
-static inline int menu_use_default(struct menu *m)
-{
-	return !m->prompt && !menu_interrupted(m);
-}
-
-/*
  * Set *choice to point to the default item's data, if any default item was
  * set, and returns 1. If no default item was set, returns -ENOENT.
  */
@@ -218,17 +204,18 @@ static inline int menu_interactive_choice(struct menu *m, void **choice)
 
 		menu_display(m);
 
-		readret = readline_into_buffer("Enter choice: ", cbuf);
+		readret = readline_into_buffer("Enter choice: ", cbuf,
+				m->timeout / 10);
 
 		if (readret >= 0) {
 			choice_item = menu_item_by_key(m, cbuf);
 
-			if (!choice_item)
+			if (!choice_item) {
 				printf("%s not found\n", cbuf);
-		} else {
-			printf("^C\n");
-			return -EINTR;
-		}
+				m->timeout = 0;
+			}
+		} else
+			return menu_default_choice(m, choice);
 	}
 
 	*choice = choice_item->data;
@@ -285,7 +272,7 @@ int menu_get_choice(struct menu *m, void **choice)
 	if (!m || !choice)
 		return -EINVAL;
 
-	if (menu_use_default(m))
+	if (!m->prompt)
 		return menu_default_choice(m, choice);
 
 	return menu_interactive_choice(m, choice);

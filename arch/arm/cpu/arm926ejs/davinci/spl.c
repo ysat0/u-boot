@@ -21,12 +21,20 @@
  * MA 02111-1307 USA
  */
 #include <common.h>
+#include <config.h>
+#include <spl.h>
 #include <asm/u-boot.h>
 #include <asm/utils.h>
 #include <nand.h>
 #include <asm/arch/dm365_lowlevel.h>
 #include <ns16550.h>
+#include <malloc.h>
+#include <spi_flash.h>
+#include <mmc.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
+#ifndef CONFIG_SPL_LIBCOMMON_SUPPORT
 void puts(const char *str)
 {
 	while (*str)
@@ -40,24 +48,49 @@ void putc(char c)
 
 	NS16550_putc((NS16550_t)(CONFIG_SYS_NS16550_COM1), c);
 }
-
-inline void hang(void)
-{
-	puts("### ERROR ### Please RESET the board ###\n");
-	for (;;)
-		;
-}
+#endif /* CONFIG_SPL_LIBCOMMON_SUPPORT */
 
 void board_init_f(ulong dummy)
 {
+	/* First, setup our stack pointer. */
+	asm volatile("mov sp, %0\n" : : "r"(CONFIG_SPL_STACK));
+
+	/* Second, perform our low-level init. */
+#ifdef CONFIG_SOC_DM365
 	dm36x_lowlevel_init(0);
-	relocate_code(CONFIG_SPL_STACK, NULL, CONFIG_SPL_TEXT_BASE);
+#endif
+#ifdef CONFIG_SOC_DA8XX
+	arch_cpu_init();
+#endif
+
+	/* Third, we clear the BSS. */
+	memset(__bss_start, 0, __bss_end__ - __bss_start);
+
+	/* Finally, setup gd and move to the next step. */
+	gd = &gdata;
+	board_init_r(NULL, 0);
 }
 
-void board_init_r(gd_t *id, ulong dummy)
+void spl_board_init(void)
 {
+	preloader_console_init();
+}
 
-	nand_init();
-	puts("Nand boot...\n");
-	nand_boot();
+u32 spl_boot_mode(void)
+{
+	return MMCSD_MODE_RAW;
+}
+
+u32 spl_boot_device(void)
+{
+#ifdef CONFIG_SPL_NAND_SIMPLE
+	return BOOT_DEVICE_NAND;
+#elif defined(CONFIG_SPL_SPI_LOAD)
+	return BOOT_DEVICE_SPI;
+#elif defined(CONFIG_SPL_MMC_LOAD)
+	return BOOT_DEVICE_MMC1;
+#else
+	puts("Unknown boot device\n");
+	hang();
+#endif
 }

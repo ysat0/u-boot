@@ -49,8 +49,6 @@
 /* input clock of PLL (VCMA9 has 12MHz input clock) */
 #define CONFIG_SYS_CLK_FREQ	12000000
 
-#undef CONFIG_USE_IRQ		/* we don't need IRQ/FIQ stuff */
-
 #define CONFIG_CMDLINE_TAG	/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
@@ -83,7 +81,6 @@
 #define CONFIG_BOARD_LATE_INIT
 
 #define CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 #define CONFIG_CMDLINE_EDITING
 
 /*
@@ -127,6 +124,7 @@
 
 /* USB support (currently only works with D-cache off) */
 #define CONFIG_USB_OHCI
+#define CONFIG_USB_OHCI_S3C24XX
 #define CONFIG_USB_KEYBOARD
 #define CONFIG_USB_STORAGE
 #define CONFIG_DOS_PARTITION
@@ -169,8 +167,7 @@
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
-/* to be activated as soon as s3c24x0 has print_cpuinfo support */
-/*#define CONFIG_DISPLAY_CPUINFO*/			/* Display cpu info */
+#define CONFIG_DISPLAY_CPUINFO				/* Display cpu info */
 #define CONFIG_DISPLAY_BOARDINFO			/* Display board info */
 
 #define CONFIG_SYS_MEMTEST_START	0x30000000	/* memtest works on */
@@ -182,9 +179,6 @@
 /* we configure PWM Timer 4 to 1ms 1000Hz  */
 #define CONFIG_SYS_HZ			1000
 
-/* valid baudrates */
-#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
-
 /* support additional compression methods */
 #define CONFIG_BZIP2
 #define CONFIG_LZO
@@ -195,16 +189,6 @@
 #define VERSION_TAG "unstable"
 #define CONFIG_IDENT_STRING "\n(c) 2003 - 2011 by MPL AG Switzerland, " \
 			    "MEV-10080-001 " VERSION_TAG
-
-/*
- * Stack sizes
- * The stack sizes are set up in start.S using the settings below
- */
-#define CONFIG_STACKSIZE	(128 * 1024)	/* regular stack */
-#ifdef CONFIG_USE_IRQ
-#define CONFIG_STACKSIZE_IRQ	(4 * 1024)	/* IRQ stack */
-#define CONFIG_STACKSIZE_FIQ	(4 * 1024)	/* FIQ stack */
-#endif
 
 /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS	1		/* we have 1 bank of DRAM */
@@ -237,7 +221,6 @@
 #define CONFIG_NAND_S3C2410
 #define CONFIG_SYS_S3C2410_NAND_HWECC
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define NAND_MAX_CHIPS			1
 #define CONFIG_SYS_NAND_BASE		0x4E000000
 #define CONFIG_S3C24XX_CUSTOM_NAND_TIMING
 #define CONFIG_S3C24XX_TACLS		1

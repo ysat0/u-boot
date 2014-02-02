@@ -49,6 +49,7 @@
 
 .globl	lowlevel_init
 lowlevel_init:
+#ifdef CONFIG_SOC_DM644X
 
 	/*-------------------------------------------------------*
 	 * Mask all IRQs by setting all bits in the EINT default *
@@ -522,9 +523,8 @@ VTPLock:
 
 	ldr	r6, DDRVTPR
 	ldr	r7, [r6]
-	and	r7, r7, $0x1f
-	and	r8, r7, $0x3e0
-	orr	r8, r7, r8
+	mov	r8, r7, LSL #32-10
+	mov	r8, r8, LSR #32-10        /* grab low 10 bits  */
 	ldr	r7, VTP_RECAL
 	orr	r8, r7, r8
 	ldr	r7, VTP_EN
@@ -643,7 +643,7 @@ VTP_LOCK_COUNT:
 VTP_MASK:
 	.word	0xffffdfff
 VTP_RECAL:
-	.word	0x40000
+	.word	0x08000
 VTP_EN:
 	.word	0x02000
 CFGTEST:
@@ -707,3 +707,6 @@ DDR2_START_ADDR:
 	.word	0x80000000
 DUMMY_VAL:
 	.word	0xa55aa55a
+#else /* CONFIG_SOC_DM644X */
+	mov pc, lr
+#endif

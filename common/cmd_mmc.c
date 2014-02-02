@@ -32,7 +32,7 @@ int do_mmc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int dev;
 
 	if (argc < 2)
-		return cmd_usage(cmdtp);
+		return CMD_RET_USAGE;
 
 	if (strcmp(argv[1], "init") == 0) {
 		if (argc == 2) {
@@ -43,7 +43,7 @@ int do_mmc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		} else if (argc == 3) {
 			dev = (int)simple_strtoul(argv[2], NULL, 10);
 		} else {
-			return cmd_usage(cmdtp);
+			return CMD_RET_USAGE;
 		}
 
 		if (mmc_legacy_init(dev) != 0) {
@@ -68,12 +68,12 @@ int do_mmc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 			curr_device = dev;
 		} else {
-			return cmd_usage(cmdtp);
+			return CMD_RET_USAGE;
 		}
 
 		printf("mmc%d is current device\n", curr_device);
 	} else {
-		return cmd_usage(cmdtp);
+		return CMD_RET_USAGE;
 	}
 
 	return 0;
@@ -115,7 +115,7 @@ static void print_mmcinfo(struct mmc *mmc)
 	printf("Bus Width: %d-bit\n", mmc->bus_width);
 }
 
-int do_mmcinfo (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mmcinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct mmc *mmc;
 
@@ -144,16 +144,15 @@ int do_mmcinfo (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	mmcinfo, 1, 0, do_mmcinfo,
 	"display MMC info",
-	"    - device number of the device to dislay info of\n"
-	""
+	"- display info of the current MMC device"
 );
 
-int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	enum mmc_state state;
 
 	if (argc < 2)
-		return cmd_usage(cmdtp);
+		return CMD_RET_USAGE;
 
 	if (curr_device < 0) {
 		if (get_mmc_num() > 0)
@@ -216,7 +215,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				return 1;
 			}
 		} else
-			return cmd_usage(cmdtp);
+			return CMD_RET_USAGE;
 
 		mmc = find_mmc_device(dev);
 		if (!mmc) {
@@ -251,14 +250,13 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return 0;
 	}
 
-	if (strcmp(argv[1], "read") == 0)
+	state = MMC_INVALID;
+	if (argc == 5 && strcmp(argv[1], "read") == 0)
 		state = MMC_READ;
-	else if (strcmp(argv[1], "write") == 0)
+	else if (argc == 5 && strcmp(argv[1], "write") == 0)
 		state = MMC_WRITE;
-	else if (strcmp(argv[1], "erase") == 0)
+	else if (argc == 4 && strcmp(argv[1], "erase") == 0)
 		state = MMC_ERASE;
-	else
-		state = MMC_INVALID;
 
 	if (state != MMC_INVALID) {
 		struct mmc *mmc = find_mmc_device(curr_device);
@@ -270,7 +268,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			addr = (void *)simple_strtoul(argv[idx], NULL, 16);
 			++idx;
 		} else
-			addr = 0;
+			addr = NULL;
 		blk = simple_strtoul(argv[idx], NULL, 16);
 		cnt = simple_strtoul(argv[idx + 1], NULL, 16);
 
@@ -307,7 +305,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return (n == cnt) ? 0 : 1;
 	}
 
-	return cmd_usage(cmdtp);
+	return CMD_RET_USAGE;
 }
 
 U_BOOT_CMD(

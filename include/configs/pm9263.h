@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2007-2008
- * Stelian Pop <stelian.pop@leadtechdesign.com>
+ * Stelian Pop <stelian@popies.net>
  * Lead Tech Design <www.leadtechdesign.com>
  * Ilko Iliev <www.ronetix.at>
  *
@@ -49,7 +49,6 @@
 #define CONFIG_SYS_AT91_CPU_NAME	"AT91SAM9263"
 #define CONFIG_PM9263		1	/* on a Ronetix PM9263 Board	*/
 #define CONFIG_ARCH_CPU_INIT
-#undef CONFIG_USE_IRQ			/* we don't need IRQ/FIQ stuff	*/
 #define CONFIG_SYS_TEXT_BASE	0
 
 #define MACH_TYPE_PM9263	1475
@@ -172,6 +171,7 @@
 
 #undef CONFIG_SKIP_LOWLEVEL_INIT
 #define CONFIG_USER_LOWLEVEL_INIT	1
+#define CONFIG_BOARD_EARLY_INIT_F
 
 /*
  * Hardware drivers
@@ -252,7 +252,6 @@
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
 #define CONFIG_NAND_ATMEL
-#define CONFIG_SYS_NAND_MAX_CHIPS	1
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x40000000
 #define CONFIG_SYS_NAND_DBW_8		1
@@ -394,7 +393,6 @@
 #endif
 
 #define CONFIG_BAUDRATE			115200
-#define CONFIG_SYS_BAUDRATE_TABLE	{115200 , 19200, 38400, 57600, 9600 }
 
 #define CONFIG_SYS_PROMPT		"u-boot-pm9263> "
 #define CONFIG_SYS_CBSIZE		256
@@ -412,11 +410,5 @@
 #define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM
 #define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x1000 - \
 				GENERATED_GBL_DATA_SIZE)
-
-#define CONFIG_STACKSIZE		(32 * 1024)	/* regular stack */
-
-#ifdef CONFIG_USE_IRQ
-#error CONFIG_USE_IRQ not supported
-#endif
 
 #endif

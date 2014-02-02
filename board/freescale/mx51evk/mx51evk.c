@@ -29,19 +29,22 @@
 #include <asm/errno.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/crm_regs.h>
+#include <asm/arch/clock.h>
+#include <asm/imx-common/mx5_video.h>
 #include <i2c.h>
 #include <mmc.h>
 #include <fsl_esdhc.h>
-#include <pmic.h>
+#include <power/pmic.h>
 #include <fsl_pmic.h>
 #include <mc13892.h>
+#include <usb/ehci-fsl.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_FSL_ESDHC
 struct fsl_esdhc_cfg esdhc_cfg[2] = {
-	{MMC_SDHC1_BASE_ADDR, 1},
-	{MMC_SDHC2_BASE_ADDR, 1},
+	{MMC_SDHC1_BASE_ADDR},
+	{MMC_SDHC2_BASE_ADDR},
 };
 #endif
 
@@ -51,6 +54,14 @@ int dram_init(void)
 	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
 				PHYS_SDRAM_1_SIZE);
 	return 0;
+}
+
+u32 get_board_rev(void)
+{
+	u32 rev = get_cpu_rev();
+	if (!gpio_get_value(IMX_GPIO_NR(1, 22)))
+		rev |= BOARD_REV_2_0 << BOARD_VER_OFFSET;
+	return rev;
 }
 
 static void setup_iomux_uart(void)
@@ -172,14 +183,79 @@ static void setup_iomux_spi(void)
 }
 #endif
 
+#ifdef CONFIG_USB_EHCI_MX5
+#define MX51EVK_USBH1_HUB_RST	IOMUX_TO_GPIO(MX51_PIN_GPIO1_7) /* GPIO1_7 */
+#define MX51EVK_USBH1_STP	IOMUX_TO_GPIO(MX51_PIN_USBH1_STP) /* GPIO1_27 */
+#define MX51EVK_USB_CLK_EN_B	IOMUX_TO_GPIO(MX51_PIN_EIM_D18) /* GPIO2_1 */
+#define MX51EVK_USB_PHY_RESET	IOMUX_TO_GPIO(MX51_PIN_EIM_D21) /* GPIO2_5 */
+
+#define USBH1_PAD	(PAD_CTL_SRE_FAST | PAD_CTL_DRV_HIGH |		\
+			 PAD_CTL_100K_PU | PAD_CTL_PUE_PULL |		\
+			 PAD_CTL_PKE_ENABLE | PAD_CTL_HYS_ENABLE)
+#define GPIO_PAD	(PAD_CTL_DRV_HIGH | PAD_CTL_PKE_ENABLE |	\
+			 PAD_CTL_SRE_FAST)
+#define NO_PAD		(1 << 16)
+
+static void setup_usb_h1(void)
+{
+	setup_iomux_usb_h1();
+
+	/* GPIO_1_7 for USBH1 hub reset */
+	mxc_request_iomux(MX51_PIN_GPIO1_7, IOMUX_CONFIG_ALT0);
+	mxc_iomux_set_pad(MX51_PIN_GPIO1_7, NO_PAD);
+
+	/* GPIO_2_1 */
+	mxc_request_iomux(MX51_PIN_EIM_D17, IOMUX_CONFIG_ALT1);
+	mxc_iomux_set_pad(MX51_PIN_EIM_D17, GPIO_PAD);
+
+	/* GPIO_2_5 for USB PHY reset */
+	mxc_request_iomux(MX51_PIN_EIM_D21, IOMUX_CONFIG_ALT1);
+	mxc_iomux_set_pad(MX51_PIN_EIM_D21, GPIO_PAD);
+}
+
+int board_ehci_hcd_init(int port)
+{
+	/* Set USBH1_STP to GPIO and toggle it */
+	mxc_request_iomux(MX51_PIN_USBH1_STP, IOMUX_CONFIG_GPIO);
+	mxc_iomux_set_pad(MX51_PIN_USBH1_STP, USBH1_PAD);
+
+	gpio_direction_output(MX51EVK_USBH1_STP, 0);
+	gpio_direction_output(MX51EVK_USB_PHY_RESET, 0);
+	mdelay(10);
+	gpio_set_value(MX51EVK_USBH1_STP, 1);
+
+	/* Set back USBH1_STP to be function */
+	mxc_request_iomux(MX51_PIN_USBH1_STP, IOMUX_CONFIG_ALT0);
+	mxc_iomux_set_pad(MX51_PIN_USBH1_STP, USBH1_PAD);
+
+	/* De-assert USB PHY RESETB */
+	gpio_set_value(MX51EVK_USB_PHY_RESET, 1);
+
+	/* Drive USB_CLK_EN_B line low */
+	gpio_direction_output(MX51EVK_USB_CLK_EN_B, 0);
+
+	/* Reset USB hub */
+	gpio_direction_output(MX51EVK_USBH1_HUB_RST, 0);
+	mdelay(2);
+	gpio_set_value(MX51EVK_USBH1_HUB_RST, 1);
+	return 0;
+}
+#endif
+
 static void power_init(void)
 {
 	unsigned int val;
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)MXC_CCM_BASE;
 	struct pmic *p;
+	int ret;
 
-	pmic_init();
-	p = get_pmic();
+	ret = pmic_init(I2C_PMIC);
+	if (ret)
+		return;
+
+	p = pmic_get("FSL_PMIC");
+	if (!p)
+		return;
 
 	/* Write needed to Power Gate 2 register */
 	pmic_reg_read(p, REG_POWER_MISC, &val);
@@ -253,30 +329,39 @@ static void power_init(void)
 	pmic_reg_write(p, REG_MODE_1, val);
 
 	mxc_request_iomux(MX51_PIN_EIM_A20, IOMUX_CONFIG_ALT1);
-	gpio_direction_output(46, 0);
+	gpio_direction_output(IMX_GPIO_NR(2, 14), 0);
 
 	udelay(500);
 
-	gpio_set_value(46, 1);
+	gpio_set_value(IMX_GPIO_NR(2, 14), 1);
 }
 
 #ifdef CONFIG_FSL_ESDHC
-int board_mmc_getcd(u8 *cd, struct mmc *mmc)
+int board_mmc_getcd(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	int ret;
+
+	mxc_request_iomux(MX51_PIN_GPIO1_0, IOMUX_CONFIG_ALT1);
+	gpio_direction_input(IMX_GPIO_NR(1, 0));
+	mxc_request_iomux(MX51_PIN_GPIO1_6, IOMUX_CONFIG_ALT0);
+	gpio_direction_input(IMX_GPIO_NR(1, 6));
 
 	if (cfg->esdhc_base == MMC_SDHC1_BASE_ADDR)
-		*cd = gpio_get_value(0);
+		ret = !gpio_get_value(IMX_GPIO_NR(1, 0));
 	else
-		*cd = gpio_get_value(6);
+		ret = !gpio_get_value(IMX_GPIO_NR(1, 6));
 
-	return 0;
+	return ret;
 }
 
 int board_mmc_init(bd_t *bis)
 {
 	u32 index;
 	s32 status = 0;
+
+	esdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
+	esdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 
 	for (index = 0; index < CONFIG_SYS_FSL_ESDHC_NUM;
 			index++) {
@@ -391,6 +476,10 @@ int board_early_init_f(void)
 {
 	setup_iomux_uart();
 	setup_iomux_fec();
+#ifdef CONFIG_USB_EHCI_MX5
+	setup_usb_h1();
+#endif
+	setup_iomux_lcd();
 
 	return 0;
 }
@@ -410,9 +499,19 @@ int board_late_init(void)
 	setup_iomux_spi();
 	power_init();
 #endif
+
 	return 0;
 }
 #endif
+
+/*
+ * Do not overwrite the console
+ * Use always serial for U-Boot console
+ */
+int overwrite_console(void)
+{
+	return 1;
+}
 
 int checkboard(void)
 {

@@ -53,6 +53,62 @@ int mxs_dma_validate_chan(int channel)
 }
 
 /*
+ * Return the address of the command within a descriptor.
+ */
+static unsigned int mxs_dma_cmd_address(struct mxs_dma_desc *desc)
+{
+	return desc->address + offsetof(struct mxs_dma_desc, cmd);
+}
+
+/*
+ * Read a DMA channel's hardware semaphore.
+ *
+ * As used by the MXS platform's DMA software, the DMA channel's hardware
+ * semaphore reflects the number of DMA commands the hardware will process, but
+ * has not yet finished. This is a volatile value read directly from hardware,
+ * so it must be be viewed as immediately stale.
+ *
+ * If the channel is not marked busy, or has finished processing all its
+ * commands, this value should be zero.
+ *
+ * See mxs_dma_append() for details on how DMA command blocks must be configured
+ * to maintain the expected behavior of the semaphore's value.
+ */
+static int mxs_dma_read_semaphore(int channel)
+{
+	struct mxs_apbh_regs *apbh_regs =
+		(struct mxs_apbh_regs *)MXS_APBH_BASE;
+	uint32_t tmp;
+	int ret;
+
+	ret = mxs_dma_validate_chan(channel);
+	if (ret)
+		return ret;
+
+	tmp = readl(&apbh_regs->ch[channel].hw_apbh_ch_sema);
+
+	tmp &= APBH_CHn_SEMA_PHORE_MASK;
+	tmp >>= APBH_CHn_SEMA_PHORE_OFFSET;
+
+	return tmp;
+}
+
+#ifndef	CONFIG_SYS_DCACHE_OFF
+void mxs_dma_flush_desc(struct mxs_dma_desc *desc)
+{
+	uint32_t addr;
+	uint32_t size;
+
+	addr = (uint32_t)desc;
+	size = roundup(sizeof(struct mxs_dma_desc), MXS_DMA_ALIGNMENT);
+
+	flush_dcache_range(addr, addr + size);
+}
+#else
+inline void mxs_dma_flush_desc(struct mxs_dma_desc *desc) {}
+#endif
+
+/*
  * Enable a DMA channel.
  *
  * If the given channel has any DMA descriptors on its active list, this
@@ -61,10 +117,10 @@ int mxs_dma_validate_chan(int channel)
  * This function marks the DMA channel as "busy," whether or not there are any
  * descriptors to process.
  */
-int mxs_dma_enable(int channel)
+static int mxs_dma_enable(int channel)
 {
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
+	struct mxs_apbh_regs *apbh_regs =
+		(struct mxs_apbh_regs *)MXS_APBH_BASE;
 	unsigned int sem;
 	struct mxs_dma_chan *pchan;
 	struct mxs_dma_desc *pdesc;
@@ -132,11 +188,11 @@ int mxs_dma_enable(int channel)
  * state. It is unwise to call this function if there is ANY chance the hardware
  * is still processing a command.
  */
-int mxs_dma_disable(int channel)
+static int mxs_dma_disable(int channel)
 {
 	struct mxs_dma_chan *pchan;
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
+	struct mxs_apbh_regs *apbh_regs =
+		(struct mxs_apbh_regs *)MXS_APBH_BASE;
 	int ret;
 
 	ret = mxs_dma_validate_chan(channel);
@@ -162,10 +218,10 @@ int mxs_dma_disable(int channel)
 /*
  * Resets the DMA channel hardware.
  */
-int mxs_dma_reset(int channel)
+static int mxs_dma_reset(int channel)
 {
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
+	struct mxs_apbh_regs *apbh_regs =
+		(struct mxs_apbh_regs *)MXS_APBH_BASE;
 	int ret;
 
 	ret = mxs_dma_validate_chan(channel);
@@ -179,93 +235,14 @@ int mxs_dma_reset(int channel)
 }
 
 /*
- * Freeze a DMA channel.
- *
- * This function causes the channel to continuously fail arbitration for bus
- * access, which halts all forward progress without losing any state. A call to
- * mxs_dma_unfreeze() will cause the channel to continue its current operation
- * with no ill effect.
- */
-int mxs_dma_freeze(int channel)
-{
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
-	int ret;
-
-	ret = mxs_dma_validate_chan(channel);
-	if (ret)
-		return ret;
-
-	writel(1 << (channel + APBH_CHANNEL_CTRL_FREEZE_CHANNEL_OFFSET),
-		&apbh_regs->hw_apbh_channel_ctrl_set);
-
-	return 0;
-}
-
-/*
- * Unfreeze a DMA channel.
- *
- * This function reverses the effect of mxs_dma_freeze(), enabling the DMA
- * channel to continue from where it was frozen.
- */
-int mxs_dma_unfreeze(int channel)
-{
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
-	int ret;
-
-	ret = mxs_dma_validate_chan(channel);
-	if (ret)
-		return ret;
-
-	writel(1 << (channel + APBH_CHANNEL_CTRL_FREEZE_CHANNEL_OFFSET),
-		&apbh_regs->hw_apbh_channel_ctrl_clr);
-
-	return 0;
-}
-
-/*
- * Read a DMA channel's hardware semaphore.
- *
- * As used by the MXS platform's DMA software, the DMA channel's hardware
- * semaphore reflects the number of DMA commands the hardware will process, but
- * has not yet finished. This is a volatile value read directly from hardware,
- * so it must be be viewed as immediately stale.
- *
- * If the channel is not marked busy, or has finished processing all its
- * commands, this value should be zero.
- *
- * See mxs_dma_append() for details on how DMA command blocks must be configured
- * to maintain the expected behavior of the semaphore's value.
- */
-int mxs_dma_read_semaphore(int channel)
-{
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
-	uint32_t tmp;
-	int ret;
-
-	ret = mxs_dma_validate_chan(channel);
-	if (ret)
-		return ret;
-
-	tmp = readl(&apbh_regs->ch[channel].hw_apbh_ch_sema);
-
-	tmp &= APBH_CHn_SEMA_PHORE_MASK;
-	tmp >>= APBH_CHn_SEMA_PHORE_OFFSET;
-
-	return tmp;
-}
-
-/*
  * Enable or disable DMA interrupt.
  *
  * This function enables the given DMA channel to interrupt the CPU.
  */
-int mxs_dma_enable_irq(int channel, int enable)
+static int mxs_dma_enable_irq(int channel, int enable)
 {
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
+	struct mxs_apbh_regs *apbh_regs =
+		(struct mxs_apbh_regs *)MXS_APBH_BASE;
 	int ret;
 
 	ret = mxs_dma_validate_chan(channel);
@@ -283,35 +260,15 @@ int mxs_dma_enable_irq(int channel, int enable)
 }
 
 /*
- * Check if a DMA interrupt is pending.
- */
-int mxs_dma_irq_is_pending(int channel)
-{
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
-	uint32_t tmp;
-	int ret;
-
-	ret = mxs_dma_validate_chan(channel);
-	if (ret)
-		return ret;
-
-	tmp = readl(&apbh_regs->hw_apbh_ctrl1);
-	tmp |= readl(&apbh_regs->hw_apbh_ctrl2);
-
-	return (tmp >> channel) & 1;
-}
-
-/*
  * Clear DMA interrupt.
  *
  * The software that is using the DMA channel must register to receive its
  * interrupts and, when they arrive, must call this function to clear them.
  */
-int mxs_dma_ack_irq(int channel)
+static int mxs_dma_ack_irq(int channel)
 {
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
+	struct mxs_apbh_regs *apbh_regs =
+		(struct mxs_apbh_regs *)MXS_APBH_BASE;
 	int ret;
 
 	ret = mxs_dma_validate_chan(channel);
@@ -327,7 +284,7 @@ int mxs_dma_ack_irq(int channel)
 /*
  * Request to reserve a DMA channel
  */
-int mxs_dma_request(int channel)
+static int mxs_dma_request(int channel)
 {
 	struct mxs_dma_chan *pchan;
 
@@ -387,8 +344,10 @@ int mxs_dma_release(int channel)
 struct mxs_dma_desc *mxs_dma_desc_alloc(void)
 {
 	struct mxs_dma_desc *pdesc;
+	uint32_t size;
 
-	pdesc = memalign(MXS_DMA_ALIGNMENT, sizeof(struct mxs_dma_desc));
+	size = roundup(sizeof(struct mxs_dma_desc), MXS_DMA_ALIGNMENT);
+	pdesc = memalign(MXS_DMA_ALIGNMENT, size);
 
 	if (pdesc == NULL)
 		return NULL;
@@ -408,32 +367,6 @@ void mxs_dma_desc_free(struct mxs_dma_desc *pdesc)
 		return;
 
 	free(pdesc);
-}
-
-/*
- * Return the address of the command within a descriptor.
- */
-unsigned int mxs_dma_cmd_address(struct mxs_dma_desc *desc)
-{
-	return desc->address + offsetof(struct mxs_dma_desc, cmd);
-}
-
-/*
- * Check if descriptor is on a channel's active list.
- *
- * This function returns the state of a descriptor's "ready" flag. This flag is
- * usually set only if the descriptor appears on a channel's active list. The
- * descriptor may or may not have already been processed by the hardware.
- *
- * The "ready" flag is set when the descriptor is submitted to a channel by a
- * call to mxs_dma_append() or mxs_dma_append_list(). The "ready" flag is
- * cleared when a processed descriptor is moved off the active list by a call
- * to mxs_dma_finish(). The "ready" flag is NOT cleared if the descriptor is
- * aborted by a call to mxs_dma_disable().
- */
-int mxs_dma_desc_pending(struct mxs_dma_desc *pdesc)
-{
-	return pdesc->flags & MXS_DMA_DESC_READY;
 }
 
 /*
@@ -499,38 +432,17 @@ int mxs_dma_desc_append(int channel, struct mxs_dma_desc *pdesc)
 
 		last->cmd.next = mxs_dma_cmd_address(pdesc);
 		last->cmd.data |= MXS_DMA_DESC_CHAIN;
+
+		mxs_dma_flush_desc(last);
 	}
 	pdesc->flags |= MXS_DMA_DESC_READY;
 	if (pdesc->flags & MXS_DMA_DESC_FIRST)
 		pchan->pending_num++;
 	list_add_tail(&pdesc->node, &pchan->active);
 
+	mxs_dma_flush_desc(pdesc);
+
 	return ret;
-}
-
-/*
- * Retrieve processed DMA descriptors.
- *
- * This function moves all the descriptors from the DMA channel's "done" list to
- * the head of the given list.
- */
-int mxs_dma_get_finished(int channel, struct list_head *head)
-{
-	struct mxs_dma_chan *pchan;
-	int ret;
-
-	ret = mxs_dma_validate_chan(channel);
-	if (ret)
-		return ret;
-
-	if (head == NULL)
-		return 0;
-
-	pchan = mxs_dma_channels + channel;
-
-	list_splice(&pchan->done, head);
-
-	return 0;
 }
 
 /*
@@ -544,7 +456,7 @@ int mxs_dma_get_finished(int channel, struct list_head *head)
  * This function marks the DMA channel as "not busy" if no unprocessed
  * descriptors remain on the "active" list.
  */
-int mxs_dma_finish(int channel, struct list_head *head)
+static int mxs_dma_finish(int channel, struct list_head *head)
 {
 	int sem;
 	struct mxs_dma_chan *pchan;
@@ -590,23 +502,23 @@ int mxs_dma_finish(int channel, struct list_head *head)
 /*
  * Wait for DMA channel to complete
  */
-int mxs_dma_wait_complete(uint32_t timeout, unsigned int chan)
+static int mxs_dma_wait_complete(uint32_t timeout, unsigned int chan)
 {
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
+	struct mxs_apbh_regs *apbh_regs =
+		(struct mxs_apbh_regs *)MXS_APBH_BASE;
 	int ret;
 
 	ret = mxs_dma_validate_chan(chan);
 	if (ret)
 		return ret;
 
-	if (mx28_wait_mask_set(&apbh_regs->hw_apbh_ctrl1_reg,
+	if (mxs_wait_mask_set(&apbh_regs->hw_apbh_ctrl1_reg,
 				1 << chan, timeout)) {
 		ret = -ETIMEDOUT;
 		mxs_dma_reset(chan);
 	}
 
-	return 0;
+	return ret;
 }
 
 /*
@@ -614,7 +526,7 @@ int mxs_dma_wait_complete(uint32_t timeout, unsigned int chan)
  */
 int mxs_dma_go(int chan)
 {
-	uint32_t timeout = 10000;
+	uint32_t timeout = 10000000;
 	int ret;
 
 	LIST_HEAD(tmp_desc_list);
@@ -640,14 +552,12 @@ int mxs_dma_go(int chan)
 /*
  * Initialize the DMA hardware
  */
-int mxs_dma_init(void)
+void mxs_dma_init(void)
 {
-	struct mx28_apbh_regs *apbh_regs =
-		(struct mx28_apbh_regs *)MXS_APBH_BASE;
-	struct mxs_dma_chan *pchan;
-	int ret, channel;
+	struct mxs_apbh_regs *apbh_regs =
+		(struct mxs_apbh_regs *)MXS_APBH_BASE;
 
-	mx28_reset_block(&apbh_regs->hw_apbh_ctrl0_reg);
+	mxs_reset_block(&apbh_regs->hw_apbh_ctrl0_reg);
 
 #ifdef CONFIG_APBH_DMA_BURST8
 	writel(APBH_CTRL0_AHB_BURST8_EN,
@@ -664,28 +574,26 @@ int mxs_dma_init(void)
 	writel(APBH_CTRL0_APB_BURST_EN,
 		&apbh_regs->hw_apbh_ctrl0_clr);
 #endif
+}
 
-	for (channel = 0; channel < MXS_MAX_DMA_CHANNELS; channel++) {
-		pchan = mxs_dma_channels + channel;
-		pchan->flags = MXS_DMA_FLAGS_VALID;
+int mxs_dma_init_channel(int channel)
+{
+	struct mxs_dma_chan *pchan;
+	int ret;
 
-		ret = mxs_dma_request(channel);
+	pchan = mxs_dma_channels + channel;
+	pchan->flags = MXS_DMA_FLAGS_VALID;
 
-		if (ret) {
-			printf("MXS DMA: Can't acquire DMA channel %i\n",
-				channel);
+	ret = mxs_dma_request(channel);
 
-			goto err;
-		}
-
-		mxs_dma_reset(channel);
-		mxs_dma_ack_irq(channel);
+	if (ret) {
+		printf("MXS DMA: Can't acquire DMA channel %i\n",
+			channel);
+		return ret;
 	}
 
-	return 0;
+	mxs_dma_reset(channel);
+	mxs_dma_ack_irq(channel);
 
-err:
-	while (--channel >= 0)
-		mxs_dma_release(channel);
-	return ret;
+	return 0;
 }

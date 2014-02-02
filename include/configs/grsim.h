@@ -94,9 +94,6 @@
 
 #undef	CONFIG_BOOTARGS
 /*#define CONFIG_SYS_HUSH_PARSER 0*/
-#ifdef	CONFIG_SYS_HUSH_PARSER
-#define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#endif
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	"netdev=eth0\0"							\
@@ -113,7 +110,7 @@
 	"net_nfs=tftp 40000000 ${bootfile};run nfsargs addip;bootm\0"	\
 	"rootpath=/export/roofs\0"					\
 	"scratch=40000000\0"					\
-	"getkernel=tftpboot \$\(scratch\)\ \$\(bootfile\)\0" \
+	"getkernel=tftpboot $(scratch) $(bootfile)\0" \
 	"ethaddr=00:00:7A:CC:00:12\0" \
 	"bootargs=console=ttyS0,38400" \
 	""

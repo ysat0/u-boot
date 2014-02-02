@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright 2010-2012 Freescale Semiconductor, Inc.
  *
  * Authors:  Roy Zang <tie-fei.zang@freescale.com>
  *	     Chunhe Lan <b25806@freescale.com>
@@ -299,9 +299,6 @@ extern unsigned long get_clock_freq(void);
 
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
-#ifdef	CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
-#endif
 
 /*
  * Pass open firmware flat tree
@@ -309,9 +306,6 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_OF_LIBFDT
 #define CONFIG_OF_BOARD_SETUP
 #define CONFIG_OF_STDOUT_VIA_ALIAS
-
-#define CONFIG_SYS_64BIT_VSPRINTF
-#define CONFIG_SYS_64BIT_STRTOUL
 
 /* new uImage format support */
 #define CONFIG_FIT
@@ -447,6 +441,8 @@ extern unsigned long get_clock_freq(void);
 /*
  * USB
  */
+#define CONFIG_HAS_FSL_DR_USB
+#ifdef CONFIG_HAS_FSL_DR_USB
 #define CONFIG_USB_EHCI
 
 #ifdef CONFIG_USB_EHCI
@@ -458,6 +454,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_CMD_EXT2
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
+#endif
 #endif
 
 /*
@@ -526,12 +523,14 @@ extern unsigned long get_clock_freq(void);
 #ifndef CONFIG_NAND
 /* Default address of microcode for the Linux Fman driver */
 /* QE microcode/firmware address */
-#define CONFIG_SYS_FMAN_FW_ADDR		0xEF000000
+#define CONFIG_SYS_QE_FMAN_FW_IN_NOR
+#define CONFIG_SYS_QE_FMAN_FW_ADDR	0xEFF40000
 #else
-#define CONFIG_SYS_QE_FW_IN_NAND	0x1f00000
+#define CONFIG_SYS_QE_FMAN_FW_IN_NAND
+#define CONFIG_SYS_QE_FMAN_FW_ADDR	0x1f00000
 #endif
-#define CONFIG_SYS_FMAN_FW_LENGTH	0x10000
-#define CONFIG_SYS_FDT_PAD		(0x3000 + CONFIG_SYS_FMAN_FW_LENGTH)
+#define CONFIG_SYS_QE_FMAN_FW_LENGTH	0x10000
+#define CONFIG_SYS_FDT_PAD		(0x3000 + CONFIG_SYS_QE_FMAN_FW_LENGTH)
 
 #ifdef CONFIG_FMAN_ENET
 #define CONFIG_SYS_FM1_DTSEC1_PHY_ADDR	0x2

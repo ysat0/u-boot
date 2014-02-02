@@ -33,7 +33,9 @@ typedef struct t2 {
 	unsigned int devconf0;		/* 0x274 */
 	unsigned char res2[0x060];	/* 0x278 */
 	unsigned int devconf1;		/* 0x2D8 */
-	unsigned char res3[0x244];	/* 0x2DC */
+	unsigned char res3[0x16C];	/* 0x2DC */
+	unsigned int ctl_prog_io1;	/* 0x448 */
+	unsigned char res4[0x0D4];	/* 0x44C */
 	unsigned int pbias_lite;	/* 0x520 */
 } t2_t;
 
@@ -47,6 +49,8 @@ typedef struct t2 {
 #define PBIASLITEPWRDNZ0		(1 << 1)
 #define PBIASSPEEDCTRL0			(1 << 2)
 #define PBIASLITEPWRDNZ1		(1 << 9)
+
+#define CTLPROGIO1SPEEDCTRL		(1 << 20)
 
 /*
  * OMAP HSMMC register definitions
@@ -129,7 +133,7 @@ struct hsmmc {
 #define INDEX_MASK			(0x3f << 24)
 #define INDEX(i)			(i << 24)
 #define DATI_MASK			(0x1 << 1)
-#define DATI_CMDDIS			(0x1 << 1)
+#define CMDI_MASK			(0x1 << 0)
 #define DTW_1_BITMODE			(0x0 << 1)
 #define DTW_4_BITMODE			(0x1 << 1)
 #define DTW_8_BITMODE                   (0x1 << 5) /* CON[DW8]*/
@@ -191,6 +195,6 @@ struct hsmmc {
 #define mmc_reg_out(addr, mask, val)\
 	writel((readl(addr) & (~(mask))) | ((val) & (mask)), (addr))
 
-int omap_mmc_init(int dev_index);
+int omap_mmc_init(int dev_index, uint host_caps_mask, uint f_max);
 
 #endif /* MMC_HOST_DEF_H */

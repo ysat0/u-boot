@@ -45,7 +45,11 @@
 #include <version.h>
 #include <serial.h>
 
+#include <os.h>
+
 DECLARE_GLOBAL_DATA_PTR;
+
+static gd_t gd_mem;
 
 /************************************************************************
  * Init Utilities							*
@@ -130,6 +134,7 @@ init_fnc_t *init_sequence[] = {
 	env_init,		/* initialize environment */
 	serial_init,		/* serial communications setup */
 	console_init_f,		/* stage 1 init of console */
+	sandbox_early_getopt_check,	/* process command line flags (err/help) */
 	display_banner,		/* say that we are here */
 #if defined(CONFIG_DISPLAY_CPUINFO)
 	print_cpuinfo,		/* display cpu info (and speed) */
@@ -147,10 +152,18 @@ void board_init_f(ulong bootflag)
 	uchar *mem;
 	unsigned long addr_sp, addr, size;
 
-	gd = malloc(sizeof(gd_t));
+	gd = &gd_mem;
 	assert(gd);
 
 	memset((void *)gd, 0, sizeof(gd_t));
+
+#if defined(CONFIG_OF_EMBED)
+	/* Get a pointer to the FDT */
+	gd->fdt_blob = _binary_dt_dtb_start;
+#elif defined(CONFIG_OF_SEPARATE)
+	/* FDT is at end of image */
+	gd->fdt_blob = (void *)(_end_ofs + _TEXT_BASE);
+#endif
 
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
 		if ((*init_fnc_ptr)() != 0)
@@ -158,9 +171,10 @@ void board_init_f(ulong bootflag)
 	}
 
 	size = CONFIG_SYS_SDRAM_SIZE;
-	mem = malloc(size);
+	mem = os_malloc(CONFIG_SYS_SDRAM_SIZE);
+
 	assert(mem);
-	gd->ram_buf = mem;
+	gd->arch.ram_buf = mem;
 	addr = (ulong)(mem + size);
 
 	/*
@@ -206,25 +220,18 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
 
-#ifdef CONFIG_SERIAL_MULTI
 	serial_initialize();
-#endif
 
 #ifdef CONFIG_POST
 	post_output_backlog();
 #endif
 
-#if 0 /* Sandbox uses system malloc for now */
-	/* The Malloc area is immediately below the monitor copy in DRAM */
-	malloc_start = dest_addr - TOTAL_MALLOC_LEN;
-	mem_malloc_init(malloc_start, TOTAL_MALLOC_LEN);
-#endif
+	/* The Malloc area is at the top of simulated DRAM */
+	mem_malloc_init((ulong)gd->arch.ram_buf + gd->ram_size -
+			TOTAL_MALLOC_LEN, TOTAL_MALLOC_LEN);
 
 	/* initialize environment */
 	env_relocate();
-
-	/* IP Address */
-	gd->bd->bi_ip_addr = getenv_IPaddr("ipaddr");
 
 	stdio_init();	/* get the devices list going. */
 
@@ -257,6 +264,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #ifdef CONFIG_POST
 	post_run(NULL, POST_RAM | post_bootmode_get(0));
 #endif
+
+	sandbox_main_loop_init();
 
 	/*
 	 * For now, run the main loop. Later we might let this be done

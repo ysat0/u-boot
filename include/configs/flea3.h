@@ -31,9 +31,9 @@
  /* High Level Configuration Options */
 #define CONFIG_ARM1136	/* This is an arm1136 CPU core */
 #define CONFIG_MX35
-#define CONFIG_MX35_HCLK_FREQ	24000000
 
 #define CONFIG_SYS_DCACHE_OFF
+#define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_DISPLAY_CPUINFO
 
@@ -46,8 +46,6 @@
 
 /* Set TEXT at the beginning of the NOR flash */
 #define CONFIG_SYS_TEXT_BASE	0xA0000000
-
-#define CONFIG_SYS_64BIT_VSPRINTF
 
 /* This is required to setup the ESDC controller */
 #define CONFIG_BOARD_EARLY_INIT_F
@@ -67,7 +65,7 @@
  */
 #define CONFIG_HARD_I2C
 #define CONFIG_I2C_MXC
-#define CONFIG_SYS_I2C_MX35_PORT3
+#define CONFIG_SYS_I2C_BASE		I2C3_BASE_ADDR
 #define CONFIG_SYS_I2C_SPEED		100000
 #define CONFIG_SYS_I2C_SLAVE		0xfe
 #define CONFIG_MXC_SPI
@@ -77,13 +75,12 @@
  * UART (console)
  */
 #define CONFIG_MXC_UART
-#define CONFIG_SYS_MX35_UART3
+#define CONFIG_MXC_UART_BASE	UART3_BASE
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX	1
 #define CONFIG_BAUDRATE		115200
-#define CONFIG_SYS_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
 
 /*
  * Command definition
@@ -98,6 +95,7 @@
 #define CONFIG_BOOTP_DNS
 
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_CACHE
 
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_SPI
@@ -107,13 +105,12 @@
 
 #define CONFIG_BOOTDELAY	3
 
-#define CONFIG_LOADADDR		0x90800000	/* loadaddr env var */
+#define CONFIG_LOADADDR		0x80800000	/* loadaddr env var */
 
 
 /*
  * Ethernet on SOC (FEC)
  */
-#define CONFIG_NET_MULTI
 #define CONFIG_FEC_MXC
 #define IMX_FEC_BASE	FEC_BASE_ADDR
 #define CONFIG_PHYLIB
@@ -121,7 +118,6 @@
 #define CONFIG_FEC_MXC_PHYADDR	0x1
 
 #define CONFIG_MII
-#define CONFIG_DISCOVER_PHY
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
@@ -132,7 +128,6 @@
 #define CONFIG_SYS_PROMPT	"flea3 U-Boot > "
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_SYS_HUSH_PARSER	/* Use the HUSH parser */
-#define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
@@ -150,22 +145,14 @@
 
 #define CONFIG_SYS_HZ				1000
 
-
-/*
- * Stack sizes
- *
- * The stack sizes are set up in start.S using the settings below
- */
-#define CONFIG_STACKSIZE	(128 * 1024)	/* regular stack */
-
 /*
  * Physical Memory Map
  */
 #define CONFIG_NR_DRAM_BANKS	1
-#define PHYS_SDRAM_1		CSD1_BASE_ADDR
+#define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024)
 
-#define CONFIG_SYS_SDRAM_BASE		CSD1_BASE_ADDR
+#define CONFIG_SYS_SDRAM_BASE		CSD0_BASE_ADDR
 #define CONFIG_SYS_INIT_RAM_ADDR	(IRAM_BASE_ADDR + 0x10000)
 #define CONFIG_SYS_INIT_RAM_SIZE		(IRAM_SIZE / 2)
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
@@ -181,10 +168,14 @@
 #define CONFIG_FLASH_CFI_MTD
 #define CONFIG_MTD_PARTITIONS
 #define MTDIDS_DEFAULT		"nand0=mxc_nand,nor0=physmap-flash.0"
-#define MTDPARTS_DEFAULT	"mtdparts=mxc_nand:196m(root1)," \
-				"196m(root2),-(user);"	\
+#define MTDPARTS_DEFAULT	"mtdparts=mxc_nand:50m(root1)," \
+				"32m(rootfb)," \
+				"64m(pcache)," \
+				"64m(app1)," \
+				"10m(app2),-(spool);" \
 				"physmap-flash.0:512k(u-boot),64k(env1)," \
 				"64k(env2),3776k(kernel1),3776k(kernel2)"
+
 /*
  * FLASH and environment organization
  */
@@ -221,7 +212,6 @@
  * NAND FLASH driver setup
  */
 #define CONFIG_NAND_MXC
-#define CONFIG_NAND_MXC_V1_1
 #define CONFIG_MXC_NAND_REGS_BASE	(NFC_BASE_ADDR)
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		(NFC_BASE_ADDR)
@@ -232,8 +222,6 @@
  * Default environment and default scripts
  * to update uboot and load kernel
  */
-#define xstr(s)	str(s)
-#define str(s)	#s
 
 #define CONFIG_HOSTNAME flea3
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
@@ -246,16 +234,16 @@
 		":${hostname}:${netdev}:off panic=1\0"			\
 	"addip_dyn=setenv bootargs ${bootargs} ip=dhcp\0"		\
 	"addip=if test -n ${ipdyn};then run addip_dyn;"			\
-		"else run addip_sta;fi\0"	\
+		"else run addip_sta;fi\0"				\
 	"addmtd=setenv bootargs ${bootargs} ${mtdparts}\0"		\
 	"addtty=setenv bootargs ${bootargs}"				\
-		" console=ttymxc0,${baudrate}\0"			\
+		" console=ttymxc2,${baudrate}\0"			\
 	"addmisc=setenv bootargs ${bootargs} ${misc}\0"			\
-	"loadaddr=90800000\0"						\
-	"kernel_addr_r=90800000\0"					\
-	"hostname=" xstr(CONFIG_HOSTNAME) "\0"				\
-	"bootfile=" xstr(CONFIG_HOSTNAME) "/uImage\0"			\
-	"ramdisk_file=" xstr(CONFIG_HOSTNAME) "/uRamdisk\0"		\
+	"loadaddr=80800000\0"						\
+	"kernel_addr_r=80800000\0"					\
+	"hostname=" __stringify(CONFIG_HOSTNAME) "\0"			\
+	"bootfile=" __stringify(CONFIG_HOSTNAME) "/uImage\0"		\
+	"ramdisk_file=" __stringify(CONFIG_HOSTNAME) "/uRamdisk\0"	\
 	"flash_self=run ramargs addip addtty addmtd addmisc;"		\
 		"bootm ${kernel_addr} ${ramdisk_addr}\0"		\
 	"flash_nfs=run nfsargs addip addtty addmtd addmisc;"		\
@@ -269,9 +257,9 @@
 		"run ramargs addip addtty addmtd addmisc;"		\
 		"bootm ${kernel_addr_r} ${ramdisk_addr_r};"		\
 		"else echo Images not loades;fi\0"			\
-	"u-boot=" xstr(CONFIG_HOSTNAME) "/u-boot.bin\0"			\
+	"u-boot=" __stringify(CONFIG_HOSTNAME) "/u-boot.bin\0"		\
 	"load=tftp ${loadaddr} ${u-boot}\0"				\
-	"uboot_addr=" xstr(CONFIG_SYS_MONITOR_BASE) "\0"		\
+	"uboot_addr=" __stringify(CONFIG_SYS_MONITOR_BASE) "\0"		\
 	"update=protect off ${uboot_addr} +40000;"			\
 		"erase ${uboot_addr} +40000;"				\
 		"cp.b ${loadaddr} ${uboot_addr} ${filesize}\0"		\

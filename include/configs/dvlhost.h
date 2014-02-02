@@ -30,6 +30,8 @@
 #define CONFIG_IXP425			1
 #define CONFIG_DVLHOST			1
 
+#define	CONFIG_MACH_TYPE		1343
+
 #define CONFIG_DISPLAY_CPUINFO		1
 #define CONFIG_DISPLAY_BOARDINFO	1
 
@@ -101,13 +103,6 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, \
 					  115200, 230400 }
 #define CONFIG_SERIAL_RTS_ACTIVE	1
-
-/*
- * Stack sizes
- *
- * The stack sizes are set up in start.S using the settings below
- */
-#define CONFIG_STACKSIZE		(128*1024)	/* regular stack */
 
 /* Expansion bus settings */
 #define CONFIG_SYS_EXP_CS0		0xbd113442

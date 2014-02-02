@@ -49,8 +49,8 @@ int board_early_init_f(void)
 
 	/* SSP0 clock at 96MHz */
 	mx28_set_sspclk(MXC_SSPCLK0, 96000, 0);
-	/* SSP2 clock at 96MHz */
-	mx28_set_sspclk(MXC_SSPCLK2, 96000, 0);
+	/* SSP2 clock at 160MHz */
+	mx28_set_sspclk(MXC_SSPCLK2, 160000, 0);
 
 #ifdef	CONFIG_CMD_USB
 	mxs_iomux_setup_pad(MX28_PAD_SSP2_SS1__USB1_OVERCURRENT);
@@ -70,25 +70,9 @@ int board_init(void)
 	return 0;
 }
 
-#define	HW_DIGCTRL_SCRATCH0	0x8001c280
-#define	HW_DIGCTRL_SCRATCH1	0x8001c290
 int dram_init(void)
 {
-	uint32_t sz[2];
-
-	sz[0] = readl(HW_DIGCTRL_SCRATCH0);
-	sz[1] = readl(HW_DIGCTRL_SCRATCH1);
-
-	if (sz[0] != sz[1]) {
-		printf("MX28:\n"
-			"Error, the RAM size in HW_DIGCTRL_SCRATCH0 and\n"
-			"HW_DIGCTRL_SCRATCH1 is not the same. Please\n"
-			"verify these two registers contain valid RAM size!\n");
-		hang();
-	}
-
-	gd->ram_size = sz[0];
-	return 0;
+	return mxs_dram_init();
 }
 
 #ifdef	CONFIG_CMD_MMC
@@ -104,8 +88,10 @@ static int m28_mmc_wp(int id)
 
 int board_mmc_init(bd_t *bis)
 {
-	/* Configure WP as output */
+	/* Configure WP as input. */
 	gpio_direction_input(MX28_PAD_AUART2_CTS__GPIO_3_10);
+	/* Turn on the power to the card. */
+	gpio_direction_output(MX28_PAD_PWM3__GPIO_3_28, 0);
 
 	return mxsmmc_initialize(bis, 0, m28_mmc_wp);
 }
@@ -119,17 +105,25 @@ int board_mmc_init(bd_t *bis)
 
 int fecmxc_mii_postcall(int phy)
 {
+#if	defined(CONFIG_DENX_M28_V11) || defined(CONFIG_DENX_M28_V10)
+	/* KZ8031 PHY on old boards. */
+	const uint32_t freq = 0x0080;
+#else
+	/* KZ8021 PHY on new boards. */
+	const uint32_t freq = 0x0000;
+#endif
+
 	miiphy_write("FEC1", phy, MII_BMCR, 0x9000);
 	miiphy_write("FEC1", phy, MII_OPMODE_STRAP_OVERRIDE, 0x0202);
 	if (phy == 3)
-		miiphy_write("FEC1", 3, MII_PHY_CTRL2, 0x8180);
+		miiphy_write("FEC1", 3, MII_PHY_CTRL2, 0x8100 | freq);
 	return 0;
 }
 
 int board_eth_init(bd_t *bis)
 {
-	struct mx28_clkctrl_regs *clkctrl_regs =
-		(struct mx28_clkctrl_regs *)MXS_CLKCTRL_BASE;
+	struct mxs_clkctrl_regs *clkctrl_regs =
+		(struct mxs_clkctrl_regs *)MXS_CLKCTRL_BASE;
 	struct eth_device *dev;
 	int ret;
 
@@ -138,6 +132,14 @@ int board_eth_init(bd_t *bis)
 	clrsetbits_le32(&clkctrl_regs->hw_clkctrl_enet,
 		CLKCTRL_ENET_TIME_SEL_MASK | CLKCTRL_ENET_CLK_OUT_EN,
 		CLKCTRL_ENET_TIME_SEL_RMII_CLK);
+
+#if !defined(CONFIG_DENX_M28_V11) && !defined(CONFIG_DENX_M28_V10)
+	/* Reset the new PHY */
+	gpio_direction_output(MX28_PAD_AUART2_RTS__GPIO_3_11, 0);
+	udelay(10000);
+	gpio_set_value(MX28_PAD_AUART2_RTS__GPIO_3_11, 1);
+	udelay(10000);
+#endif
 
 	ret = fecmxc_initialize_multi(bis, 0, 0, MXS_ENET0_BASE);
 	if (ret) {
@@ -177,40 +179,5 @@ int board_eth_init(bd_t *bis)
 
 	return ret;
 }
-
-#ifdef	CONFIG_M28_FEC_MAC_IN_OCOTP
-
-#define	MXS_OCOTP_MAX_TIMEOUT	1000000
-void imx_get_mac_from_fuse(char *mac)
-{
-	struct mx28_ocotp_regs *ocotp_regs =
-		(struct mx28_ocotp_regs *)MXS_OCOTP_BASE;
-	uint32_t data;
-
-	memset(mac, 0, 6);
-
-	writel(OCOTP_CTRL_RD_BANK_OPEN, &ocotp_regs->hw_ocotp_ctrl_set);
-
-	if (mx28_wait_mask_clr(&ocotp_regs->hw_ocotp_ctrl_reg, OCOTP_CTRL_BUSY,
-				MXS_OCOTP_MAX_TIMEOUT)) {
-		printf("MXS FEC: Can't get MAC from OCOTP\n");
-		return;
-	}
-
-	data = readl(&ocotp_regs->hw_ocotp_cust0);
-
-	mac[0] = 0x00;
-	mac[1] = 0x04;
-	mac[2] = (data >> 24) & 0xff;
-	mac[3] = (data >> 16) & 0xff;
-	mac[4] = (data >> 8) & 0xff;
-	mac[5] = data & 0xff;
-}
-#else
-void imx_get_mac_from_fuse(char *mac)
-{
-	memset(mac, 0, 6);
-}
-#endif
 
 #endif

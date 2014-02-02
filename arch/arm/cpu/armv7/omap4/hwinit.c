@@ -37,7 +37,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-u32 *const omap4_revision = (u32 *)OMAP4_SRAM_SCRATCH_OMAP4_REV;
+u32 *const omap_si_rev = (u32 *)OMAP4_SRAM_SCRATCH_OMAP4_REV;
 
 static const struct gpio_bank gpio_bank_44xx[6] = {
 	{ (void *)OMAP44XX_GPIO1_BASE, METHOD_GPIO_24XX },
@@ -59,8 +59,8 @@ void do_io_settings(void)
 	u32 lpddr2io;
 	struct control_lpddr2io_regs *lpddr2io_regs =
 		(struct control_lpddr2io_regs *)LPDDR2_IO_REGS_BASE;
-	struct omap4_sys_ctrl_regs *const ctrl =
-		(struct omap4_sys_ctrl_regs *)SYSCTRL_GENERAL_CORE_BASE;
+	struct omap_sys_ctrl_regs *const ctrl =
+		(struct omap_sys_ctrl_regs *)SYSCTRL_GENERAL_CORE_BASE;
 
 	u32 omap4_rev = omap_revision();
 
@@ -105,13 +105,23 @@ void do_io_settings(void)
 			&ctrl->control_ldosram_core_voltage_ctrl);
 	}
 
+	/*
+	 * Over-ride the register
+	 *	i. unconditionally for all 4430
+	 *	ii. only if un-trimmed for 4460
+	 */
 	if (!readl(&ctrl->control_efuse_1))
 		writel(CONTROL_EFUSE_1_OVERRIDE, &ctrl->control_efuse_1);
 
-	if (!readl(&ctrl->control_efuse_2))
+	if ((omap4_rev < OMAP4460_ES1_0) || !readl(&ctrl->control_efuse_2))
 		writel(CONTROL_EFUSE_2_OVERRIDE, &ctrl->control_efuse_2);
 }
-#endif
+#endif /* CONFIG_SPL_BUILD */
+
+/* dummy fuction for omap4 */
+void config_data_eye_leveling_samples(u32 emif_base)
+{
+}
 
 void init_omap_revision(void)
 {
@@ -124,32 +134,40 @@ void init_omap_revision(void)
 
 	switch (arm_rev) {
 	case MIDR_CORTEX_A9_R0P1:
-		*omap4_revision = OMAP4430_ES1_0;
+		*omap_si_rev = OMAP4430_ES1_0;
 		break;
 	case MIDR_CORTEX_A9_R1P2:
 		switch (readl(CONTROL_ID_CODE)) {
 		case OMAP4_CONTROL_ID_CODE_ES2_0:
-			*omap4_revision = OMAP4430_ES2_0;
+			*omap_si_rev = OMAP4430_ES2_0;
 			break;
 		case OMAP4_CONTROL_ID_CODE_ES2_1:
-			*omap4_revision = OMAP4430_ES2_1;
+			*omap_si_rev = OMAP4430_ES2_1;
 			break;
 		case OMAP4_CONTROL_ID_CODE_ES2_2:
-			*omap4_revision = OMAP4430_ES2_2;
+			*omap_si_rev = OMAP4430_ES2_2;
 			break;
 		default:
-			*omap4_revision = OMAP4430_ES2_0;
+			*omap_si_rev = OMAP4430_ES2_0;
 			break;
 		}
 		break;
 	case MIDR_CORTEX_A9_R1P3:
-		*omap4_revision = OMAP4430_ES2_3;
+		*omap_si_rev = OMAP4430_ES2_3;
 		break;
 	case MIDR_CORTEX_A9_R2P10:
-		*omap4_revision = OMAP4460_ES1_0;
+		switch (readl(CONTROL_ID_CODE)) {
+		case OMAP4460_CONTROL_ID_CODE_ES1_1:
+			*omap_si_rev = OMAP4460_ES1_1;
+			break;
+		case OMAP4460_CONTROL_ID_CODE_ES1_0:
+		default:
+			*omap_si_rev = OMAP4460_ES1_0;
+			break;
+		}
 		break;
 	default:
-		*omap4_revision = OMAP4430_SILICON_ID_INVALID;
+		*omap_si_rev = OMAP4430_SILICON_ID_INVALID;
 		break;
 	}
 }
@@ -164,4 +182,4 @@ void v7_outer_cache_disable(void)
 {
 	set_pl310_ctrl_reg(0);
 }
-#endif
+#endif /* !CONFIG_SYS_L2CACHE_OFF */

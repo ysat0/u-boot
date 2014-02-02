@@ -41,17 +41,98 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/arch/dma.h>
+#include <bouncebuf.h>
 
 struct mxsmmc_priv {
 	int			id;
-	struct mx28_ssp_regs	*regs;
+	struct mxs_ssp_regs	*regs;
 	uint32_t		clkseq_bypass;
 	uint32_t		*clkctrl_ssp;
 	uint32_t		buswidth;
 	int			(*mmc_is_wp)(int);
+	struct mxs_dma_desc	*desc;
 };
 
 #define	MXSMMC_MAX_TIMEOUT	10000
+#define MXSMMC_SMALL_TRANSFER	512
+
+static int mxsmmc_send_cmd_pio(struct mxsmmc_priv *priv, struct mmc_data *data)
+{
+	struct mxs_ssp_regs *ssp_regs = priv->regs;
+	uint32_t *data_ptr;
+	int timeout = MXSMMC_MAX_TIMEOUT;
+	uint32_t reg;
+	uint32_t data_count = data->blocksize * data->blocks;
+
+	if (data->flags & MMC_DATA_READ) {
+		data_ptr = (uint32_t *)data->dest;
+		while (data_count && --timeout) {
+			reg = readl(&ssp_regs->hw_ssp_status);
+			if (!(reg & SSP_STATUS_FIFO_EMPTY)) {
+				*data_ptr++ = readl(&ssp_regs->hw_ssp_data);
+				data_count -= 4;
+				timeout = MXSMMC_MAX_TIMEOUT;
+			} else
+				udelay(1000);
+		}
+	} else {
+		data_ptr = (uint32_t *)data->src;
+		timeout *= 100;
+		while (data_count && --timeout) {
+			reg = readl(&ssp_regs->hw_ssp_status);
+			if (!(reg & SSP_STATUS_FIFO_FULL)) {
+				writel(*data_ptr++, &ssp_regs->hw_ssp_data);
+				data_count -= 4;
+				timeout = MXSMMC_MAX_TIMEOUT;
+			} else
+				udelay(1000);
+		}
+	}
+
+	return timeout ? 0 : COMM_ERR;
+}
+
+static int mxsmmc_send_cmd_dma(struct mxsmmc_priv *priv, struct mmc_data *data)
+{
+	uint32_t data_count = data->blocksize * data->blocks;
+	int dmach;
+	struct mxs_dma_desc *desc = priv->desc;
+	void *addr;
+	unsigned int flags;
+	struct bounce_buffer bbstate;
+
+	memset(desc, 0, sizeof(struct mxs_dma_desc));
+	desc->address = (dma_addr_t)desc;
+
+	if (data->flags & MMC_DATA_READ) {
+		priv->desc->cmd.data = MXS_DMA_DESC_COMMAND_DMA_WRITE;
+		addr = data->dest;
+		flags = GEN_BB_WRITE;
+	} else {
+		priv->desc->cmd.data = MXS_DMA_DESC_COMMAND_DMA_READ;
+		addr = (void *)data->src;
+		flags = GEN_BB_READ;
+	}
+
+	bounce_buffer_start(&bbstate, addr, data_count, flags);
+
+	priv->desc->cmd.address = (dma_addr_t)bbstate.bounce_buffer;
+
+	priv->desc->cmd.data |= MXS_DMA_DESC_IRQ | MXS_DMA_DESC_DEC_SEM |
+				(data_count << MXS_DMA_DESC_BYTES_OFFSET);
+
+	dmach = MXS_DMA_CHANNEL_AHB_APBH_SSP0 + priv->id;
+	mxs_dma_desc_append(dmach, priv->desc);
+	if (mxs_dma_go(dmach)) {
+		bounce_buffer_stop(&bbstate);
+		return COMM_ERR;
+	}
+
+	bounce_buffer_stop(&bbstate);
+
+	return 0;
+}
 
 /*
  * Sends a command out on the bus.  Takes the mmc pointer,
@@ -61,12 +142,11 @@ static int
 mxsmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 {
 	struct mxsmmc_priv *priv = (struct mxsmmc_priv *)mmc->priv;
-	struct mx28_ssp_regs *ssp_regs = priv->regs;
+	struct mxs_ssp_regs *ssp_regs = priv->regs;
 	uint32_t reg;
 	int timeout;
-	uint32_t data_count;
-	uint32_t *data_ptr;
 	uint32_t ctrl0;
+	int ret;
 
 	debug("MMC%d: CMD%d\n", mmc->block_dev.dev, cmd->cmdidx);
 
@@ -104,6 +184,11 @@ mxsmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	if (cmd->resp_type & MMC_RSP_136)	/* It's a 136 bits response */
 		ctrl0 |= SSP_CTRL0_LONG_RESP;
 
+	if (data && (data->blocksize * data->blocks < MXSMMC_SMALL_TRANSFER))
+		writel(SSP_CTRL1_DMA_ENABLE, &ssp_regs->hw_ssp_ctrl1_clr);
+	else
+		writel(SSP_CTRL1_DMA_ENABLE, &ssp_regs->hw_ssp_ctrl1_set);
+
 	/* Command index */
 	reg = readl(&ssp_regs->hw_ssp_cmd0);
 	reg &= ~(SSP_CMD0_CMD_MASK | SSP_CMD0_APPEND_8CYC);
@@ -120,7 +205,8 @@ mxsmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		/* READ or WRITE */
 		if (data->flags & MMC_DATA_READ) {
 			ctrl0 |= SSP_CTRL0_READ;
-		} else if (priv->mmc_is_wp(mmc->block_dev.dev)) {
+		} else if (priv->mmc_is_wp &&
+			priv->mmc_is_wp(mmc->block_dev.dev)) {
 			printf("MMC%d: Can not write a locked card!\n",
 				mmc->block_dev.dev);
 			return UNUSABLE_ERR;
@@ -183,38 +269,21 @@ mxsmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	if (!data)
 		return 0;
 
-	/* Process the data */
-	data_count = data->blocksize * data->blocks;
-	timeout = MXSMMC_MAX_TIMEOUT;
-	if (data->flags & MMC_DATA_READ) {
-		data_ptr = (uint32_t *)data->dest;
-		while (data_count && --timeout) {
-			reg = readl(&ssp_regs->hw_ssp_status);
-			if (!(reg & SSP_STATUS_FIFO_EMPTY)) {
-				*data_ptr++ = readl(&ssp_regs->hw_ssp_data);
-				data_count -= 4;
-				timeout = MXSMMC_MAX_TIMEOUT;
-			} else
-				udelay(1000);
+	if (data->blocksize * data->blocks < MXSMMC_SMALL_TRANSFER) {
+		ret = mxsmmc_send_cmd_pio(priv, data);
+		if (ret) {
+			printf("MMC%d: Data timeout with command %d "
+				"(status 0x%08x)!\n",
+				mmc->block_dev.dev, cmd->cmdidx, reg);
+			return ret;
 		}
 	} else {
-		data_ptr = (uint32_t *)data->src;
-		timeout *= 100;
-		while (data_count && --timeout) {
-			reg = readl(&ssp_regs->hw_ssp_status);
-			if (!(reg & SSP_STATUS_FIFO_FULL)) {
-				writel(*data_ptr++, &ssp_regs->hw_ssp_data);
-				data_count -= 4;
-				timeout = MXSMMC_MAX_TIMEOUT;
-			} else
-				udelay(1000);
+		ret = mxsmmc_send_cmd_dma(priv, data);
+		if (ret) {
+			printf("MMC%d: DMA transfer failed\n",
+				mmc->block_dev.dev);
+			return ret;
 		}
-	}
-
-	if (!timeout) {
-		printf("MMC%d: Data timeout with command %d (status 0x%08x)!\n",
-			mmc->block_dev.dev, cmd->cmdidx, reg);
-		return COMM_ERR;
 	}
 
 	/* Check data errors */
@@ -233,7 +302,7 @@ mxsmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 static void mxsmmc_set_ios(struct mmc *mmc)
 {
 	struct mxsmmc_priv *priv = (struct mxsmmc_priv *)mmc->priv;
-	struct mx28_ssp_regs *ssp_regs = priv->regs;
+	struct mxs_ssp_regs *ssp_regs = priv->regs;
 
 	/* Set the clock speed */
 	if (mmc->clock)
@@ -262,14 +331,15 @@ static void mxsmmc_set_ios(struct mmc *mmc)
 static int mxsmmc_init(struct mmc *mmc)
 {
 	struct mxsmmc_priv *priv = (struct mxsmmc_priv *)mmc->priv;
-	struct mx28_ssp_regs *ssp_regs = priv->regs;
+	struct mxs_ssp_regs *ssp_regs = priv->regs;
 
 	/* Reset SSP */
-	mx28_reset_block(&ssp_regs->hw_ssp_ctrl0_reg);
+	mxs_reset_block(&ssp_regs->hw_ssp_ctrl0_reg);
 
 	/* 8 bits word length in MMC mode */
 	clrsetbits_le32(&ssp_regs->hw_ssp_ctrl1,
-		SSP_CTRL1_SSP_MODE_MASK | SSP_CTRL1_WORD_LENGTH_MASK,
+		SSP_CTRL1_SSP_MODE_MASK | SSP_CTRL1_WORD_LENGTH_MASK |
+		SSP_CTRL1_DMA_ENABLE,
 		SSP_CTRL1_SSP_MODE_SD_MMC | SSP_CTRL1_WORD_LENGTH_EIGHT_BITS);
 
 	/* Set initial bit clock 400 KHz */
@@ -285,10 +355,11 @@ static int mxsmmc_init(struct mmc *mmc)
 
 int mxsmmc_initialize(bd_t *bis, int id, int (*wp)(int))
 {
-	struct mx28_clkctrl_regs *clkctrl_regs =
-		(struct mx28_clkctrl_regs *)MXS_CLKCTRL_BASE;
+	struct mxs_clkctrl_regs *clkctrl_regs =
+		(struct mxs_clkctrl_regs *)MXS_CLKCTRL_BASE;
 	struct mmc *mmc = NULL;
 	struct mxsmmc_priv *priv = NULL;
+	int ret;
 
 	mmc = malloc(sizeof(struct mmc));
 	if (!mmc)
@@ -300,26 +371,37 @@ int mxsmmc_initialize(bd_t *bis, int id, int (*wp)(int))
 		return -ENOMEM;
 	}
 
+	priv->desc = mxs_dma_desc_alloc();
+	if (!priv->desc) {
+		free(priv);
+		free(mmc);
+		return -ENOMEM;
+	}
+
+	ret = mxs_dma_init_channel(id);
+	if (ret)
+		return ret;
+
 	priv->mmc_is_wp = wp;
 	priv->id = id;
 	switch (id) {
 	case 0:
-		priv->regs = (struct mx28_ssp_regs *)MXS_SSP0_BASE;
+		priv->regs = (struct mxs_ssp_regs *)MXS_SSP0_BASE;
 		priv->clkseq_bypass = CLKCTRL_CLKSEQ_BYPASS_SSP0;
 		priv->clkctrl_ssp = &clkctrl_regs->hw_clkctrl_ssp0;
 		break;
 	case 1:
-		priv->regs = (struct mx28_ssp_regs *)MXS_SSP1_BASE;
+		priv->regs = (struct mxs_ssp_regs *)MXS_SSP1_BASE;
 		priv->clkseq_bypass = CLKCTRL_CLKSEQ_BYPASS_SSP1;
 		priv->clkctrl_ssp = &clkctrl_regs->hw_clkctrl_ssp1;
 		break;
 	case 2:
-		priv->regs = (struct mx28_ssp_regs *)MXS_SSP2_BASE;
+		priv->regs = (struct mxs_ssp_regs *)MXS_SSP2_BASE;
 		priv->clkseq_bypass = CLKCTRL_CLKSEQ_BYPASS_SSP2;
 		priv->clkctrl_ssp = &clkctrl_regs->hw_clkctrl_ssp2;
 		break;
 	case 3:
-		priv->regs = (struct mx28_ssp_regs *)MXS_SSP3_BASE;
+		priv->regs = (struct mxs_ssp_regs *)MXS_SSP3_BASE;
 		priv->clkseq_bypass = CLKCTRL_CLKSEQ_BYPASS_SSP3;
 		priv->clkctrl_ssp = &clkctrl_regs->hw_clkctrl_ssp3;
 		break;
@@ -329,6 +411,7 @@ int mxsmmc_initialize(bd_t *bis, int id, int (*wp)(int))
 	mmc->send_cmd = mxsmmc_send_cmd;
 	mmc->set_ios = mxsmmc_set_ios;
 	mmc->init = mxsmmc_init;
+	mmc->getcd = NULL;
 	mmc->priv = priv;
 
 	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_33_34;
@@ -344,7 +427,7 @@ int mxsmmc_initialize(bd_t *bis, int id, int (*wp)(int))
 	 */
 	mmc->f_min = 400000;
 	mmc->f_max = mxc_get_clock(MXC_SSP0_CLK + id) * 1000 / 2;
-	mmc->b_max = 0;
+	mmc->b_max = 0x20;
 
 	mmc_register(mmc);
 	return 0;

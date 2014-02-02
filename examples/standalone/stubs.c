@@ -1,3 +1,4 @@
+#include <common.h>
 #include <exports.h>
 
 #ifndef GCC_VERSION
@@ -180,6 +181,34 @@ gd_t *global_data;
 "	lwi	$r16, [$r16 + (%1)]\n"	\
 "	jr	$r16\n"			\
 	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "$r16");
+#elif defined(CONFIG_OPENRISC)
+/*
+ * r10 holds the pointer to the global_data, r13 is a call-clobbered
+ * register
+ */
+#define EXPORT_FUNC(x) \
+	asm volatile (			\
+"	.globl " #x "\n"		\
+#x ":\n"				\
+"	l.lwz	r13, %0(r10)\n"	\
+"	l.lwz	r13, %1(r13)\n"	\
+"	l.jr	r13\n"		\
+"	l.nop\n"				\
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "r13");
+#elif defined(CONFIG_H8300)
+/*
+ * er5 holds the pointer to the global_data. er0 is call clobbered.
+ */
+#define EXPORT_FUNC(x)					\
+	asm volatile(					\
+	"	.globl\t" #x "\n"			\
+#x ":\n"					\
+	"	mov.l er5,er0\n"			\
+	"	add.l %0,er0\n"				\
+	"	add.l %1,er0\n"				\
+	"	mov.l @er0,er0\n"			\
+	"	jmp @er0\n"				\
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "er0" );
 #elif defined(CONFIG_RX)
 /*
  * r13 holds the pointer to the global_data. r1 is call clobbered.
@@ -216,7 +245,6 @@ void __attribute__((unused)) dummy(void)
 {
 #include <_exports.h>
 }
-
 extern unsigned long __bss_start, _end;
 
 void app_startup(char * const *argv)

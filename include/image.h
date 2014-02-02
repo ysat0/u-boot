@@ -34,6 +34,7 @@
 #define __IMAGE_H__
 
 #include "compiler.h"
+#include <asm/byteorder.h>
 
 #ifdef USE_HOSTCC
 
@@ -107,8 +108,10 @@
 #define IH_ARCH_AVR32		17	/* AVR32	*/
 #define IH_ARCH_ST200	        18	/* STMicroelectronics ST200  */
 #define IH_ARCH_SANDBOX		19	/* Sandbox architecture (test only) */
-#define IH_ARCH_NDS32	        19	/* ANDES Technology - NDS32  */
-#define IH_ARCH_RX		20	/* RX		*/
+#define IH_ARCH_NDS32	        20	/* ANDES Technology - NDS32  */
+#define IH_ARCH_OPENRISC        21	/* OpenRISC 1000  */
+#define IH_ARCH_H8300		22	/* H8/300 */
+#define IH_ARCH_RX		23	/* RX		*/
 
 /*
  * Image Types
@@ -163,6 +166,8 @@
 #define IH_TYPE_UBLIMAGE	11	/* Davinci UBL Image		*/
 #define IH_TYPE_OMAPIMAGE	12	/* TI OMAP Config Header Image	*/
 #define IH_TYPE_AISIMAGE	13	/* TI Davinci AIS Image		*/
+#define IH_TYPE_KERNEL_NOLOAD	14	/* OS Kernel Image, can run from any load address */
+#define IH_TYPE_PBLIMAGE	15	/* Freescale PBL Boot Image	*/
 
 /*
  * Compression Types
@@ -176,18 +181,21 @@
 #define IH_MAGIC	0x27051956	/* Image Magic Number		*/
 #define IH_NMLEN		32	/* Image Name Length		*/
 
+/* Reused from common.h */
+#define ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
+
 /*
  * Legacy format image header,
  * all data in network byte order (aka natural aka bigendian).
  */
 typedef struct image_header {
-	uint32_t	ih_magic;	/* Image Header Magic Number	*/
-	uint32_t	ih_hcrc;	/* Image Header CRC Checksum	*/
-	uint32_t	ih_time;	/* Image Creation Timestamp	*/
-	uint32_t	ih_size;	/* Image Data Size		*/
-	uint32_t	ih_load;	/* Data	 Load  Address		*/
-	uint32_t	ih_ep;		/* Entry Point Address		*/
-	uint32_t	ih_dcrc;	/* Image Data CRC Checksum	*/
+	__be32		ih_magic;	/* Image Header Magic Number	*/
+	__be32		ih_hcrc;	/* Image Header CRC Checksum	*/
+	__be32		ih_time;	/* Image Creation Timestamp	*/
+	__be32		ih_size;	/* Image Data Size		*/
+	__be32		ih_load;	/* Data	 Load  Address		*/
+	__be32		ih_ep;		/* Entry Point Address		*/
+	__be32		ih_dcrc;	/* Image Data CRC Checksum	*/
 	uint8_t		ih_os;		/* Operating System		*/
 	uint8_t		ih_arch;	/* CPU architecture		*/
 	uint8_t		ih_type;	/* Image Type			*/
@@ -266,6 +274,8 @@ typedef struct bootm_headers {
 	struct lmb	lmb;		/* for memory mgmt */
 #endif
 } bootm_headers_t;
+
+extern bootm_headers_t images;
 
 /*
  * Some systems (for example LWMON) have very short watchdog periods;
@@ -455,7 +465,6 @@ static inline void image_set_name(image_header_t *hdr, const char *name)
 int image_check_hcrc(const image_header_t *hdr);
 int image_check_dcrc(const image_header_t *hdr);
 #ifndef USE_HOSTCC
-int getenv_yesno(char *var);
 ulong getenv_bootm_low(void);
 phys_size_t getenv_bootm_size(void);
 phys_size_t getenv_bootm_mapsize(void);
@@ -490,6 +499,8 @@ static inline int image_check_target_arch(const image_header_t *hdr)
 {
 #ifndef IH_ARCH_DEFAULT
 # error "please define IH_ARCH_DEFAULT in your arch asm/u-boot.h"
+#elif defined(__H8300H__) || defined(__H8300S__)
+	if (!image_check_arch (hdr, IH_ARCH_H8300))
 #endif
 	return image_check_arch(hdr, IH_ARCH_DEFAULT);
 }
@@ -507,6 +518,7 @@ static inline int image_check_target_arch(const image_header_t *hdr)
 #define FIT_HASH_NODENAME	"hash"
 #define FIT_ALGO_PROP		"algo"
 #define FIT_VALUE_PROP		"value"
+#define FIT_IGNORE_PROP		"uboot-ignore"
 
 /* image node */
 #define FIT_DATA_PROP		"data"
@@ -528,9 +540,9 @@ static inline int image_check_target_arch(const image_header_t *hdr)
 #define FIT_MAX_HASH_LEN	20	/* max(crc32_len(4), sha1_len(20)) */
 
 /* cmdline argument format parsing */
-inline int fit_parse_conf(const char *spec, ulong addr_curr,
+int fit_parse_conf(const char *spec, ulong addr_curr,
 		ulong *addr, const char **conf_name);
-inline int fit_parse_subimage(const char *spec, ulong addr_curr,
+int fit_parse_subimage(const char *spec, ulong addr_curr,
 		ulong *addr, const char **image_name);
 
 void fit_print_contents(const void *fit);
@@ -591,6 +603,9 @@ int fit_image_get_data(const void *fit, int noffset,
 int fit_image_hash_get_algo(const void *fit, int noffset, char **algo);
 int fit_image_hash_get_value(const void *fit, int noffset, uint8_t **value,
 				int *value_len);
+#ifndef USE_HOSTCC
+int fit_image_hash_get_ignore(const void *fit, int noffset, int *ignore);
+#endif
 
 int fit_set_timestamp(void *fit, int noffset, time_t timestamp);
 int fit_set_hashes(void *fit);
@@ -606,6 +621,7 @@ int fit_image_check_type(const void *fit, int noffset, uint8_t type);
 int fit_image_check_comp(const void *fit, int noffset, uint8_t comp);
 int fit_check_format(const void *fit);
 
+int fit_conf_find_compat(const void *fit, const void *fdt);
 int fit_conf_get_node(const void *fit, const char *conf_uname);
 int fit_conf_get_kernel_node(const void *fit, int noffset);
 int fit_conf_get_ramdisk_node(const void *fit, int noffset);
@@ -617,6 +633,8 @@ void fit_conf_print(const void *fit, int noffset, const char *p);
 static inline int fit_image_check_target_arch(const void *fdt, int node)
 {
 	return fit_image_check_arch(fdt, node, IH_ARCH_DEFAULT);
+#elif defined(__H8300H__) || defined(__H8300S__)
+	if (!image_check_arch (hdr, IH_ARCH_H8300))
 }
 #endif /* USE_HOSTCC */
 

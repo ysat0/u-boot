@@ -225,9 +225,7 @@
 #define CONFIG_CMD_NAND			/* enable NAND support */
 #define CONFIG_NAND_MPC5121_NFC
 #define CONFIG_SYS_NAND_BASE            0x40000000
-
 #define CONFIG_SYS_MAX_NAND_DEVICE      1
-#define NAND_MAX_CHIPS                  CONFIG_SYS_MAX_NAND_DEVICE
 #define CONFIG_SYS_NAND_SELECT_DEVICE	/* driver supports mutipl. chips */
 
 /*
@@ -300,7 +298,6 @@
 /*
  * Used PSC UART devices
  */
-#define CONFIG_SERIAL_MULTI
 #define CONFIG_SYS_PSC1
 #define CONFIG_SYS_PSC4
 #define CONFIG_SYS_PSC6
@@ -436,10 +433,8 @@
 #define CONFIG_KGDB_SER_INDEX	2	/* which serial port to use */
 #endif
 
-#ifdef CONFIG_SERIAL_MULTI
 /* POST support */
 #define CONFIG_POST             (CONFIG_SYS_POST_COPROC)
-#endif
 
 /*
  * Environment Configuration

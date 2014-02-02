@@ -68,17 +68,6 @@ struct cspi_regs {
 	u32 test;
 };
 
-/* Watchdog Timer (WDOG) registers */
-#define WDOG_ENABLE	(1 << 2)
-#define WDOG_WT_SHIFT	8
-#define WDOG_WDZST	(1 << 0)
-
-struct wdog_regs {
-	u16 wcr;	/* Control */
-	u16 wsr;	/* Service */
-	u16 wrsr;	/* Reset Status */
-};
-
 /* IIM Control Registers */
 struct iim_regs {
 	u32 iim_stat;
@@ -541,6 +530,8 @@ struct esdc_regs {
 
 #endif
 
+#define ARCH_MXC
+
 #define __REG(x)     (*((volatile u32 *)(x)))
 #define __REG16(x)   (*((volatile u16 *)(x)))
 #define __REG8(x)    (*((volatile u8 *)(x)))
@@ -567,7 +558,8 @@ struct esdc_regs {
 
 #define MX31_IIM_BASE_ADDR	0x5001C000
 
-#define PDR0_CSI_PODF(x)	(((x) & 0x1ff) << 23)
+#define PDR0_CSI_PODF(x)	(((x) & 0x3f) << 26)
+#define PDR0_CSI_PRDF(x)	(((x) & 0x7) << 23)
 #define PDR0_PER_PODF(x)	(((x) & 0x1f) << 16)
 #define PDR0_HSP_PODF(x)	(((x) & 0x7) << 11)
 #define PDR0_NFC_PODF(x)	(((x) & 0x7) << 8)
@@ -575,12 +567,23 @@ struct esdc_regs {
 #define PDR0_MAX_PODF(x)	(((x) & 0x7) << 3)
 #define PDR0_MCU_PODF(x)	((x) & 0x7)
 
+#define PDR1_USB_PRDF(x)	(((x) & 0x3) << 30)
+#define PDR1_USB_PODF(x)	(((x) & 0x7) << 27)
+#define PDR1_FIRI_PRDF(x)	(((x) & 0x7) << 24)
+#define PDR1_FIRI_PODF(x)	(((x) & 0x3f) << 18)
+#define PDR1_SSI2_PRDF(x)	(((x) & 0x7) << 15)
+#define PDR1_SSI2_PODF(x)	(((x) & 0x3f) << 9)
+#define PDR1_SSI1_PRDF(x)	(((x) & 0x7) << 6)
+#define PDR1_SSI1_PODF(x)	((x) & 0x3f)
+
+#define PLL_BRMO(x)		(((x) & 0x1) << 31)
 #define PLL_PD(x)		(((x) & 0xf) << 26)
 #define PLL_MFD(x)		(((x) & 0x3ff) << 16)
 #define PLL_MFI(x)		(((x) & 0xf) << 10)
 #define PLL_MFN(x)		(((x) & 0x3ff) << 0)
 
-#define GET_PDR0_CSI_PODF(x)	(((x) >> 23) & 0x1ff)
+#define GET_PDR0_CSI_PODF(x)	(((x) >> 26) & 0x3f)
+#define GET_PDR0_CSI_PRDF(x)	(((x) >> 23) & 0x7)
 #define GET_PDR0_PER_PODF(x)	(((x) >> 16) & 0x1f)
 #define GET_PDR0_HSP_PODF(x)	(((x) >> 11) & 0x7)
 #define GET_PDR0_NFC_PODF(x)	(((x) >> 8) & 0x7)
@@ -599,6 +602,19 @@ struct esdc_regs {
 #define WEIM_ESDCTL1	0xB8001008
 #define WEIM_ESDCFG1	0xB800100C
 #define WEIM_ESDMISC	0xB8001010
+
+#define UART1_BASE	0x43F90000
+#define UART2_BASE	0x43F94000
+#define UART3_BASE	0x5000C000
+#define UART4_BASE	0x43FB0000
+#define UART5_BASE	0x43FB4000
+
+#define I2C1_BASE_ADDR          0x43f80000
+#define I2C1_CLK_OFFSET		26
+#define I2C2_BASE_ADDR          0x43F98000
+#define I2C2_CLK_OFFSET		28
+#define I2C3_BASE_ADDR          0x43f84000
+#define I2C3_CLK_OFFSET		30
 
 #define ESDCTL_SDE			(1 << 31)
 #define ESDCTL_CMD_RW			(0 << 28)
@@ -656,11 +672,11 @@ struct esdc_regs {
 #define IPU_CONF_PF_EN		(1<<3)
 #define IPU_CONF_ROT_EN		(1<<2)
 #define IPU_CONF_IC_EN		(1<<1)
-#define IPU_CONF_SCI_EN		(1<<0)
+#define IPU_CONF_CSI_EN		(1<<0)
 
 #define ARM_PPMRR		0x40000015
 
-#define WDOG_BASE		0x53FDC000
+#define WDOG1_BASE_ADDR		0x53FDC000
 
 /*
  * GPIO
@@ -702,6 +718,13 @@ struct esdc_regs {
 #define MUX_CTL_CSPI3_SCLK		0x0d
 #define MUX_CTL_CSPI3_SPI_RDY	0x0e
 #define MUX_CTL_CSPI3_MOSI		0x13
+
+#define MUX_CTL_SD1_DATA1	0x18
+#define MUX_CTL_SD1_DATA2	0x19
+#define MUX_CTL_SD1_DATA3	0x1a
+#define MUX_CTL_SD1_CMD		0x1d
+#define MUX_CTL_SD1_CLK		0x1e
+#define MUX_CTL_SD1_DATA0	0x1f
 
 #define MUX_CTL_USBH2_DATA1	0x40
 #define MUX_CTL_USBH2_DIR	0x44
@@ -849,6 +872,10 @@ struct esdc_regs {
  */
 #define NFC_BASE_ADDR	0xB8000000
 
+/* SD card controller */
+#define SDHC1_BASE_ADDR	0x50004000
+#define SDHC2_BASE_ADDR	0x50008000
+
 /*
  * Internal RAM (16KB)
  */
@@ -857,31 +884,33 @@ struct esdc_regs {
 
 #define MX31_AIPS1_BASE_ADDR	0x43f00000
 #define IMX_USB_BASE		(MX31_AIPS1_BASE_ADDR + 0x88000)
+#define IMX_USB_PORT_OFFSET	0x200
 
-/* USB portsc */
-/* values for portsc field */
-#define MXC_EHCI_PHY_LOW_POWER_SUSPEND	(1 << 23)
-#define MXC_EHCI_FORCE_FS		(1 << 24)
-#define MXC_EHCI_UTMI_8BIT		(0 << 28)
-#define MXC_EHCI_UTMI_16BIT		(1 << 28)
-#define MXC_EHCI_SERIAL			(1 << 29)
-#define MXC_EHCI_MODE_UTMI		(0 << 30)
-#define MXC_EHCI_MODE_PHILIPS		(1 << 30)
-#define MXC_EHCI_MODE_ULPI		(2 << 30)
-#define MXC_EHCI_MODE_SERIAL		(3 << 30)
+/*
+ * CSPI register definitions
+ */
+#define MXC_CSPI
+#define MXC_CSPICTRL_EN		(1 << 0)
+#define MXC_CSPICTRL_MODE	(1 << 1)
+#define MXC_CSPICTRL_XCH	(1 << 2)
+#define MXC_CSPICTRL_SMC	(1 << 3)
+#define MXC_CSPICTRL_POL	(1 << 4)
+#define MXC_CSPICTRL_PHA	(1 << 5)
+#define MXC_CSPICTRL_SSCTL	(1 << 6)
+#define MXC_CSPICTRL_SSPOL	(1 << 7)
+#define MXC_CSPICTRL_CHIPSELECT(x)	(((x) & 0x3) << 24)
+#define MXC_CSPICTRL_BITCOUNT(x)	(((x) & 0x1f) << 8)
+#define MXC_CSPICTRL_DATARATE(x)	(((x) & 0x7) << 16)
+#define MXC_CSPICTRL_TC		(1 << 8)
+#define MXC_CSPICTRL_RXOVF	(1 << 6)
+#define MXC_CSPICTRL_MAXBITS	0x1f
 
-/* values for flags field */
-#define MXC_EHCI_INTERFACE_DIFF_UNI	(0 << 0)
-#define MXC_EHCI_INTERFACE_DIFF_BI	(1 << 0)
-#define MXC_EHCI_INTERFACE_SINGLE_UNI	(2 << 0)
-#define MXC_EHCI_INTERFACE_SINGLE_BI	(3 << 0)
-#define MXC_EHCI_INTERFACE_MASK		(0xf)
+#define MXC_CSPIPERIOD_32KHZ	(1 << 15)
+#define MAX_SPI_BYTES	4
 
-#define MXC_EHCI_POWER_PINS_ENABLED	(1 << 5)
-#define MXC_EHCI_TTL_ENABLED		(1 << 6)
-
-#define MXC_EHCI_INTERNAL_PHY		(1 << 7)
-#define MXC_EHCI_IPPUE_DOWN		(1 << 8)
-#define MXC_EHCI_IPPUE_UP		(1 << 9)
+#define MXC_SPI_BASE_ADDRESSES \
+	0x43fa4000, \
+	0x50010000, \
+	0x53f84000,
 
 #endif /* __ASM_ARCH_MX31_IMX_REGS_H */

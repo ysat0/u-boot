@@ -43,7 +43,7 @@
  *   what is supported.  Returns < 0 on error, 0 if the PHY's advertisement
  *   hasn't changed, and > 0 if it has changed.
  */
-int genphy_config_advert(struct phy_device *phydev)
+static int genphy_config_advert(struct phy_device *phydev)
 {
 	u32 advertise;
 	int oldadv, adv;
@@ -118,7 +118,7 @@ int genphy_config_advert(struct phy_device *phydev)
  * Description: Configures MII_BMCR to force speed/duplex
  *   to the values in phydev. Assumes that the values are valid.
  */
-int genphy_setup_forced(struct phy_device *phydev)
+static int genphy_setup_forced(struct phy_device *phydev)
 {
 	int err;
 	int ctl = 0;
@@ -288,6 +288,7 @@ static int genphy_parse_link(struct phy_device *phydev)
 		u32 lpa = 0;
 		u32 gblpa = 0;
 
+#ifndef CONFIG_PHY_BROKEN_ERCAP
 		/* Check for gigabit capability */
 		if (mii_reg & BMSR_ERCAP) {
 			/* We want a list of states supported by
@@ -297,7 +298,7 @@ static int genphy_parse_link(struct phy_device *phydev)
 			gblpa &= phy_read(phydev,
 					MDIO_DEVAD_NONE, MII_CTRL1000) << 2;
 		}
-
+#endif
 		/* Set the baseline so we only have to set them
 		 * if they're different
 		 */
@@ -444,6 +445,9 @@ int phy_init(void)
 #ifdef CONFIG_PHY_REALTEK
 	phy_realtek_init();
 #endif
+#ifdef CONFIG_PHY_SMSC
+	phy_smsc_init();
+#endif
 #ifdef CONFIG_PHY_TERANETICS
 	phy_teranetics_init();
 #endif
@@ -462,7 +466,7 @@ int phy_register(struct phy_driver *drv)
 	return 0;
 }
 
-int phy_probe(struct phy_device *phydev)
+static int phy_probe(struct phy_device *phydev)
 {
 	int err = 0;
 
@@ -485,7 +489,7 @@ static struct phy_driver *generic_for_interface(phy_interface_t interface)
 	return &genphy_driver;
 }
 
-struct phy_driver *get_phy_driver(struct phy_device *phydev,
+static struct phy_driver *get_phy_driver(struct phy_device *phydev,
 				phy_interface_t interface)
 {
 	struct list_head *entry;
@@ -502,8 +506,9 @@ struct phy_driver *get_phy_driver(struct phy_device *phydev,
 	return generic_for_interface(interface);
 }
 
-struct phy_device *phy_device_create(struct mii_dev *bus, int addr, int phy_id,
-					phy_interface_t interface)
+static struct phy_device *phy_device_create(struct mii_dev *bus, int addr,
+					    int phy_id,
+					    phy_interface_t interface)
 {
 	struct phy_device *dev;
 
@@ -546,7 +551,7 @@ struct phy_device *phy_device_create(struct mii_dev *bus, int addr, int phy_id,
  * Description: Reads the ID registers of the PHY at @addr on the
  *   @bus, stores it in @phy_id and returns zero on success.
  */
-int get_phy_id(struct mii_dev *bus, int addr, int devad, u32 *phy_id)
+static int get_phy_id(struct mii_dev *bus, int addr, int devad, u32 *phy_id)
 {
 	int phy_reg;
 
@@ -578,8 +583,8 @@ int get_phy_id(struct mii_dev *bus, int addr, int devad, u32 *phy_id)
  * Description: Reads the ID registers of the PHY at @addr on the
  *   @bus, then allocates and returns the phy_device to represent it.
  */
-struct phy_device *get_phy_device(struct mii_dev *bus, int addr,
-				phy_interface_t interface)
+static struct phy_device *get_phy_device(struct mii_dev *bus, int addr,
+					 phy_interface_t interface)
 {
 	u32 phy_id = 0x1fffffff;
 	int i;
@@ -666,7 +671,6 @@ int phy_reset(struct phy_device *phydev)
 		puts("PHY reset timed out\n");
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -720,16 +724,21 @@ struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 	return phydev;
 }
 
+/*
+ * Start the PHY.  Returns 0 on success, or a negative error code.
+ */
 int phy_startup(struct phy_device *phydev)
 {
 	if (phydev->drv->startup)
-		phydev->drv->startup(phydev);
+		return phydev->drv->startup(phydev);
 
 	return 0;
 }
 
 static int __board_phy_config(struct phy_device *phydev)
 {
+	if (phydev->drv->config)
+		return phydev->drv->config(phydev);
 	return 0;
 }
 
@@ -738,9 +747,6 @@ int board_phy_config(struct phy_device *phydev)
 
 int phy_config(struct phy_device *phydev)
 {
-	if (phydev->drv->config)
-		phydev->drv->config(phydev);
-
 	/* Invoke an optional board-specific helper */
 	board_phy_config(phydev);
 

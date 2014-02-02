@@ -32,7 +32,7 @@ OUTPUT_ARCH(arm)
 ENTRY(_start)
 SECTIONS
 {
-	. = 0x00000000;
+	. = CONFIG_SPL_TEXT_BASE;
 
 	. = ALIGN(4);
 	.text      :
@@ -47,6 +47,10 @@ SECTIONS
 
 	. = ALIGN(4);
 	.data : { *(SORT_BY_ALIGNMENT(.data*)) } >.sram
+	. = ALIGN(4);
+	.u_boot_list : {
+		#include <u-boot.lst>
+	} >.sram
 	. = ALIGN(4);
 	.rel.dyn : {
 		__rel_dyn_start = .;

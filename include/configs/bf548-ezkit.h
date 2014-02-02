@@ -131,7 +131,6 @@
 #define CONFIG_DRIVER_NAND_BFIN
 #define CONFIG_SYS_NAND_BASE		0 /* not actually used */
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define NAND_MAX_CHIPS		1
 
 
 /*
@@ -189,6 +188,7 @@
 /* Don't waste time transferring a logo over the UART */
 # if (CONFIG_BFIN_BOOT_MODE != BFIN_BOOT_UART)
 #  define CONFIG_VIDEO
+#  define EASYLOGO_HEADER <asm/bfin_logo_230x230_gzip.h>
 # endif
 # define CONFIG_DEB_DMA_URGENT
 #endif

@@ -16,13 +16,14 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(SOC).o
 
-SOBJS	:= lowlevel_init.o
-
 COBJS	+= clock.o
 COBJS	+= sys_info.o
+COBJS	+= mem.o
 COBJS	+= ddr.o
 COBJS	+= emif4.o
 COBJS	+= board.o
+COBJS	+= mux.o
+COBJS-$(CONFIG_NAND_OMAP_GPMC)	+= elm.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS) $(COBJS-y) $(SOBJS))

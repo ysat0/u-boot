@@ -23,26 +23,34 @@
 
 #include <common.h>
 #include <ns16550.h>
+#include <linux/compiler.h>
 #include <asm/io.h>
-#include <asm/arch/tegra2.h>
-#include <asm/arch/sys_proto.h>
-
-#include <asm/arch/clk_rst.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/display.h>
+#include <asm/arch/emc.h>
+#include <asm/arch/funcmux.h>
 #include <asm/arch/pinmux.h>
-#include <asm/arch/uart.h>
-#include "board.h"
-
-#ifdef CONFIG_TEGRA2_MMC
-#include <mmc.h>
-#endif
+#include <asm/arch/pmu.h>
+#include <asm/arch/pwm.h>
+#include <asm/arch/tegra.h>
+#include <asm/arch/usb.h>
+#include <asm/arch-tegra/board.h>
+#include <asm/arch-tegra/clk_rst.h>
+#include <asm/arch-tegra/pmc.h>
+#include <asm/arch-tegra/sys_proto.h>
+#include <asm/arch-tegra/uart.h>
+#include <asm/arch-tegra/warmboot.h>
+#include <spi.h>
+#include <i2c.h>
+#include "emc.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
-const struct tegra2_sysinfo sysinfo = {
-	CONFIG_TEGRA2_BOARD_STRING
+const struct tegra_sysinfo sysinfo = {
+	CONFIG_TEGRA_BOARD_STRING
 };
 
+#ifndef CONFIG_SPL_BUILD
 /*
  * Routine: timer_init
  * Description: init the timestamp and lastinc value
@@ -51,81 +59,48 @@ int timer_init(void)
 {
 	return 0;
 }
-
-static void enable_uart(enum periph_id pid)
-{
-	/* Assert UART reset and enable clock */
-	reset_set_enable(pid, 1);
-	clock_enable(pid);
-	clock_ll_set_source(pid, 0);	/* UARTx_CLK_SRC = 00, PLLP_OUT0 */
-
-	/* wait for 2us */
-	udelay(2);
-
-	/* De-assert reset to UART */
-	reset_set_enable(pid, 0);
-}
-
-/*
- * Routine: clock_init_uart
- * Description: init the PLL and clock for the UART(s)
- */
-static void clock_init_uart(void)
-{
-#if defined(CONFIG_TEGRA2_ENABLE_UARTA)
-	enable_uart(PERIPH_ID_UART1);
-#endif	/* CONFIG_TEGRA2_ENABLE_UARTA */
-#if defined(CONFIG_TEGRA2_ENABLE_UARTD)
-	enable_uart(PERIPH_ID_UART4);
-#endif	/* CONFIG_TEGRA2_ENABLE_UARTD */
-}
-
-/*
- * Routine: pin_mux_uart
- * Description: setup the pin muxes/tristate values for the UART(s)
- */
-static void pin_mux_uart(void)
-{
-#if defined(CONFIG_TEGRA2_ENABLE_UARTA)
-	pinmux_set_func(PINGRP_IRRX, PMUX_FUNC_UARTA);
-	pinmux_set_func(PINGRP_IRTX, PMUX_FUNC_UARTA);
-
-	pinmux_tristate_disable(PINGRP_IRRX);
-	pinmux_tristate_disable(PINGRP_IRTX);
-#endif	/* CONFIG_TEGRA2_ENABLE_UARTA */
-#if defined(CONFIG_TEGRA2_ENABLE_UARTD)
-	pinmux_set_func(PINGRP_GMC, PMUX_FUNC_UARTD);
-
-	pinmux_tristate_disable(PINGRP_GMC);
-#endif	/* CONFIG_TEGRA2_ENABLE_UARTD */
-}
-
-#ifdef CONFIG_TEGRA2_MMC
-/*
- * Routine: pin_mux_mmc
- * Description: setup the pin muxes/tristate values for the SDMMC(s)
- */
-static void pin_mux_mmc(void)
-{
-	/* SDMMC4: config 3, x8 on 2nd set of pins */
-	pinmux_set_func(PINGRP_ATB, PMUX_FUNC_SDIO4);
-	pinmux_set_func(PINGRP_GMA, PMUX_FUNC_SDIO4);
-	pinmux_set_func(PINGRP_GME, PMUX_FUNC_SDIO4);
-
-	pinmux_tristate_disable(PINGRP_ATB);
-	pinmux_tristate_disable(PINGRP_GMA);
-	pinmux_tristate_disable(PINGRP_GME);
-
-	/* SDMMC3: SDIO3_CLK, SDIO3_CMD, SDIO3_DAT[3:0] */
-	pinmux_set_func(PINGRP_SDB, PMUX_FUNC_SDIO3);
-	pinmux_set_func(PINGRP_SDC, PMUX_FUNC_SDIO3);
-	pinmux_set_func(PINGRP_SDD, PMUX_FUNC_SDIO3);
-
-	pinmux_tristate_disable(PINGRP_SDC);
-	pinmux_tristate_disable(PINGRP_SDD);
-	pinmux_tristate_disable(PINGRP_SDB);
-}
 #endif
+
+void __pin_mux_usb(void)
+{
+}
+
+void pin_mux_usb(void) __attribute__((weak, alias("__pin_mux_usb")));
+
+void __pin_mux_spi(void)
+{
+}
+
+void pin_mux_spi(void) __attribute__((weak, alias("__pin_mux_spi")));
+
+void __gpio_early_init_uart(void)
+{
+}
+
+void gpio_early_init_uart(void)
+__attribute__((weak, alias("__gpio_early_init_uart")));
+
+void __pin_mux_nand(void)
+{
+	funcmux_select(PERIPH_ID_NDFLASH, FUNCMUX_DEFAULT);
+}
+
+void pin_mux_nand(void) __attribute__((weak, alias("__pin_mux_nand")));
+
+/*
+ * Routine: power_det_init
+ * Description: turn off power detects
+ */
+static void power_det_init(void)
+{
+#if defined(CONFIG_TEGRA20)
+	struct pmc_ctlr *const pmc = (struct pmc_ctlr *)NV_PA_PMC_BASE;
+
+	/* turn off power detects */
+	writel(0, &pmc->pmc_pwr_det_latch);
+	writel(0, &pmc->pmc_pwr_det);
+#endif
+}
 
 /*
  * Routine: board_init
@@ -133,53 +108,97 @@ static void pin_mux_mmc(void)
  */
 int board_init(void)
 {
+	__maybe_unused int err;
+
+	/* Do clocks and UART first so that printf() works */
 	clock_init();
 	clock_verify();
 
+#ifdef CONFIG_SPI_UART_SWITCH
+	gpio_config_uart();
+#endif
+#ifdef CONFIG_TEGRA_SPI
+	pin_mux_spi();
+	spi_init();
+#endif
+#ifdef CONFIG_PWM_TEGRA
+	if (pwm_init(gd->fdt_blob))
+		debug("%s: Failed to init pwm\n", __func__);
+#endif
+#ifdef CONFIG_LCD
+	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
+#endif
 	/* boot param addr */
 	gd->bd->bi_boot_params = (NV_PA_SDRAM_BASE + 0x100);
 
-	return 0;
-}
+	power_det_init();
 
-#ifdef CONFIG_TEGRA2_MMC
-/* this is a weak define that we are overriding */
-int board_mmc_init(bd_t *bd)
-{
-	debug("board_mmc_init called\n");
-	/* Enable muxes, etc. for SDMMC controllers */
-	pin_mux_mmc();
-	gpio_config_mmc();
+#ifdef CONFIG_TEGRA_I2C
+#ifndef CONFIG_SYS_I2C_INIT_BOARD
+#error "You must define CONFIG_SYS_I2C_INIT_BOARD to use i2c on Nvidia boards"
+#endif
+	i2c_init_board();
+# ifdef CONFIG_TEGRA_PMU
+	if (pmu_set_nominal())
+		debug("Failed to select nominal voltages\n");
+#  ifdef CONFIG_TEGRA_CLOCK_SCALING
+	err = board_emc_init();
+	if (err)
+		debug("Memory controller init failed: %d\n", err);
+#  endif
+# endif /* CONFIG_TEGRA_PMU */
+#endif /* CONFIG_TEGRA_I2C */
 
-	debug("board_mmc_init: init eMMC\n");
-	/* init dev 0, eMMC chip, with 4-bit bus */
-	tegra2_mmc_init(0, 4);
-
-	debug("board_mmc_init: init SD slot\n");
-	/* init dev 1, SD slot, with 4-bit bus */
-	tegra2_mmc_init(1, 4);
-
-	return 0;
-}
+#ifdef CONFIG_USB_EHCI_TEGRA
+	pin_mux_usb();
+	board_usb_init(gd->fdt_blob);
+#endif
+#ifdef CONFIG_LCD
+	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
 #endif
 
+#ifdef CONFIG_TEGRA_NAND
+	pin_mux_nand();
+#endif
+
+#ifdef CONFIG_TEGRA_LP0
+	/* save Sdram params to PMC 2, 4, and 24 for WB0 */
+	warmboot_save_sdram_params();
+
+	/* prepare the WB code to LP0 location */
+	warmboot_prepare_code(TEGRA_LP0_ADDR, TEGRA_LP0_SIZE);
+#endif
+
+	return 0;
+}
+
 #ifdef CONFIG_BOARD_EARLY_INIT_F
+static void __gpio_early_init(void)
+{
+}
+
+void gpio_early_init(void) __attribute__((weak, alias("__gpio_early_init")));
+
 int board_early_init_f(void)
 {
-	/* Initialize essential common plls */
-	clock_early_init();
-
-	/* Initialize UART clocks */
-	clock_init_uart();
-
-	/* Initialize periph pinmuxes */
-	pin_mux_uart();
+	board_init_uart_f();
 
 	/* Initialize periph GPIOs */
-	gpio_config_uart();
+	gpio_early_init();
+	gpio_early_init_uart();
+#ifdef CONFIG_LCD
+	tegra_lcd_early_init(gd->fdt_blob);
+#endif
 
-	/* Init UART, scratch regs, and start CPU */
-	tegra2_start();
 	return 0;
 }
 #endif	/* EARLY_INIT */
+
+int board_late_init(void)
+{
+#ifdef CONFIG_LCD
+	/* Make sure we finish initing the LCD */
+	tegra_lcd_check_next_stage(gd->fdt_blob, 1);
+#endif
+	return 0;
+}

@@ -1,0 +1,2 @@
+#define ARCH_DMA_MINALIGN 4
+

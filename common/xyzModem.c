@@ -58,6 +58,7 @@
 #include <xyzModem.h>
 #include <stdarg.h>
 #include <crc.h>
+#include <malloc.h>
 
 /* Assumption - run xyzModem protocol over the console port */
 
@@ -81,7 +82,7 @@ static struct
 #else
   int *__chan;
 #endif
-  unsigned char pkt[1024], *bufp;
+  unsigned char *pkt, *bufp;
   unsigned char blk, cblk, crc1, crc2;
   unsigned char next_blk;	/* Expected block */
   int len, mode, total_retries;
@@ -100,7 +101,7 @@ static struct
 
 #ifndef REDBOOT			/*SB */
 typedef int cyg_int32;
-int
+static int
 CYGACC_COMM_IF_GETC_TIMEOUT (char chan, char *c)
 {
 #define DELAY 20
@@ -118,7 +119,7 @@ CYGACC_COMM_IF_GETC_TIMEOUT (char chan, char *c)
   return 0;
 }
 
-void
+static void
 CYGACC_COMM_IF_PUTC (char x, char y)
 {
   putc (y);
@@ -165,7 +166,7 @@ _tolower (char c)
 }
 
 /* Parse (scan) a number */
-bool
+static bool
 parse_num (char *s, unsigned long *val, char **es, char *delim)
 {
   bool first = true;
@@ -353,6 +354,7 @@ xyzModem_get_hdr (void)
   bool hdr_found = false;
   int i, can_total, hdr_chars;
   unsigned short cksum;
+  char *pktp;
 
   ZM_DEBUG (zm_new ());
   /* Find the start of a header */
@@ -433,13 +435,14 @@ xyzModem_get_hdr (void)
     }
   xyz.len = (c == SOH) ? 128 : 1024;
   xyz.bufp = xyz.pkt;
+  pktp = xyz.pkt;
   for (i = 0; i < xyz.len; i++)
     {
       res = CYGACC_COMM_IF_GETC_TIMEOUT (*xyz.__chan, &c);
       ZM_DEBUG (zm_save (c));
       if (res)
 	{
-	  xyz.pkt[i] = c;
+	  *pktp++ = c;
 	}
       else
 	{
@@ -489,9 +492,10 @@ xyzModem_get_hdr (void)
   else
     {
       cksum = 0;
+      pktp = xyz.pkt;
       for (i = 0; i < xyz.len; i++)
 	{
-	  cksum += xyz.pkt[i];
+	  cksum += *pktp++;
 	}
       if (xyz.crc1 != (cksum & 0xFF))
 	{
@@ -560,6 +564,11 @@ xyzModem_stream_open (connection_info_t * info, int *err)
   xyz.read_length = 0;
   xyz.file_length = 0;
 #endif
+  if (xyz.pkt == NULL) {
+    xyz.pkt = malloc(1024);
+    if (xyz.pkt == NULL)
+      return -1;
+  }
 
   CYGACC_COMM_IF_PUTC (*xyz.__chan, (xyz.crc_mode ? 'C' : NAK));
 
@@ -743,6 +752,8 @@ xyzModem_stream_close (int *err)
      xyz.crc_mode ? "CRC" : "Cksum", xyz.total_SOH, xyz.total_STX,
      xyz.total_CAN, xyz.total_retries);
   ZM_DEBUG (zm_flush ());
+  free(xyz.pkt);
+  xyz.pkt = NULL;
 }
 
 /* Need to be able to clean out the input buffer, so have to take the */

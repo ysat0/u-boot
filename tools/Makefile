@@ -21,7 +21,7 @@
 # MA 02111-1307 USA
 #
 
-TOOLSUBDIRS =
+TOOLSUBDIRS = kernel-doc
 
 #
 # Include this after HOSTOS HOSTARCH check
@@ -66,10 +66,13 @@ BIN_FILES-$(CONFIG_BUILD_ENVCRC) += envcrc$(SFX)
 BIN_FILES-$(CONFIG_CMD_NET) += gen_eth_addr$(SFX)
 BIN_FILES-$(CONFIG_CMD_LOADS) += img2srec$(SFX)
 BIN_FILES-$(CONFIG_XWAY_SWAP_BYTES) += xway-swap-bytes$(SFX)
+BIN_FILES-y += mkenvimage$(SFX)
 BIN_FILES-y += mkimage$(SFX)
+BIN_FILES-$(CONFIG_SMDK5250) += mksmdk5250spl$(SFX)
 BIN_FILES-$(CONFIG_MX28) += mxsboot$(SFX)
 BIN_FILES-$(CONFIG_NETCONSOLE) += ncb$(SFX)
 BIN_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1$(SFX)
+BIN_FILES-$(CONFIG_KIRKWOOD) += kwboot$(SFX)
 
 # Source files which exist outside the tools directory
 EXT_OBJ_FILES-$(CONFIG_BUILD_ENVCRC) += common/env_embedded.o
@@ -89,14 +92,18 @@ OBJ_FILES-$(CONFIG_CMD_LOADS) += img2srec.o
 OBJ_FILES-$(CONFIG_XWAY_SWAP_BYTES) += xway-swap-bytes.o
 NOPED_OBJ_FILES-y += aisimage.o
 NOPED_OBJ_FILES-y += kwbimage.o
+NOPED_OBJ_FILES-y += pblimage.o
 NOPED_OBJ_FILES-y += imximage.o
 NOPED_OBJ_FILES-y += omapimage.o
+NOPED_OBJ_FILES-y += mkenvimage.o
 NOPED_OBJ_FILES-y += mkimage.o
+OBJ_FILES-$(CONFIG_SMDK5250) += mkexynosspl.o
 OBJ_FILES-$(CONFIG_MX28) += mxsboot.o
 OBJ_FILES-$(CONFIG_NETCONSOLE) += ncb.o
 NOPED_OBJ_FILES-y += os_support.o
 OBJ_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1.o
 NOPED_OBJ_FILES-y += ublimage.o
+OBJ_FILES-$(CONFIG_KIRKWOOD) += kwboot.o
 
 # Don't build by default
 #ifeq ($(ARCH),ppc)
@@ -190,6 +197,11 @@ $(obj)xway-swap-bytes$(SFX):	$(obj)xway-swap-bytes.o
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
+$(obj)mkenvimage$(SFX):	$(obj)crc32.o $(obj)mkenvimage.o \
+	$(obj)os_support.o
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
+
 $(obj)mkimage$(SFX):	$(obj)aisimage.o \
 			$(obj)crc32.o \
 			$(obj)default_image.o \
@@ -197,6 +209,7 @@ $(obj)mkimage$(SFX):	$(obj)aisimage.o \
 			$(obj)image.o \
 			$(obj)imximage.o \
 			$(obj)kwbimage.o \
+			$(obj)pblimage.o \
 			$(obj)md5.o \
 			$(obj)mkimage.o \
 			$(obj)os_support.o \
@@ -204,6 +217,10 @@ $(obj)mkimage$(SFX):	$(obj)aisimage.o \
 			$(obj)sha1.o \
 			$(obj)ublimage.o \
 			$(LIBFDT_OBJS)
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
+
+$(obj)mk$(BOARD)spl$(SFX):	$(obj)mkexynosspl.o
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
@@ -221,6 +238,10 @@ $(obj)ncb$(SFX):	$(obj)ncb.o
 
 $(obj)ubsha1$(SFX):	$(obj)os_support.o $(obj)sha1.o $(obj)ubsha1.o
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+
+$(obj)kwboot$(SFX): $(obj)kwboot.o
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
 
 # Some of the tool objects need to be accessed from outside the tools directory
 $(obj)%.o: $(SRCTREE)/common/%.c

@@ -62,7 +62,6 @@ DECLARE_GLOBAL_DATA_PTR;
 */
 
 extern void timer_interrupt_init(void);
-extern void malloc_bin_reloc(void);
 extern int do_ambapp_print(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]);
 extern int prom_init(void);
 
@@ -165,13 +164,9 @@ char *str_init_seq_done = "\n\rInit sequence done...\r\n\r\n";
 
 void board_init_f(ulong bootflag)
 {
-	cmd_tbl_t *cmdtp;
 	bd_t *bd;
-	unsigned char *s;
 	init_fnc_t **init_fnc_ptr;
 	int j;
-	int i;
-	char *e;
 
 #ifndef CONFIG_SYS_NO_FLASH
 	ulong flash_size;
@@ -251,8 +246,8 @@ void board_init_f(ulong bootflag)
 	/*
 	 * We have to relocate the command table manually
 	 */
-	fixup_cmdtable(&__u_boot_cmd_start,
-		(ulong)(&__u_boot_cmd_end - &__u_boot_cmd_start));
+	fixup_cmdtable(ll_entry_start(cmd_tbl_t, cmd),
+			ll_entry_count(cmd_tbl_t, cmd));
 #endif /* defined(CONFIG_NEEDS_MANUAL_RELOC) */
 
 #if defined(CONFIG_CMD_AMBAPP) && defined(CONFIG_SYS_AMBAPP_PRINT_ON_STARTUP)
@@ -289,8 +284,7 @@ void board_init_f(ulong bootflag)
 		 *
 		 * NOTE: Maybe we should add some WATCHDOG_RESET()? XXX
 		 */
-		s = getenv("flashchecksum");
-		if (s && (*s == 'y')) {
+		if (getenv_yesno("flashchecksum") == 1) {
 			printf("  CRC: %08lX",
 			       crc32(0, (const unsigned char *)CONFIG_SYS_FLASH_BASE,
 				     flash_size)
@@ -336,8 +330,6 @@ void board_init_f(ulong bootflag)
 	mac_read_from_eeprom();
 #endif
 
-	/* IP Address */
-	bd->bi_ip_addr = getenv_IPaddr("ipaddr");
 #if defined(CONFIG_PCI)
 	/*
 	 * Do pci configuration
@@ -362,11 +354,6 @@ void board_init_f(ulong bootflag)
 
 	/* Initialize from environment */
 	load_addr = getenv_ulong("loadaddr", 16, load_addr);
-#if defined(CONFIG_CMD_NET)
-	if ((s = getenv("bootfile")) != NULL) {
-		copy_filename(BootFile, s, sizeof(BootFile));
-	}
-#endif /* CONFIG_CMD_NET */
 
 	WATCHDOG_RESET();
 
@@ -429,7 +416,7 @@ void hang(void)
 {
 	puts("### ERROR ### Please RESET the board ###\n");
 #ifdef CONFIG_SHOW_BOOT_PROGRESS
-	show_boot_progress(-30);
+	bootstage_error(BOOTSTAGE_ID_NEED_RESET);
 #endif
 	for (;;) ;
 }

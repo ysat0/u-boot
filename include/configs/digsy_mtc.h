@@ -119,7 +119,6 @@
 #ifdef CONFIG_VIDEO
 #define CONFIG_CMD_BMP
 #endif
-#define CONFIG_CMD_DFL
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_DHCP
@@ -289,13 +288,6 @@
 #define CONFIG_SYS_DS1339_TCR_VAL	0xAB	/* diode + 4k resistor */
 #endif
 
-/* ExBo I2C Addresses */
-#if defined(CONFIG_DIGSY_REV5)
-#define CONFIG_SYS_EXBO_EE_I2C_ADDRESS	0x54
-#else
-#define CONFIG_SYS_EXBO_EE_I2C_ADDRESS	0x56
-#endif
-
 /*
  * Flash configuration
  */
@@ -419,7 +411,6 @@
 #define CONFIG_CMDLINE_EDITING	1
 #define CONFIG_SYS_PROMPT	"=> "
 #define CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
 #define CONFIG_AUTOBOOT_KEYED
 #define CONFIG_AUTOBOOT_PROMPT "autoboot in %d seconds\n", bootdelay

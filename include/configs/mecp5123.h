@@ -178,9 +178,7 @@
 #define CONFIG_CMD_NAND
 #define CONFIG_NAND_MPC5121_NFC
 #define CONFIG_SYS_NAND_BASE            0x40000000
-
 #define CONFIG_SYS_MAX_NAND_DEVICE      1
-#define NAND_MAX_CHIPS                  CONFIG_SYS_MAX_NAND_DEVICE
 
 /*
  * Configuration parameters for MPC5121 NAND driver
@@ -224,6 +222,7 @@
  * Serial console configuration
  */
 #define CONFIG_PSC_CONSOLE	3	/* console is on PSC3 */
+#define CONFIG_SYS_PSC3
 #if CONFIG_PSC_CONSOLE != 3
 #error CONFIG_PSC_CONSOLE must be 3
 #endif
@@ -240,7 +239,6 @@
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
 #ifdef  CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 #endif
 
 /* I2C */

@@ -245,15 +245,16 @@ int get_prom(u8* mac_addr, u8* base_addr)
 			break;
 		}
 	}
-	if ((i < NR_INFO) || ((prom[28] == 0x57) && (prom[30] == 0x57))) {
+	if ((i < NR_INFO) || ((prom[28] == 0x57) && (prom[30] == 0x57)) ||
+	    ((prom[28] == 0x42) && (prom[30] == 0x42))) {
 		PRINTK ("on exit i is %d/%ld\n", i, NR_INFO);
 		PRINTK ("MAC address is ");
 		for (j = 0; j < 6; j++) {
 			mac_addr[j] = prom[j << 1];
-			PRINTK ("%02x:", mac_addr[i]);
+			PRINTK ("%02x:", mac_addr[j]);
 		}
 		PRINTK ("\n");
-		return (i < NR_INFO) ? i : 0;
+		return 1;
 	}
 	return 0;
 }

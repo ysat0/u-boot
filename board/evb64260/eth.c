@@ -246,8 +246,7 @@ gt6426x_eth_poll(void *v)
 /**************************************************************************
 TRANSMIT - Transmit a frame
 ***************************************************************************/
-int
-gt6426x_eth_transmit(void *v, volatile char *p, unsigned int s)
+int gt6426x_eth_transmit(void *v, char *p, unsigned int s)
 {
 	struct eth_device *wp = (struct eth_device *)v;
 	struct eth_dev_s *dev = (struct eth_dev_s *)wp->priv;
@@ -686,7 +685,7 @@ gt6426x_eth_initialize(bd_t *bis)
 			return;
 		}
 
-		/* must be less than NAMESIZE (16) */
+		/* must be less than sizeof(dev->name) */
 		sprintf(dev->name, "gal_enet%d", devnum);
 
 #ifdef DEBUG

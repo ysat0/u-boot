@@ -108,11 +108,9 @@ int checkboard (void)
 	else
 		panic ("Unexpected Board REV %x detected!!\n", board_rev_gpio);
 
-	cpu = gd->cpu;
+	cpu = gd->arch.cpu;
 	printf ("Board: %sRDB Rev%c\n", cpu->name, board_rev);
-#ifdef CONFIG_PHYS_64BIT
-	puts ("(36-bit addrmap) \n");
-#endif
+
 	setbits_be32(&pgpio->gpdir, GPIO_DIR);
 
 /*
