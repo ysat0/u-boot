@@ -54,14 +54,6 @@ SECTIONS
 	} > from
 	PROVIDE (__etext = .);
 
-	PROVIDE (___u_boot_cmd_start = .);
-	.u_boot_cmd :
-	{
-		*(.u_boot_cmd)
-		. = ALIGN(4);
-	} > from
-	PROVIDE (___u_boot_cmd_end = .);
-
 	PROVIDE (__fdata = .);
 	.data :
 	{

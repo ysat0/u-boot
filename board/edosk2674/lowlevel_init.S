@@ -19,7 +19,7 @@
 #include <config.h>
 
 	.h8300s
-	.global	_lowlevel_init
+	.global	lowlevel_init
 
 	.text
 	.align	2
@@ -28,7 +28,7 @@
 This function call to before relocate
 So not refer to absolute address
 */
-_lowlevel_init:
+lowlevel_init:
 	bsr	1f
 1:	mov.l	@sp+,er4
 	mov.l	#init_table,er5

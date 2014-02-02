@@ -24,13 +24,19 @@
 OUTPUT_ARCH(h8300s)
 ENTRY(_start)
 
+MEMORY
+{
+       from : ORIGIN = 0x000000, LENGTH = 4M
+       sdram : ORIGIN = 0x400000, LENGTH = 8M
+       iram : ORIGIN = 0xff4000, LENGTH = 32K
+}
+
 SECTIONS
 {
-	. = CONFIG_SYS_TEXT_BASE - 0x200;
 	.vector :
 	{
 		*(.vector)
-	}
+	} > from
 
 	PROVIDE (__start = .);
 	PROVIDE (__ftext = .);
@@ -41,22 +47,15 @@ SECTIONS
 		. = ALIGN(4);
 		*(.text)
 		. = ALIGN(4);
-	}
+	} >sdram AT>from
 	PROVIDE (__ecode = .);
 	.rodata :
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
-	}
+#include "u-boot.lst"
+	} >sdram AT>from
 	PROVIDE (__etext = .);
-
-	PROVIDE (___u_boot_cmd_start = .);
-	.u_boot_cmd :
-	{
-		*(.u_boot_cmd)
-		. = ALIGN(4);
-	}
-	PROVIDE (___u_boot_cmd_end = .);
 
 	.data :
 	{
@@ -64,20 +63,20 @@ SECTIONS
 	
 		*(.data)
 		. = ALIGN(4);
-	}
+	} >sdram AT>from
 	PROVIDE (__sizeof_data = SIZEOF(.data));
 	PROVIDE (__edata = .);
 
 	PROVIDE (_bss_start = .);
-	PROVIDE (___bss_start = .);
+	PROVIDE (__bss_start = .);
 	.bss :
 	{
 		*(.bss)
 		. = ALIGN(4);
-	}
+	} > sdram
 	PROVIDE (_bss_end = .);
 
 	PROVIDE (__end = .);
 	PROVIDE (__ram_vec =    0xffbe00);
-	PROVIDE (__init_stack = 0xffc000);
+	PROVIDE (_init_stack = 0xffc000);
 }
