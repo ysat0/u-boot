@@ -59,6 +59,7 @@
 	.long	__ram_vec + (30 * 4)	/* 30: nmi */
 	.long	_start
 #endif
+
 	.text
 	.align	2
 _start:
@@ -66,11 +67,12 @@ _start:
 	bsr	lowlevel_init
 
 #if !defined(CONFIG_RX600_DEBUG_SDRAM)
+	mov.l	#_fdata,r1
+	mov.l	#_edata,r3
+	sub	r1,r3
 	mov.l	#_etext,r2
-	mov.l	#_fdata ,r1
-	mov.l	#__u_boot_cmd_end - _fdata,r3
 	smovf
-#endif
+#endif	
 	mov.l	#bss_start,r1
 	mov.l	#bss_end,r3
 	sub	r1,r3

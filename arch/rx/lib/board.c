@@ -61,7 +61,9 @@ static init_fnc_t * const init_sequence[] =
 	display_options,
 	checkcpu,
 	checkboard,		/* Check support board */
+#if defined(CONFIG_SYS_SDRAM_BASE)
 	sdram_init,
+#endif
 	interrupt_init,
 	NULL			/* Terminate this list */
 };
