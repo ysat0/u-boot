@@ -981,8 +981,6 @@ struct image_region *fit_region_make_list(const void *fit,
 static inline int fit_image_check_target_arch(const void *fdt, int node)
 {
 	return fit_image_check_arch(fdt, node, IH_ARCH_DEFAULT);
-#elif defined(__H8300H__) || defined(__H8300S__)
-	if (!image_check_arch (hdr, IH_ARCH_H8300))
 }
 
 #ifdef CONFIG_FIT_VERBOSE

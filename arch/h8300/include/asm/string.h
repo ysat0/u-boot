@@ -1,5 +1,5 @@
-#ifndef __ASM_SH_STRING_H
-#define __ASM_SH_STRING_H
+#ifndef __ASM_H8300_STRING_H
+#define __ASM_H8300_STRING_H
 
 /*
  * Copyright (C) 1999 Niibe Yutaka
@@ -38,4 +38,4 @@
 #define __HAVE_ARCH_STRTOK      1
 
 #endif /* KERNEL */
-#endif /* __ASM_SH_STRING_H */
+#endif /* __ASM_H8300_STRING_H */

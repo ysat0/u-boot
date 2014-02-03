@@ -86,7 +86,7 @@
 
 /* Board Clock */
 #define CONFIG_SYS_CLK_FREQ		33333333
-#define CONFIG_SYS_HZ			CONFIG_SYS_CLK_FREQ
+#define CONFIG_SH_SCIF_CLK_FREQ		CONFIG_SYS_CLK_FREQ
 
 /* Ether */
 #define CONFIG_LAN91C96		1
