@@ -1,3 +1,28 @@
+/*
+ * (C) Copyright 2003
+ * Data Flash Atmel Description File
+ * Author : Hamid Ikdoumi (Atmel)
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+/* File Name		: dataflash.h					*/
+/* Object		: Data Flash Atmel Description File		*/
+/* Translator		:						*/
+/*									*/
+/* 1.0 03/04/01 HI	: Creation					*/
+/* 1.2 20/10/02 FB	: Adapatation Service and Lib v3		*/
+/*----------------------------------------------------------------------*/
+
+#ifndef _DataFlash_h
+#define _DataFlash_h
+
+
+#include "config.h"
+
+/*number of protected area*/
+#define NB_DATAFLASH_AREA		5
+
 #ifdef CONFIG_SYS_NO_FLASH
 
 /*-----------------------------------------------------------------------

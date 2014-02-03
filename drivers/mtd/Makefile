@@ -2,9 +2,9 @@
 # (C) Copyright 2000-2007
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
-# See file CREDITS for list of people who contributed to this
-# project.
+# SPDX-License-Identifier:	GPL-2.0+
 #
+<<<<<<< HEAD
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation; either version 2 of
@@ -55,5 +55,22 @@ $(LIB):	$(obj).depend $(OBJS)
 include $(SRCTREE)/rules.mk
 
 sinclude $(obj).depend
+=======
+>>>>>>> origin
 
-#########################################################################
+ifneq (,$(findstring y,$(CONFIG_MTD_DEVICE)$(CONFIG_CMD_NAND)$(CONFIG_CMD_ONENAND)))
+obj-y += mtdcore.o
+endif
+obj-$(CONFIG_MTD_PARTITIONS) += mtdpart.o
+obj-$(CONFIG_MTD_CONCAT) += mtdconcat.o
+ifneq ($(CONFIG_HAS_DATAFLASH),)
+obj-$(CONFIG_AT91) += at45.o dataflash.o
+obj-$(CONFIG_CPU_H83069) += h8dataflash.o 3069flash_low.o
+endif
+obj-$(CONFIG_FLASH_CFI_DRIVER) += cfi_flash.o
+obj-$(CONFIG_FLASH_CFI_MTD) += cfi_mtd.o
+obj-$(CONFIG_HAS_DATAFLASH) += dataflash.o
+obj-$(CONFIG_FTSMC020) += ftsmc020.o
+obj-$(CONFIG_FLASH_CFI_LEGACY) += jedec_flash.o
+obj-$(CONFIG_MW_EEPROM) += mw_eeprom.o
+obj-$(CONFIG_ST_SMI) += st_smi.o
