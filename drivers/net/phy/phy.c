@@ -288,6 +288,7 @@ static int genphy_parse_link(struct phy_device *phydev)
 		u32 lpa = 0;
 		u32 gblpa = 0;
 
+#ifndef CONFIG_PHY_BROKEN_ERCAP
 		/* Check for gigabit capability */
 		if (mii_reg & BMSR_ERCAP) {
 			/* We want a list of states supported by
@@ -297,7 +298,7 @@ static int genphy_parse_link(struct phy_device *phydev)
 			gblpa &= phy_read(phydev,
 					MDIO_DEVAD_NONE, MII_CTRL1000) << 2;
 		}
-
+#endif
 		/* Set the baseline so we only have to set them
 		 * if they're different
 		 */
@@ -670,7 +671,6 @@ int phy_reset(struct phy_device *phydev)
 		puts("PHY reset timed out\n");
 		return -1;
 	}
-
 	return 0;
 }
 
