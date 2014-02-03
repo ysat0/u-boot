@@ -87,7 +87,7 @@ void flush_cache(unsigned long addr, unsigned long size)
 {
 	unsigned long entry;
 	unsigned long tag;
-	jump_to_uncacheable();
+	jump_to_P2();
 	while(size > 0) {
 		entry = (addr & 0x000003ff0) | 0x00000008;
 		tag = addr & 0x1ffff0000;
@@ -96,7 +96,7 @@ void flush_cache(unsigned long addr, unsigned long size)
 		addr += 4;
 		size -= 4;
 	}
-	back_to_cacheable();
+	back_to_P1();
 }
 
 void icache_enable(void)
@@ -119,8 +119,9 @@ void dcache_enable(void)
 	unsigned long ccr;
 	ccr = readl(CCR1);
 	ccr |= 0x0000000d;
-	jump_to_uncacheable();
+	jump_to_P2();
 	writel(ccr, CCR1);
+	back_to_P1();
 }
 
 void dcache_disable(void)
@@ -128,9 +129,10 @@ void dcache_disable(void)
 	unsigned long ccr;
 	ccr = readl(CCR1);
 	ccr &= ~0x00000001;
-	jump_to_uncacheable();
+	jump_to_P2();
 	cache_wback_all();
 	writel(ccr, CCR1);
+	back_to_P1();
 }
 
 int dcache_status(void)

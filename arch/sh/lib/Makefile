@@ -26,4 +26,6 @@ lib-y	+= ashldi3.o
 lib-y	+= ashrsi3.o
 lib-y	+= lshrdi3.o
 lib-y	+= movmem.o
+lib-y	+= sdivsi3.o
+lib-y	+= udivsi3.o
 endif

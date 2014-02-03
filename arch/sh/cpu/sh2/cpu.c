@@ -51,6 +51,7 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
+#if defined(CONFIG_CPU_SH7619)
 static void phy_init(void)
 {
 	int i;
@@ -62,8 +63,7 @@ static void phy_init(void)
 	__raw_writew(0xe007, 0xf8490000);
 	udelay(10000);
 }
-
-
+#endif
 
 int cpu_eth_init(bd_t *bis)
 {

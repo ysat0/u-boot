@@ -28,11 +28,12 @@
 #endif
 
 #if defined(CONFIG_SH_ETHER_CACHE_WRITEBACK) && !defined(CONFIG_SYS_DCACHE_OFF)
+#if defined(CONFIG_CPU_SH7619)
+#define flush_cache_wback(addr, len)    \
+		flush_cache(addr, len)
+#else
 #define flush_cache_wback(addr, len)    \
 		flush_dcache_range((u32)addr, (u32)(addr + len - 1))
-#else
-#define flush_cache_wback(addr, len)	\
-	flush_cache(addr, len)
 #endif
 #else
 #define flush_cache_wback(...)
@@ -381,8 +382,11 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 
 	/* Configure e-dmac registers */
 #if defined(CONFIG_CPU_SH7619)
-	sh_eth_write(eth, (sh_eth_read(eth, EDMR) & ~EMDR_DESC_R) |,
-		     EDMR_DESC, EDMR);
+	sh_eth_write(eth, (sh_eth_read(eth, EDMR) & ~EMDR_DESC_R) |
+		     EMDR_DESC, EDMR);
+#else
+	sh_eth_write(eth, (sh_eth_read(eth, EDMR) & ~EMDR_DESC_R) |
+			(EMDR_DESC | EDMR_EL), EDMR);
 #endif
 	sh_eth_write(eth, 0, EESIPR);
 	sh_eth_write(eth, 0, TRSCER);
