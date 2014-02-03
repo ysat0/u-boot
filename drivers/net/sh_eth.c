@@ -369,7 +369,7 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 
 	/* Configure e-dmac registers */
 #if !defined(CONFIG_CPU_SH7619)
-	sh_eth_write(eth, (sh_eth_read(eth, EDMR) & ~EMDR_DESC_R) | EDMR_EL,
+	sh_eth_write(eth, (sh_eth_read(eth, EDMR) & ~EMDR_DESC_R),
 		     EDMR);
 #endif
 	sh_eth_write(eth, 0, EESIPR);
