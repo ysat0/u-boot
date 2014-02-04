@@ -77,5 +77,6 @@
 
 /* Board Clock */
 #define CONFIG_SYS_CLK_FREQ		16000000
+#define CONFIG_SH_SCIF_CLK_FREQ		CONFIG_SYS_CLK_FREQ
 
 #endif	/* __H8300S_SIM_H */
