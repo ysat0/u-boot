@@ -227,21 +227,9 @@ struct uart_port {
 # define SCSPTR3 0xffc60020		/* 16 bit SCIF */
 # define SCIF_ORER 0x0001		/* Overrun error bit */
 # define SCSCR_INIT(port)	0x38	/* TIE=0,RIE=0,TE=1,RE=1,REIE=1 */
-<<<<<<< HEAD
-#elif defined(CONFIG_RX)
-# define SCSPTR0 0x00088240		/* 8 bit SCI */
-# define SCSPTR1 0x00088248		/* 8 bit SCI */
-# define SCSPTR2 0x00088250		/* 8 bit SCI */
-# define SCSPTR3 0x00088258		/* 8 bit SCI */
-# define SCSPTR4 0x00088260		/* 8 bit SCI */
-# define SCSPTR5 0x00088268		/* 8 bit SCI */
-# define SCSPTR6 0x00088270		/* 8 bit SCI */
-# define SCSCR_INIT(port)	0x38	/* TIE=0,RIE=0,TE=1,RE=1,REIE=1 */
-=======
 #elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
 # define SCIF_ORER	0x0001
 # define SCSCR_INIT(port)	0x32	/* TIE=0,RIE=0,TE=1,RE=1,REIE=0, */
->>>>>>> origin
 #else
 # error CPU subtype not defined
 #endif
@@ -749,14 +737,11 @@ static inline int scbrr_calc(struct uart_port port, int bps, int clk)
 		return ((clk*2)+16*bps)/(16*bps)-1;
 }
 #define SCBRR_VALUE(bps, clk) scbrr_calc(sh_sci, bps, clk)
-<<<<<<< HEAD
-=======
-#elif defined(__H8300H__) || defined(__H8300S__)
-#define SCBRR_VALUE(bps, clk) (((clk*1000/32)/bps)-1)
+#elif defined(CONFG_H8300)
+#define SCBRR_VALUE(bps, clk) (((clk/32)/bps)-1)
 #elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
 #define SCBRR DL
 #define SCBRR_VALUE(bps, clk) (clk / bps / 16)
->>>>>>> origin
 #else /* Generic SH */
 #define SCBRR_VALUE(bps, clk) ((clk+16*bps)/(32*bps)-1)
 #endif
