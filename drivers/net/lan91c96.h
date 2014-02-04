@@ -155,7 +155,7 @@ typedef unsigned long int		dword;
 				SMC_outb(edev, *__b, r+1); __b++;	\
 			}					\
 		})
-
+#else
 /*
  * We have only 16 Bit PCMCIA access on Socket 0
  */
