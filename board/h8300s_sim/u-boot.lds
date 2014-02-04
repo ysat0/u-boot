@@ -50,8 +50,10 @@ SECTIONS
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
-#include "u-boot.lst"
 	} > from
+        .u_boot_list : {
+                KEEP(*(SORT(.u_boot_list*)));
+        } > from
 	PROVIDE (__etext = .);
 
 	PROVIDE (__fdata = .);
