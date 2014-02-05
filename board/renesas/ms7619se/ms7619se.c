@@ -25,6 +25,79 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if defined(CONFIG_CMD_NET)
+static inline void write_bit(int b)
+{
+	if (b)
+		__raw_writew(0x000a, PCDRL);
+	else
+		__raw_writew(0x0008, PCDRL);
+	udelay(2);
+	if (b)
+		__raw_writew(0x000e, PCDRL);
+	else
+		__raw_writew(0x000c, PCDRL);
+	udelay(2);
+}
+
+static inline int read_bit(void)
+{
+	__raw_writew(0x0008, PCDRL);
+	udelay(2);
+	__raw_writew(0x000c, PCDRL);
+	udelay(2);
+	return __raw_readw(PCDRL) & 1;
+}
+
+static void read_e2(int addr, ushort *dst, int len)
+{
+	int i;
+	ushort d = 0;
+
+	/* CS=H */
+	__raw_writew(0x0008, PCDRL);
+	udelay(10);
+
+	/* read command */
+	write_bit(1);
+	write_bit(1);
+	write_bit(0);
+	for(i = 0; i < 10; i++) {
+		if (addr & 0x200)
+			write_bit(1);
+		else
+			write_bit(0);
+		addr <<= 1;
+	}
+	while(len > 0) {
+		for (i = 0; i < 16; i++) {
+			d <<= 1;
+			d |= read_bit();
+		}
+		*dst++ = d;
+		len--;
+	}
+	/* CS=L */
+	__raw_writew(0x0000, PCDRL);
+}
+
+int board_late_init(void)
+{
+	uchar enetaddr[6];
+	if (!eth_getenv_enetaddr("ethaddr", enetaddr)) {
+		read_e2(0, (ushort *)enetaddr, 3);
+		eth_setenv_enetaddr("ethaddr", enetaddr);
+	}
+	return 0;
+}
+#else
+int board_late_init(void)
+{
+	return 0;
+}
+
+#endif
+
 int checkboard(void)
 {
 	puts("BOARD: Renesas Technology MS7619SE\n");

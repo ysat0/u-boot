@@ -72,7 +72,6 @@ lowlevel_init:
 	rts
 	 mov.l	r2,@r1
 
-
 	.align	4
 $delay_count:
 	.long	2000
