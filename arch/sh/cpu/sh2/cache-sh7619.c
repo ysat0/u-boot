@@ -87,6 +87,9 @@ void flush_cache(unsigned long addr, unsigned long size)
 {
 	unsigned long entry;
 	unsigned long tag;
+
+	/* align size */
+	size = (size + 3) & ~3;
 	jump_to_P2();
 	while(size > 0) {
 		entry = (addr & 0x000003ff0) | 0x00000008;
