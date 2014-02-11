@@ -45,6 +45,13 @@ do {					\
 		: "=&r" (__dummy));	\
 } while (0)
 
+#define CACHE_OC_NUM_ENTRIES 128
+#define CACHE_OC_NUM_WAYS 4
+#define CACHE_OC_ADDRESS_ARRAY 0xf0800000
+#define CACHE_OC_WAY_SHIFT 11
+#define CACHE_OC_ENTRY_SHIFT 2
+#define CACHE_UPDATED 0x02
+
 static inline void cache_wback_all(void)
 {
 	unsigned long addr, data, i, j;
@@ -65,6 +72,7 @@ void flush_cache(unsigned long addr, unsigned long size)
 {
 	unsigned long entry;
 	unsigned long tag;
+	size = (size + 3) & ~3;
 	jump_to_uncacheable();
 	while(size > 0) {
 		entry = addr & 0x000003ff0;
@@ -86,6 +94,7 @@ void icache_enable(void)
 	ccr |= 0x00000900;
 	jump_to_uncacheable();
 	writel(ccr, CCR1);
+	back_to_cacheable();
 }
 
 void icache_disable(void)
@@ -95,6 +104,7 @@ void icache_disable(void)
 	ccr &= ~0x00000100;
 	jump_to_uncacheable();
 	writel(ccr, CCR1);
+	back_to_cacheable();
 }
 
 int icache_status(void)
@@ -111,6 +121,7 @@ void dcache_enable(void)
 	ccr |= 0x00000009;
 	jump_to_uncacheable();
 	writel(ccr, CCR1);
+	back_to_cacheable();
 }
 
 void dcache_disable(void)
@@ -121,6 +132,7 @@ void dcache_disable(void)
 	jump_to_uncacheable();
 	cache_wback_all();
 	writel(ccr, CCR1);
+	back_to_cacheable();
 }
 
 int dcache_status(void)

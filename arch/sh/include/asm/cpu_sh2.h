@@ -8,15 +8,9 @@
 #ifndef _ASM_CPU_SH2_H_
 #define _ASM_CPU_SH2_H_
 
-/* cache control */
-#define CCR_CACHE_STOP		0x00000008
-#define CCR_CACHE_ENABLE	0x00000005
-#define CCR_CACHE_ICI		0x00000008
-
-#define CACHE_OC_ADDRESS_ARRAY	0xf0000000
-#define CACHE_OC_WAY_SHIFT	13
-#define CACHE_OC_NUM_ENTRIES	256
-#define CACHE_OC_ENTRY_SHIFT	4
+#if defined(CONFIG_SH2A)
+#  include <asm/cpu_sh2a.h>
+#endif
 #define CACHE_OC_NUM_WAYS	4
 #define CACHE_UPDATED		2
 
@@ -39,9 +33,10 @@ do { 							 \
 		writeb((readb(STBCR3) & ~0x10), STBCR3); \
 } while (0)
 #endif
-
 #if defined(CONFIG_CPU_SH7203)
 # include <asm/cpu_sh7203.h>
+#elif defined(CONFIG_CPU_SH7206)
+# include <asm/cpu_sh7206.h>
 #elif defined(CONFIG_CPU_SH7264)
 # include <asm/cpu_sh7264.h>
 #elif defined(CONFIG_CPU_SH7269)
