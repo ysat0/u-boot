@@ -52,34 +52,3 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	reset_cpu(0);
 	return 0;
 }
-
-void flush_cache(unsigned long addr, unsigned long size)
-{
-
-}
-
-void icache_enable(void)
-{
-}
-
-void icache_disable(void)
-{
-}
-
-int icache_status(void)
-{
-	return 0;
-}
-
-void dcache_enable(void)
-{
-}
-
-void dcache_disable(void)
-{
-}
-
-int dcache_status(void)
-{
-	return 0;
-}

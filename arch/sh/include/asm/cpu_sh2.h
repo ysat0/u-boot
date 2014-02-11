@@ -8,15 +8,6 @@
 #ifndef _ASM_CPU_SH2_H_
 #define _ASM_CPU_SH2_H_
 
-/* cache control */
-#define CCR_CACHE_STOP		0x00000008
-#define CCR_CACHE_ENABLE	0x00000005
-#define CCR_CACHE_ICI		0x00000008
-
-#define CACHE_OC_ADDRESS_ARRAY	0xf0000000
-#define CACHE_OC_WAY_SHIFT	13
-#define CACHE_OC_NUM_ENTRIES	256
-#define CACHE_OC_ENTRY_SHIFT	4
 
 #if defined(CONFIG_CPU_SH7203)
 # include <asm/cpu_sh7203.h>
