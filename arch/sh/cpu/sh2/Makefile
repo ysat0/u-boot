@@ -11,8 +11,11 @@
 
 extra-y	= start.o
 obj-y	= cpu.o interrupts.o watchdog.o
-obj-$(CONFIG_CPU_SH7619) += cache-sh7619.o
-obj-$(CONFIG_SH2A) += cache-sh2a.o
+
+cache-$(CONFIG_SH2A) = cache-sh2a.o
+cache-$(CONFIG_CPU_SH7619) = cache-sh7619.o
+ifdef cache-y
+obj-y += $(cache-y)
 else
-obj-y	+= nocache.o
+obj-y += nocache.o
 endif
