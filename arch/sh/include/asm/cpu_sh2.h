@@ -13,6 +13,8 @@
 #endif
 #if defined(CONFIG_CPU_SH7203)
 # include <asm/cpu_sh7203.h>
+#elif defined(CONFIG_CPU_SH7206)
+# include <asm/cpu_sh7206.h>
 #elif defined(CONFIG_CPU_SH7264)
 # include <asm/cpu_sh7264.h>
 #elif defined(CONFIG_CPU_SH7269)
