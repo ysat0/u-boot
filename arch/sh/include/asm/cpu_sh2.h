@@ -8,7 +8,9 @@
 #ifndef _ASM_CPU_SH2_H_
 #define _ASM_CPU_SH2_H_
 
-
+#if defined(CONFIG_SH2A)
+#  include <asm/cpu_sh2a.h>
+#endif
 #if defined(CONFIG_CPU_SH7203)
 # include <asm/cpu_sh7203.h>
 #elif defined(CONFIG_CPU_SH7264)

@@ -10,16 +10,17 @@
 #include <asm/processor.h>
 #include <asm/io.h>
 
-#define STBCR4      0xFFFE040C
-#define cmt_clock_enable() do {\
-		writeb(readb(STBCR4) & ~0x04, STBCR4);\
-	} while (0)
-#define scif0_enable() do {\
-		writeb(readb(STBCR4) & ~0x80, STBCR4);\
-	} while (0)
-#define scif3_enable() do {\
-		writeb(readb(STBCR4) & ~0x10, STBCR4);\
-	} while (0)
+#if defined(CONFIG_CONS_SCIF0)
+# define CH 0
+#elif defined(CONFIG_CONS_SCIF1)
+# define CH 1
+#elif defined(CONFIG_CONS_SCIF2)
+# define CH 2
+#elif defined(CONFIG_CONS_SCIF3)
+# define CH 3
+#else
+# error "Default SCIF doesn't set....."
+#endif
 
 int checkcpu(void)
 {
@@ -30,11 +31,7 @@ int checkcpu(void)
 int cpu_init(void)
 {
 	/* SCIF enable */
-#if defined(CONFIG_CONS_SCIF3)
-	scif3_enable();
-#else
-	scif0_enable();
-#endif
+	scif_enable(CH);
 	/* CMT clock enable */
 	cmt_clock_enable() ;
 	return 0;
