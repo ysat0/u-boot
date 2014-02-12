@@ -2,23 +2,7 @@
  * (C) Copyright 2009
  * Vipin Kumar, STMicroelectronics, <vipin.kumar@st.com>
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _SPEAR_COMMON_H
@@ -33,11 +17,9 @@
 /* Ethernet driver configuration */
 #define CONFIG_MII
 #define CONFIG_DESIGNWARE_ETH
-#define CONFIG_DW_SEARCH_PHY
-#define CONFIG_DW0_PHY				1
 #define CONFIG_NET_MULTI
+#define CONFIG_PHYLIB
 #define CONFIG_PHY_RESET_DELAY			10000		/* in usec */
-#define CONFIG_DW_AUTONEG
 #define CONFIG_PHY_GIGE			/* Include GbE speed/duplex detection */
 
 /* USBD driver configuration */
@@ -63,7 +45,6 @@
 #define CONFIG_I2C_CHIPADDRESS			0x50
 
 /* Timer, HZ specific defines */
-#define CONFIG_SYS_HZ				1000
 
 /* Flash configuration */
 #if defined(CONFIG_FLASH_PNOR)

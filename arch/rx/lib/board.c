@@ -130,12 +130,3 @@ void rx_generic_init(void)
 		main_loop();
 	}
 }
-
-/***********************************************************************/
-
-void hang(void)
-{
-	puts("Board ERROR\n");
-	for (;;)
-		;
-}

@@ -224,6 +224,9 @@ struct uart_port {
 # define SCSPTR3 0xffc60020		/* 16 bit SCIF */
 # define SCIF_ORER 0x0001		/* Overrun error bit */
 # define SCSCR_INIT(port)	0x38	/* TIE=0,RIE=0,TE=1,RE=1,REIE=1 */
+#elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
+# define SCIF_ORER	0x0001
+# define SCSCR_INIT(port)	0x32	/* TIE=0,RIE=0,TE=1,RE=1,REIE=0, */
 #elif defined(CONFIG_RX)
 # define SCSPTR0 0x00088240		/* 8 bit SCI */
 # define SCSPTR1 0x00088248		/* 8 bit SCI */
@@ -307,6 +310,9 @@ struct uart_port {
 /* SH7763 SCIF2 support */
 # define SCIF2_RFDC_MASK 0x001f
 # define SCIF2_TXROOM_MAX 16
+#elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
+# define SCIF_ERRORS (SCIF_PER | SCIF_FER | SCIF_ER | SCIF_BRK)
+# define SCIF_RFDC_MASK	0x003f
 #else
 # define SCIF_ERRORS (SCIF_PER | SCIF_FER | SCIF_ER | SCIF_BRK)
 # define SCIF_RFDC_MASK 0x001f
@@ -318,7 +324,7 @@ struct uart_port {
 #endif
 
 #define SCxSR_TEND(port)\
-		(((port)->type == PORT_SCI) ? SCI_TDRE	: SCIF_TEND)
+		(((port)->type == PORT_SCI) ? SCI_TEND	: SCIF_TEND)
 #define SCxSR_ERRORS(port)\
 		(((port)->type == PORT_SCI) ? SCI_ERRORS : SCIF_ERRORS)
 #define SCxSR_RDxF(port)\
@@ -595,6 +601,10 @@ SCIF_FNS(SCSPTR,                        0,  0, 0, 0)
 #else
 SCIF_FNS(SCSPTR,                        0,  0, 0x20, 16)
 #endif
+#if defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
+SCIF_FNS(DL,				0,  0, 0x30, 16)
+SCIF_FNS(CKS,				0,  0, 0x34, 16)
+#endif
 SCIF_FNS(SCLSR,                         0,  0, 0x24, 16)
 #endif
 #endif
@@ -668,7 +678,8 @@ static inline int sci_rxd_in(struct uart_port *port)
 #elif defined(CONFIG_H8300)
 static inline int sci_rxd_in(struct uart_port *port)
 {
-	return 1;
+	int ch = (port->mapbase - SMR0) >> 3;
+	return (H8300_SCI_DR(ch) & h8300_sci_pins[ch].rx) ? 1 : 0;
 }
 #else /* default case for non-SCI processors */
 static inline int sci_rxd_in(struct uart_port *port)
@@ -733,6 +744,11 @@ static inline int scbrr_calc(struct uart_port port, int bps, int clk)
 		return ((clk*2)+16*bps)/(16*bps)-1;
 }
 #define SCBRR_VALUE(bps, clk) scbrr_calc(sh_sci, bps, clk)
+#elif defined(__H8300H__) || defined(__H8300S__)
+#define SCBRR_VALUE(bps, clk) (((clk*1000/32)/bps)-1)
+#elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
+#define SCBRR DL
+#define SCBRR_VALUE(bps, clk) (clk / bps / 16)
 #else /* Generic SH */
 #define SCBRR_VALUE(bps, clk) ((clk+16*bps)/(32*bps)-1)
 #endif
