@@ -56,9 +56,10 @@ static inline void cache_wback_all(void)
 {
 	unsigned long addr, data, i, j;
 
-	for (i = 0; i < CACHE_OC_NUM_ENTRIES; i++){
+	for (i = 0; i < CACHE_OC_NUM_ENTRIES; i++) {
 		for (j = 0; j < CACHE_OC_NUM_WAYS; j++) {
-			addr = CACHE_OC_ADDRESS_ARRAY | (j << CACHE_OC_WAY_SHIFT)
+			addr = CACHE_OC_ADDRESS_ARRAY
+				| (j << CACHE_OC_WAY_SHIFT)
 				| (i << CACHE_OC_ENTRY_SHIFT);
 			data = inl(addr);
 			if (data & CACHE_UPDATED) {
@@ -68,13 +69,14 @@ static inline void cache_wback_all(void)
 		}
 	}
 }
+
 void flush_cache(unsigned long addr, unsigned long size)
 {
 	unsigned long entry;
 	unsigned long tag;
 	size = (size + 3) & ~3;
 	jump_to_uncacheable();
-	while(size > 0) {
+	while (size > 0) {
 		entry = addr & 0x000003ff0;
 		tag = addr & 0x1ffff0000;
 		/* I-Cache flush */

@@ -10,7 +10,7 @@
 #include <asm/processor.h>
 #include <asm/macro.h>
 #define INTMSK0 0x11800000
-	
+
 	.global	lowlevel_init
 
 	.text
@@ -84,15 +84,15 @@ BSC_settings_table:
 	.long	CS4BCR, 0x10000400
 	.long	CS5BCR, 0x10000400
 	.long	CS3BCR, 0x10004600
-	.long	CS0WCR, 0x00000380;	/* wait:4cycle				*/
-	.long	CS2WCR, 0x00000380;
-	.long	CS4WCR, 0x00000380;
-	.long	CS5WCR, 0x00000380;
-	.long	CS3WCR, 0x00004892;	/* pre->actv:1cycle, actv->read/write:2cycle, write->pre:1cycle, ref->actv:4cycle	*/
-	.long	SDCR,   0x00000811;
-	.long	RTCNT,  0xa55a0083;
-	.long	RTCOR,  0xa55a0083;
-	.long	RTCSR,  0xa55a0008;	/* reflesh count=B¦Õ/4	*/
+	.long	CS0WCR, 0x00000380	/* wait:4cycle */
+	.long	CS2WCR, 0x00000380
+	.long	CS4WCR, 0x00000380
+	.long	CS5WCR, 0x00000380
+	.long	CS3WCR, 0x00004892	/* pre->actv:1cycle, actv->read/write:2cycle, write->pre:1cycle, ref->actv:4cycle */
+	.long	SDCR,   0x00000811
+	.long	RTCNT,  0xa55a0083
+	.long	RTCOR,  0xa55a0083
+	.long	RTCSR,  0xa55a0008	/* reflesh count=Bclk/4 */
 	.long	0
 
 PFC_settings_table:

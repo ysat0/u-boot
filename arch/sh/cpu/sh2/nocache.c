@@ -7,7 +7,6 @@
 /* dummy cache control functions */
 void flush_cache(unsigned long addr, unsigned long size)
 {
-
 }
 
 void icache_enable(void)
