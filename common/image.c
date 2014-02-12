@@ -82,6 +82,7 @@ static const table_entry_t uimage_arch[] = {
 	{	IH_ARCH_OPENRISC,	"or1k",		"OpenRISC 1000",},
 	{	IH_ARCH_SANDBOX,	"sandbox",	"Sandbox",	},
 	{	IH_ARCH_ARM64,		"arm64",	"AArch64",	},
+	{	IH_ARCH_ARC,		"arc",		"ARC",		},
 	{	IH_ARCH_H8300,		"h8300",	"H8/300",	},
 	{	-1,			"",		"",		},
 };

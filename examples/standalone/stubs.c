@@ -210,7 +210,20 @@ gd_t *global_data;
 "	l.jr	r13\n"		\
 "	l.nop\n"				\
 	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "r13");
-#elif defined(CONFIG_H8300)
+#elif defined(CONFIG_ARC)
+/*
+ * r25 holds the pointer to the global_data. r10 is call clobbered.
+ */
+#define EXPORT_FUNC(x) \
+	asm volatile( \
+"	.align 4\n" \
+"	.globl " #x "\n" \
+#x ":\n" \
+"	ld	r10, [r25, %0]\n" \
+"	ld	r10, [r10, %1]\n" \
+"	j	[r10]\n" \
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "r10");
+#elif(CONFIG_H8300)
 /*
  * er5 holds the pointer to the global_data. er0 is call clobbered.
  */

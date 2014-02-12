@@ -157,7 +157,8 @@ struct lmb;
 #define IH_ARCH_NDS32	        20	/* ANDES Technology - NDS32  */
 #define IH_ARCH_OPENRISC        21	/* OpenRISC 1000  */
 #define IH_ARCH_ARM64		22	/* ARM64	*/
-#define IH_ARCH_H8300		23	/* H8/300 */
+#define IH_ARCH_ARC		23	/* Synopsys DesignWare ARC */
+#define IH_ARCH_H8300		24	/* H8/300 */
 
 /*
  * Image Types
@@ -619,8 +620,6 @@ static inline int image_check_target_arch(const image_header_t *hdr)
 {
 #ifndef IH_ARCH_DEFAULT
 # error "please define IH_ARCH_DEFAULT in your arch asm/u-boot.h"
-#elif defined(__H8300H__) || defined(__H8300S__)
-	if (!image_check_arch (hdr, IH_ARCH_H8300))
 #endif
 	return image_check_arch(hdr, IH_ARCH_DEFAULT);
 }
