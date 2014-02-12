@@ -23,30 +23,5 @@
 # MA 02111-1307 USA
 #
 
-include $(TOPDIR)/config.mk
-
-LIB	= $(obj)lib$(CPU).o
-SOBJS = start.o
-COBJS = cpu.o interrupts.o watchdog.o 
-
-SRCS    := $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS    := $(addprefix $(obj),$(COBJS))
-SOBJS   := $(addprefix $(obj),$(SOBJS))
-
-$(LIB):	$(OBJS) $(SOBJS)
-	$(call cmd_link_o_target, $(OBJS))
-
-clean:
-	rm -f $(SOBJS) $(OBJS)
-
-distclean:	clean
-	rm -f $(LIB) core *.bak $(obj).depend
-
-#########################################################################
-
-# defines $(obj).depend target
-include $(SRCTREE)/rules.mk
-
-sinclude $(obj).depend
-
-#########################################################################
+extra-y = start.o
+obj-y = cpu.o interrupts.o watchdog.o 
