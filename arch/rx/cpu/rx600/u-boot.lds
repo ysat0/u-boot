@@ -55,9 +55,11 @@ SECTIONS
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
-#include "u-boot.lst"
 	} > irom
 	PROVIDE (_etext = .);
+	.u_boot_list : {
+		KEEP(*(SORT(.u_boot_list*)));
+	} > irom
 
 #if !defined(CONFIG_RX600_DEBUG_SDRAM)
 	. = 0xffffff80;
