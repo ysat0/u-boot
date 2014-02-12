@@ -111,8 +111,6 @@ static void sh_serial_setbrg(void)
 
 static int sh_serial_init(void)
 {
-	sci_out(&sh_sci, SCSCR , SCSCR_INIT(&sh_sci));
-	sci_out(&sh_sci, SCSCR , SCSCR_INIT(&sh_sci));
 	sci_out(&sh_sci, SCSMR, 0);
 	sci_out(&sh_sci, SCSMR, 0);
 	sci_out(&sh_sci, SCFCR, SCFCR_RFRST|SCFCR_TFRST);
@@ -120,6 +118,8 @@ static int sh_serial_init(void)
 	sci_out(&sh_sci, SCFCR, 0);
 
 	serial_setbrg();
+	sci_out(&sh_sci, SCSCR , SCSCR_INIT(&sh_sci));
+	sci_out(&sh_sci, SCSCR , SCSCR_INIT(&sh_sci));
 	return 0;
 }
 
