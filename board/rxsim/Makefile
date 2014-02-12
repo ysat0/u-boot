@@ -18,31 +18,4 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307 USA
 
-include $(TOPDIR)/config.mk
-
-LIB	= lib$(BOARD).o
-
-OBJS	:= rxsim.o
-SOBJS	:= lowlevel_init.o
-
-LIB	:= $(addprefix $(obj),$(LIB))
-OBJS	:= $(addprefix $(obj),$(OBJS))
-SOBJS	:= $(addprefix $(obj),$(SOBJS))
-
-$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
-	$(call cmd_link_o_target, $(OBJS) $(SOBJS))
-
-clean:
-	rm -f $(SOBJS) $(OBJS)
-
-distclean:	clean
-	rm -f $(LIB) core *.bak .depend
-
-#########################################################################
-
-# defines $(obj).depend target
-include $(SRCTREE)/rules.mk
-
-sinclude $(obj).depend
-
-#########################################################################
+obj-y := rxsim.o lowlevel_init.o
