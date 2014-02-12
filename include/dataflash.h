@@ -1,4 +1,7 @@
+/*
  * SPDX-License-Identifier:	GPL-2.0+
+ */
+
 #ifdef CONFIG_SYS_NO_FLASH
 
 /*-----------------------------------------------------------------------
@@ -43,7 +46,5 @@ extern int addr_dataflash (unsigned long addr);
 extern int read_dataflash (unsigned long addr, unsigned long size, char *result);
 extern int write_dataflash(unsigned long addr_dest, unsigned long addr_src,
 			unsigned long size);
-extern int AT91F_DataflashInit(void);
-
 extern void dataflash_print_info (void);
 extern void dataflash_perror (int err);
