@@ -158,8 +158,8 @@ struct lmb;
 #define IH_ARCH_OPENRISC        21	/* OpenRISC 1000  */
 #define IH_ARCH_ARM64		22	/* ARM64	*/
 #define IH_ARCH_ARC		23	/* Synopsys DesignWare ARC */
-#define IH_ARCH_H8300		22	/* H8/300 */
-#define IH_ARCH_RX		23	/* RX		*/
+#define IH_ARCH_H8300		24	/* H8/300 */
+#define IH_ARCH_RX		25	/* RX		*/
 
 /*
  * Image Types
@@ -983,8 +983,6 @@ struct image_region *fit_region_make_list(const void *fit,
 static inline int fit_image_check_target_arch(const void *fdt, int node)
 {
 	return fit_image_check_arch(fdt, node, IH_ARCH_DEFAULT);
-#elif defined(__H8300H__) || defined(__H8300S__)
-	if (!image_check_arch (hdr, IH_ARCH_H8300))
 }
 
 #ifdef CONFIG_FIT_VERBOSE
