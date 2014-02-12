@@ -138,7 +138,7 @@ struct uart_port {
 # define SCIF0_BASE 0xffffb0 
 # define SCIF1_BASE 0xffffb8 
 # define SCIF2_BASE 0xffffc0 
-#elif defined(CONFIG_CPU_H8S2678)
+#elif defined(CONFIG_CPU_H8S2674)
 # define SCSCR_INIT(port)          0x30 /* TIE=0,RIE=0,TE=1,RE=1 */
 # define H8300_SCI_DR(ch) (*(volatile char *)(P1DR + h8300_sci_pins[ch].port))
 # define SCIF0_BASE 0xffff78 
@@ -560,7 +560,16 @@ SCIF_FNS(SCFER,  0x10, 16)
 SCIF_FNS(SCFCR,  0x18, 16)
 SCIF_FNS(SCFDR,  0x1c, 16)
 SCIF_FNS(SCLSR,  0x24, 16)
-#elif defined(CONFIG_CPU_RX610) || defined(CONFIG_CPU_RX62X)
+#elif defined(CONFIG_CPU_RX610) || defined(CONFIG_CPU_RX62N)
+SCIx_FNS(SCSMR,  0x00,  8, 0x00,  8, 0x00,  8, 0x00, 16, 0x00,  8)
+SCIx_FNS(SCBRR,  0x02,  8, 0x04,  8, 0x02,  8, 0x04,  8, 0x01,  8)
+SCIx_FNS(SCSCR,  0x04,  8, 0x08,  8, 0x04,  8, 0x08, 16, 0x02,  8)
+SCIx_FNS(SCxTDR, 0x06,  8, 0x0c,  8, 0x06,  8, 0x0C,  8, 0x03,  8)
+SCIx_FNS(SCxSR,  0x08,  8, 0x10,  8, 0x08, 16, 0x10, 16, 0x04,  8)
+SCIx_FNS(SCxRDR, 0x0a,  8, 0x14,  8, 0x0A,  8, 0x14,  8, 0x05,  8)
+SCIF_FNS(SCFCR,                      0x0c,  8, 0x18, 16)
+SCIF_FNS(SCLSR,				0,  0, 0x28, 16)
+#elif defined(CONFIG_CPU_RX63N)
 SCIx_FNS(SCSMR,  0x00,  8, 0x00,  8, 0x00,  8, 0x00, 16, 0x00,  8)
 SCIx_FNS(SCBRR,  0x02,  8, 0x04,  8, 0x02,  8, 0x04,  8, 0x01,  8)
 SCIx_FNS(SCxTDR, 0x06,  8, 0x0c,  8, 0x06,  8, 0x0C,  8, 0x03,  8)
@@ -612,12 +621,12 @@ SCIF_FNS(SCLSR,                         0,  0, 0x24, 16)
 #define sci_out(port, reg, value) sci_##reg##_out(port, value)
 
 /* H8/300 series SCI pins assignment */
-#if defined(__H8300H__) || defined(__H8300S__)
+#if defined(CONFIG_H8300) || defined(CONFIG_RX)
 static const struct __attribute__((packed)) {
 	int port;             /* GPIO port no */
 	unsigned short rx, tx; /* GPIO bit no */
 } h8300_sci_pins[] = {
-#if defined(CONFIG_H83007) || defined(CONFIG_H83068)
+#if defined(CONFIG_CPU_H83069)
 	{    /* SCI0 */
 		.port = H8300_GPIO_P9,
 		.rx   = H8300_GPIO_B2,
@@ -633,7 +642,7 @@ static const struct __attribute__((packed)) {
 		.rx   = H8300_GPIO_B7,
 		.tx   = H8300_GPIO_B6,
 	}
-#elif defined(CONFIG_H8S2678)
+#elif defined(CONFIG_CPU_H8S2764)
 	{    /* SCI0 */
 		.port = H8300_GPIO_P3,
 		.rx   = H8300_GPIO_B2,
@@ -744,8 +753,6 @@ static inline int scbrr_calc(struct uart_port port, int bps, int clk)
 		return ((clk*2)+16*bps)/(16*bps)-1;
 }
 #define SCBRR_VALUE(bps, clk) scbrr_calc(sh_sci, bps, clk)
-#elif defined(__H8300H__) || defined(__H8300S__)
-#define SCBRR_VALUE(bps, clk) (((clk*1000/32)/bps)-1)
 #elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
 #define SCBRR DL
 #define SCBRR_VALUE(bps, clk) (clk / bps / 16)

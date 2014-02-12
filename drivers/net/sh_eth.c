@@ -444,6 +444,8 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 #elif defined(CONFIG_CPU_SH7724) || defined(CONFIG_R8A7790) || \
 		defined(CONFIG_R8A7791)
 		val = ECMR_RTM;
+#elif defined(CONFIG_CPU_RX62N)
+		sh_eth_write(eth, ECMR_RTM, ECMR);
 #endif
 	} else if (phy->speed == 10) {
 		printf(SHETHER_NAME ": 10Base/");
@@ -459,15 +461,6 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 		sh_eth_write(eth, GECMR_1000B, GECMR);
 	}
 #endif
-#if defined(CONFIG_CPU_RX62N)
-	if (phy_status & (PHY_S_100X_F|PHY_S_100X_H)) {
-		printf("100Base/");
-		ecmr = ECMR_RTM;
-	} else {
-		printf("10Base/");
-	}
-#endif
-	ecmr |= ECMR_CHG_DM|ECMR_RE|ECMR_TE;
 	/* Check if full duplex mode is supported by the phy */
 	if (phy->duplex) {
 		printf("Full\n");
@@ -477,7 +470,6 @@ static int sh_eth_config(struct sh_eth_dev *eth, bd_t *bd)
 		printf("Half\n");
 		sh_eth_write(eth, val | (ECMR_CHG_DM|ECMR_RE|ECMR_TE), ECMR);
 	}
-	outl(ecmr, ECMR(port));
 
 	return ret;
 

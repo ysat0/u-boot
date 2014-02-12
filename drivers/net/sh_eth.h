@@ -29,6 +29,9 @@
 #define outl	writel
 #define ADDR_TO_PHY(addr)	((int)(addr))
 #define ADDR_TO_P2(addr)	(addr)
+#elif defined(CONFIG_RX)
+#define ADDR_TO_PHY(addr)	((unsigned int)(addr))
+#define ADDR_TO_P2(addr)	(addr)
 #endif /* defined(CONFIG_SH) */
 
 /* base padding size is 16 */
@@ -306,6 +309,9 @@ static const u16 sh_eth_offset_fast_sh4[SH_ETH_MAX_REGISTER_OFFSET] = {
 #elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
 #define SH_ETH_TYPE_ETHER
 #define BASE_IO_ADDR	0xEE700200
+#elif defined(CONFIG_CPU_RX62N)
+#define SH_ETH_TYPE_ETHER
+#define BASE_IO_ADDR	0x000c0000
 #endif
 
 /*
@@ -511,7 +517,7 @@ enum FELIC_MODE_BIT {
 	ECMR_PRM = 0x00000001,
 #ifdef CONFIG_CPU_SH7724
 	ECMR_RTM = 0x00000010,
-#elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791)
+#elif defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791) || defined(CONFIG_CPU_RX62N)
 	ECMR_RTM = 0x00000004,
 #endif
 

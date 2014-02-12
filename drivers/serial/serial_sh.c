@@ -48,10 +48,10 @@ static struct uart_port sh_sci = {
 	.type		= PORT_TYPE,
 };
 
-/* TDRE / RDRF emulation for RX610 */
-/* RX610's SCI don't have TDRE and RDRF in SSR
+/* TDRE / RDRF emulation for RX630 */
+/* RX630's SCI don't have TDRE and RDRF in SSR
    This part emulate these flags of IR */
-#if defined(CONFIG_CPU_RX610)
+#if defined(CONFIG_CPU_RX63N)
 
 #define port_to_irq(port) ((((port)->mapbase - 0x88240) / 8) + 214)
 #define read_ir(irq) __raw_readb((unsigned char *)(0x00087000 + (irq)))
