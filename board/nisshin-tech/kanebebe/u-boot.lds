@@ -26,7 +26,10 @@ ENTRY(_start)
 
 MEMORY
 {
-	dram : ORIGIN = 0x400000, LENGTH = 4M
+	vector : ORIGIN = 0x000000, LENGTH = 4K
+	config : ORIGIN = 0x001000, LENGTH = 28K
+	irom : ORIGIN = 0x008000, LENGTH = 480K
+	dram : ORIGIN = 0x7b0000, LENGTH = 320K
 	/* 0xffbf20 - 0xffc720 using flash writer */
 	iram : ORIGIN = 0xffcf20, LENGTH = 12K
 }
@@ -37,28 +40,30 @@ SECTIONS
 	.vector :
 	{
 		*(.vector)
-	} > dram
+	} > vector
 	.config :
 	{
 		*(.config)
-	} > dram
-	PROVIDE (__start = .);
-	PROVIDE (__ftext = .);
+	} > config		
+	PROVIDE (_start = .);
+	PROVIDE (_ftext = .);
 	.text :
 	{
-		arch/h8300/cpu/h8300h/start.o		(.text)
+		KEEP(arch/h8300/cpu/h8300h/start.o		(.text))
 		. = ALIGN(4);
 		*(.text)
 		. = ALIGN(4);
-	} > dram
-	PROVIDE (__ecode = .);
+	} > irom
+	PROVIDE (_ecode = .);
 	.rodata :
 	{
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		. = ALIGN(4);
-#include "u-boot.lst"
-	} > dram
-	PROVIDE (__etext = .);
+	} > irom
+	.u_boot_list : {
+		KEEP(*(SORT(.u_boot_list*)));
+	} > irom
+	PROVIDE (_etext = .);
 
 	PROVIDE (_fdata = .);
 	.data :
@@ -66,27 +71,31 @@ SECTIONS
 		PROVIDE (_ram_data = .);
 		*(.data)
 		. = ALIGN(4);
-	} >dram
+	} >dram AT>irom
 	PROVIDE (_sizeof_data = SIZEOF(.data));
-	PROVIDE (__edata = .);
-	PROVIDE (_iram_text =_fdata + SIZEOF(.data));
-	.iram :
-	{
-		PROVIDE (_iram_top = .);
-		*(.text2)
-		*(.bss2)		
-	} >iram AT>dram
+	PROVIDE (_edata = .);
+	PROVIDE (_iram_text = _fdata + SIZEOF(.data));
 
+	PROVIDE (bss_start = .);
+	PROVIDE (__bss_start = .);
 	.bss :
 	{
-		PROVIDE (bss_start = .);
-		PROVIDE (___bss_start = .);
 		*(.bss)
 		. = ALIGN(4);
 	} > dram
 	PROVIDE (bss_end = .);
 
-	PROVIDE (__end = .);
+	PROVIDE (_end = .);
+	.iram_text :
+	{
+		PROVIDE (_iram_top = .);
+		*(.text2)
+	} >iram AT>irom
+	.iram_bss :
+	{
+		*(.bss2)
+	} >iram AT>irom
+
 	PROVIDE (_init_stack = 0xfffe20);
 	PROVIDE (_ram_vec =    0xfffe20);
 }

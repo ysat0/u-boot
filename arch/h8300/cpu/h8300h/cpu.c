@@ -27,7 +27,7 @@
 
 int checkcpu(void)
 {
-	puts("CPU: H8300H\n");
+	puts("CPU: H8/300H\n");
 	return 0;
 }
 

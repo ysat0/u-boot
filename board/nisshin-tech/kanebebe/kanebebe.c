@@ -25,7 +25,7 @@
 
 int checkboard(void)
 {
-	puts("BOARD: csun KaneBebe\n");
+	puts("BOARD: nisshin-tech KaneBebe\n");
 	return 0;
 }
 
