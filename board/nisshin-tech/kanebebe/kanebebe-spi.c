@@ -24,6 +24,7 @@ static 	struct bb_spi_dev *dev;
 
 static int setup(struct bb_spi *spi)
 {
+	writeb(0x60, PBDDR);
 	return 0;
 }
 
