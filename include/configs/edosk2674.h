@@ -30,6 +30,7 @@
 #define CONFIG_H8300S		1
 #define CONFIG_CPU_H8S2678	1
 #define CONFIG_EDOSK2674	1
+#define CONFIG_H8300_RELOCATE	GD_FLG_RELOC
 
 #include <config_cmd_default.h>
 #undef CONFIG_CMD_FPGA

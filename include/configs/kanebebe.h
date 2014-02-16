@@ -31,8 +31,8 @@
 #define CONFIG_KANEBEBE		1
 #define CONFIG_H8300_RELOCATE	0
 
-#define CONFIG_SYS_LDSCRIPT "board/csun/kanebebe/u-boot.lds"
-/*#define CONFIG_SYS_LDSCRIPT "board/csun/kanebebe/u-boot.lds.ram"*/
+#define CONFIG_SYS_LDSCRIPT "board/nisshin-tech/kanebebe/u-boot.lds"
+/*#define CONFIG_SYS_LDSCRIPT "board/nisshin-tech/kanebebe/u-boot.lds.ram"*/
 
 #include <config_cmd_default.h>
 #undef CONFIG_CMD_FPGA
