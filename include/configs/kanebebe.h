@@ -44,10 +44,9 @@
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_EXT2
 #define CONFIG_CMD_USB
-/*
 #define CONFIG_CMD_MMC_SPI
 #define CONFIG_CMD_MMC
-*/
+
 #define CONFIG_NET_MULTI
 
 #define CONFIG_BAUDRATE		38400
@@ -121,13 +120,13 @@
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC_SPI			1
 #define CONFIG_BB_SPI			1
+#define CONFIG_PARTITIONS		1
 #if 0
 #define CONFIG_RSCI_SPI			1
 #define CONFIG_RSCI_SPI_BASE		0xffffc0
 #define CONFIG_RSCI_SPI_PORT		0xffffd5
 #define CONFIG_RSCI_SPI_BIT		2
 #endif
-#define CONFIG_MMC_TRACE		1
 #endif
 
 #endif
