@@ -71,3 +71,4 @@ extern int AT91F_DataflashInit(void);
 
 extern void dataflash_print_info (void);
 extern void dataflash_perror (int err);
+#endif
