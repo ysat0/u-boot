@@ -356,11 +356,7 @@ static int usb_parse_config(struct usb_device *dev,
 	/* Ok the first entry must be a configuration entry,
 	 * now process the others */
 	head = (struct usb_descriptor_header *) &buffer[index];
-<<<<<<< HEAD
-	while (index + 1 < __get_unaligned_le(&(dev->config.desc.wTotalLength))) {
-=======
 	while (index + 1 < dev->config.desc.wTotalLength && head->bLength) {
->>>>>>> origin
 		switch (head->bDescriptorType) {
 		case USB_DT_INTERFACE:
 			if (head->bLength != USB_DT_INTERFACE_SIZE) {
@@ -545,11 +541,7 @@ int usb_get_configuration_no(struct usb_device *dev,
 				"(expected %i, got %i)\n", 9, result);
 		return -1;
 	}
-<<<<<<< HEAD
-	tmp = __get_unaligned_le(&(config->wTotalLength));
-=======
 	length = le16_to_cpu(config->wTotalLength);
->>>>>>> origin
 
 	if (length > USB_BUFSIZ) {
 		printf("%s: failed to get descriptor - too long: %d\n",
