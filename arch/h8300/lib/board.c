@@ -75,6 +75,9 @@ static init_fnc_t * const init_sequence[] =
 	dram_init,
 	timer_init,
 	interrupt_init,
+#ifdef CONFIG_BOARD_LATE_INIT
+	board_late_init,
+#endif
 	NULL			/* Terminate this list */
 };
 
@@ -84,13 +87,13 @@ void h8300_generic_init(gd_t *_gd)
 	bd_t *bd;
 	init_fnc_t * const *init_fnc_ptr;
 	gd = _gd;
-	memset(gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
+	memset(gd, 0, GENERATED_GBL_DATA_SIZE);
 
 	gd->bd = (bd_t *)(gd + 1);	/* At end of global data */
-	gd->flags = GD_FLG_RELOC;
+	gd->flags = CONFIG_H8300_RELOCATE;
 	gd->baudrate = CONFIG_BAUDRATE;
 
-	gd->cpu_clk = CONFIG_SYS_CLK_FREQ;
+	gd->cpu_clk = CONFIG_SYS_HZ;
 
 	bd = gd->bd;
 #if defined(CONFIG_SYS_SDRAM_BASE)
@@ -106,7 +109,7 @@ void h8300_generic_init(gd_t *_gd)
 #endif
 	bd->bi_baudrate	= CONFIG_BAUDRATE;
 
-	mem_malloc_init((unsigned long)gd + CONFIG_SYS_GBL_DATA_SIZE,
+	mem_malloc_init((unsigned long)gd + GENERATED_GBL_DATA_SIZE + sizeof(bd_t),
 			CONFIG_SYS_MALLOC_LEN);
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
 		WATCHDOG_RESET();

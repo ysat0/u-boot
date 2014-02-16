@@ -31,6 +31,7 @@ int checkboard(void)
 
 int board_init(void)
 {
+	__raw_writeb(0x04, 0xfee005);
 	__raw_writeb(0xff, 0xfee009);
 	__raw_writeb(0xc0, 0xffffd9);
 	return 0;
@@ -46,18 +47,19 @@ int dram_init(void)
 	return 0;
 }
 
-void led_set_state(unsigned short value)
-{
-	unsigned char padr;
-	padr = __raw_readb(0xffffd9);
-	padr &= 0x3f;
-	padr |= (value & 0x03) << 6;
-	__raw_writeb(padr, 0xffffd9);
-}
-
 #ifdef CONFIG_CMD_NET
 int board_eth_init(bd_t *bis)
 {
 	return ne2k_register();
 }
 #endif
+
+int board_late_init(void)
+{
+	DECLARE_GLOBAL_DATA_PTR;
+
+#ifdef CONFIG_CMD_MMC
+	mmc_initialize(gd->bd);
+#endif
+	return 0;
+}

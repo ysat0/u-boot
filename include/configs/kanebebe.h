@@ -25,14 +25,14 @@
 #ifndef __KANEBEBE_H
 #define __KANEBEBE_H
 
-#undef DEBUG
 #define CONFIG_H8300		1
 #define CONFIG_H8300H		1
 #define CONFIG_CPU_H83069	1
 #define CONFIG_KANEBEBE		1
+#define CONFIG_H8300_RELOCATE	0
 
-#define CONFIG_SYS_LDSCRIPT "board/kanebebe/u-boot.lds"
-/*#define CONFIG_SYS_LDSCRIPT "board/kanebebe/u-boot.lds.ram"*/
+#define CONFIG_SYS_LDSCRIPT "board/csun/kanebebe/u-boot.lds"
+/*#define CONFIG_SYS_LDSCRIPT "board/csun/kanebebe/u-boot.lds.ram"*/
 
 #include <config_cmd_default.h>
 #undef CONFIG_CMD_FPGA
@@ -43,12 +43,16 @@
 #undef CONFIG_CMD_CACHE
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_EXT2
-#define CONFIG_CMD_USB			1
-
+#define CONFIG_CMD_USB
+/*
+#define CONFIG_CMD_MMC_SPI
+#define CONFIG_CMD_MMC
+*/
 #define CONFIG_NET_MULTI
 
 #define CONFIG_BAUDRATE		38400
 #define CONFIG_BOOTARGS		"console=ttySC1,38400"
+#define CONFIG_BOARD_LATE_INIT
 
 #undef CONFIG_VERSION_VARIABLE
 #undef	CONFIG_SHOW_BOOT_PROGRESS
@@ -88,7 +92,6 @@
 #define CONFIG_SYS_LOAD_ADDR		0x400000
 #define CONFIG_STANDALONE_LOAD_ADDR	0x400000
 #define CONFIG_SYS_MALLOC_LEN		256 * 1024
-#define CONFIG_SYS_GBL_DATA_SIZE	64
 
 #define CONFIG_ENV_SIZE			4096
 #define CONFIG_ENV_IS_IN_DATAFLASH	1
@@ -101,15 +104,30 @@
 
 /* Board Clock */
 #define CONFIG_SYS_HZ			25000000
-#define CONFIG_SYS_CLK_FREQ		CONFIG_SYS_HZ
+#define CONFIG_SH_SCIF_CLK_FREQ		CONFIG_SYS_HZ
 
 #define CONFIG_DRIVER_NE2000		1
 #define CONFIG_DRIVER_NE2000_BASE	0x200000
 
+#ifdef CONFIG_CMD_USB
 #define CONFIG_USB_SL811HS		1
 #define CONFIG_USB_SL811HS_ADDRESS	0x800000
 #define CONFIG_USB_SL811HS_DATA		0x800002
 #define CONFIG_USB_STORAGE		1
 #define CONFIG_DOS_PARTITION		1
+#endif
+
+#ifdef CONFIG_CMD_MMC_SPI
+#define CONFIG_GENERIC_MMC		1
+#define CONFIG_MMC_SPI			1
+#define CONFIG_BB_SPI			1
+#if 0
+#define CONFIG_RSCI_SPI			1
+#define CONFIG_RSCI_SPI_BASE		0xffffc0
+#define CONFIG_RSCI_SPI_PORT		0xffffd5
+#define CONFIG_RSCI_SPI_BIT		2
+#endif
+#define CONFIG_MMC_TRACE		1
+#endif
 
 #endif
